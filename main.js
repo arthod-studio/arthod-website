@@ -741,7 +741,9 @@ if (fv) {
       document.removeEventListener('touchmove', onMove);
       document.removeEventListener('touchend', onUp);
       const h2 = el.getBoundingClientRect().height;
-      if (el.dataset.mediaKey) setLayoutRec(el.dataset.mediaKey, { h: Math.round(h2) });
+      const w2 = el.getBoundingClientRect().width;
+      // 고정 px 높이가 아니라 비율(aspect-ratio)로 저장 — 화면 폭이 바뀌어도 비율이 유지되어 반응형이 깨지지 않음
+      if (el.dataset.mediaKey && w2 > 0) setLayoutRec(el.dataset.mediaKey, { ar: +(w2 / h2).toFixed(4) });
       toast('사진 크기가 저장되었습니다');
     };
     const onDown = (e) => {
@@ -1103,7 +1105,8 @@ if (fv) {
   }
   function applyLayoutRec(el, rec) {
     if (!rec) return;
-    if (rec.h) el.style.setProperty('--user-h', rec.h + 'px'), el.style.height = rec.h + 'px';
+    if (rec.ar) { el.style.aspectRatio = String(rec.ar); el.style.height = 'auto'; }
+    else if (rec.h) el.style.setProperty('--user-h', rec.h + 'px'), el.style.height = rec.h + 'px'; // \uad6c\ubc84\uc804 \ud638\ud658(\uc608\uc804 \uc800\uc7a5\uac12)
     if (rec.pos) {
       const target = el.querySelector('.card-bg, .svc-img, .whs-slide, img') || el;
       if (target.tagName === 'IMG') target.style.objectPosition = rec.pos;
