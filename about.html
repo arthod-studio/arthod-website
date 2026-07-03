@@ -358,10 +358,54 @@
     .btn-wg { background:transparent;color:#fff;font-size:13px;font-weight:500;padding:13px 32px;border-radius:2px;border:1px solid rgba(255,255,255,.3);display:inline-flex;align-items:center;transition:border-color .2s; letter-spacing:.04em; }
     .btn-wg:hover { border-color:rgba(255,255,255,.7); }
 
+    @media(min-width:901px) and (max-width:1100px){
+      .ab-phil-col:first-child .ab-phil-word,
+      .ab-phil-col:last-child .ab-phil-word,
+      .ab-phil.split .ab-phil-col:first-child .ab-phil-word,
+      .ab-phil.split .ab-phil-col:last-child .ab-phil-word {
+        transform: none !important;
+        opacity: 1;
+      }
+      .ab-phil.idle .ab-phil-col:first-child .ab-phil-word,
+      .ab-phil.idle .ab-phil-col:last-child .ab-phil-word {
+        animation: none !important;
+      }
+      .ab-phil-col .ab-phil-tag,
+      .ab-phil-col .ab-phil-list {
+        opacity: 1;
+        transform: none;
+      }
+      .ab-phil-word {
+        font-size: clamp(44px,5.8vw,60px);
+        max-width: 100%;
+      }
+    }
     @media(max-width:900px){
       .ab-statement-body { grid-template-columns:1fr; }
       .ab-stats-grid { grid-template-columns:1fr 1fr; }
       .ab-phil { grid-template-columns:1fr; }
+      .ab-phil-col { padding: clamp(48px,10vh,80px) var(--px); }
+      .ab-phil-col:first-child .ab-phil-word,
+      .ab-phil-col:last-child .ab-phil-word,
+      .ab-phil.split .ab-phil-col:first-child .ab-phil-word,
+      .ab-phil.split .ab-phil-col:last-child .ab-phil-word {
+        transform: none !important;
+        opacity: 1;
+      }
+      .ab-phil.idle .ab-phil-col:first-child .ab-phil-word,
+      .ab-phil.idle .ab-phil-col:last-child .ab-phil-word {
+        animation: none !important;
+      }
+      .ab-phil-col .ab-phil-tag,
+      .ab-phil-col .ab-phil-list {
+        opacity: 1;
+        transform: none;
+      }
+      .ab-phil-word {
+        font-size: clamp(44px,16vw,86px);
+        max-width: 100%;
+        overflow-wrap: anywhere;
+      }
       .ab-hero-bottom { flex-direction:column; align-items:flex-start; }
       .ab-hero-info { text-align:left; }
     }

@@ -13,7 +13,7 @@
     .work-hero {
       position: relative;
       aspect-ratio: 16/9;
-      width: 100%;
+      width: calc(100% - 16px);
       height: auto;
       overflow: hidden;
       margin: 8px;
@@ -135,6 +135,15 @@
     @media (max-width: 768px) {
       .work-meta-bar { grid-template-columns: 1fr 1fr; gap: 24px; }
       .wm-item { border-right: none; padding-right: 0; margin-right: 0; }
+    }
+    @media (max-width: 480px) {
+      .work-hero {
+        width: calc(100% - 12px);
+        margin: 6px;
+        border-radius: 12px;
+        aspect-ratio: 4/3;
+      }
+      .work-meta-bar { grid-template-columns: 1fr; }
     }
 
     /* ── Body ── */
@@ -259,6 +268,11 @@
     @media (max-width: 600px) {
       .wc-gallery[data-layout] { grid-template-columns: repeat(2, 1fr) !important; }
       .wc-gallery[data-layout="feature-mix"] .wc-gitem:first-child { grid-column: span 2; grid-row: span 1; }
+    }
+    @media (max-width: 480px) {
+      .wc-2col,
+      .wc-gallery[data-layout] { grid-template-columns: 1fr !important; }
+      .wc-gallery[data-layout="feature-mix"] .wc-gitem:first-child { grid-column: span 1; }
     }
 
     .wc-layout-btn {

@@ -218,7 +218,26 @@
     }
     @media (max-width: 480px) {
       .card-inner { aspect-ratio: 3/2; border-radius: 8px; }
-      .card-head { flex-wrap: wrap; }
+      .card-head {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 14px 0;
+      }
+      .card-head-left,
+      .card-head-right {
+        width: 100%;
+        min-width: 0;
+      }
+      .card-head-right {
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+      .card-title { line-height: 1.08; }
+      .card-en {
+        display: block;
+        margin: 6px 0 0;
+      }
     }
   </style>
 </head>
