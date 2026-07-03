@@ -14,8 +14,13 @@
     .nav-links a:hover { background-size: 100% 100%; color: #080808 !important; }
     .site-nav.scrolled { background: rgba(8,8,8,.88); backdrop-filter: blur(16px); }
     .site-nav.scrolled .nav-links a { color: rgba(255,255,255,.55); }
-    .site-nav.scrolled .nav-links a:hover,
-    .site-nav.scrolled .nav-links a[style] { color: #fff; }
+    .nav-links a.active,
+    .site-nav.scrolled .nav-links a.active {
+      background-size: 100% 100%;
+      color: #080808 !important;
+      font-weight: 600;
+    }
+    .site-nav.scrolled .nav-links a:hover { color: #080808 !important; }
 
     .works-page { padding-top: var(--nav-h); }
 
@@ -251,7 +256,7 @@
       <a href="index.html" class="nav-logo"><img src="logo.png" alt="Arthod"></a>
       <nav class="nav-links">
         <a href="about.html">About</a>
-        <a href="works.html" style="color:#fff;font-weight:600">Works</a>
+        <a href="works.html">Works</a>
         <a href="services.html">Services</a>
         <a href="contact.html">Contact</a>
       </nav>
@@ -415,7 +420,7 @@
     </div>
   </footer>
 
-  <script src="main.js"></script>
+  <script src="main.js?v=youtube-controls-1"></script>
   <script>
     // ── 카드 순서 편집 (편집 모드 전용, 위/아래 버튼) ──────────────
     (function () {

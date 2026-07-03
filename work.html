@@ -297,7 +297,17 @@
     body.editing .wc-gallery-add { display: block; }
     .wc-gallery-add:hover { border-color: var(--ink); color: var(--ink); }
 
-    .wc-gitem { position: relative; }
+    .wc-gitem {
+      position: relative;
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 1s cubic-bezier(0,0,.2,1), transform 1s cubic-bezier(0,0,.2,1);
+      transition-delay: var(--g-delay, 0s);
+    }
+    .wc-gitem.v {
+      opacity: 1;
+      transform: none;
+    }
     .wc-gitem-remove {
       display: none;
       position: absolute; top: 8px; right: 8px; z-index: 64;
@@ -406,7 +416,7 @@
     }
 
     /* ── Scroll reveal for dynamic content ── */
-    .wr { opacity: 0; transform: translateY(32px); transition: opacity .75s cubic-bezier(0,0,.2,1), transform .75s cubic-bezier(0,0,.2,1); }
+    .wr { opacity: 0; transform: translateY(32px); transition: opacity 1s cubic-bezier(0,0,.2,1), transform 1s cubic-bezier(0,0,.2,1); }
     .wr.v { opacity: 1; transform: none; }
     .wr.d1 { transition-delay: .12s; }
     .wr.d2 { transition-delay: .24s; }
@@ -438,7 +448,7 @@
       <a href="index.html" class="nav-logo"><img src="logo.png" alt="Arthod"></a>
       <nav class="nav-links">
         <a href="about.html">About</a>
-        <a href="works.html" style="font-weight:600">Works</a>
+        <a href="works.html">Works</a>
         <a href="services.html">Services</a>
         <a href="contact.html">Contact</a>
       </nav>
@@ -465,7 +475,7 @@
   <!-- ══ CONTENT (filled by JS) ══════════════════════════════ -->
   <main class="work-page" id="work-page"></main>
 
-  <script src="main.js"></script>
+  <script src="main.js?v=youtube-controls-1"></script>
   <script>
   // ── Project data ──────────────────────────────────────────
   const PROJECTS = [
@@ -792,13 +802,6 @@
     const wrEls = document.querySelectorAll('.wr');
     function settle(el) {
       el.classList.add('v');
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          el.style.setProperty('transition', 'none', 'important');
-          el.style.setProperty('opacity', '1', 'important');
-          el.style.setProperty('transform', 'none', 'important');
-        });
-      });
     }
     // 안전장치: IntersectionObserver 미지원/실패 시 즉시 전부 표시
     if (!('IntersectionObserver' in window)) {
@@ -812,8 +815,6 @@
         });
       }, { threshold: 0.05, rootMargin: '0px 0px -32px 0px' });
       wrEls.forEach(el => wrObs.observe(el));
-      // 폴백: 2초 안에 화면에 안 뜬 요소는 강제로 표시(관찰자 누락 방지)
-      setTimeout(() => { wrEls.forEach(settle); }, 2000);
     } catch (err) {
       wrEls.forEach(settle);
     }
@@ -822,6 +823,31 @@
   // ── 갤러리 사진 목록 (추가/삭제 가능) ────────────────────────
   const GALLERY_ITEMS_KEY = 'arthod-galleryitems:' + p.id;
   const DEFAULT_GALLERY_SLOTS = ['g1', 'g2', 'g3', 'g4', 'g5', 'g6'];
+  let galleryRevealObserver = null;
+
+  function setupGalleryReveal() {
+    const items = [...document.querySelectorAll('#wc-gallery-root .wc-gitem')];
+    items.forEach((item, i) => {
+      item.style.setProperty('--g-delay', Math.min(i * 0.12, 0.96).toFixed(2) + 's');
+    });
+
+    if (!('IntersectionObserver' in window)) {
+      items.forEach(item => item.classList.add('v'));
+      return;
+    }
+
+    if (galleryRevealObserver) galleryRevealObserver.disconnect();
+    galleryRevealObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('v');
+        galleryRevealObserver.unobserve(entry.target);
+      });
+    }, { threshold: 0.04, rootMargin: '0px 0px 8% 0px' });
+
+    items.forEach(item => galleryRevealObserver.observe(item));
+  }
+
   function defaultImgFor(slot) {
     const n = parseInt(slot.replace('g', ''), 10);
     return imgs[(2 + n) % imgs.length] || imgs[3];
@@ -838,7 +864,7 @@
   function renderGallery() {
     const root = document.getElementById('wc-gallery-root');
     root.innerHTML = gallerySlots.map(slot =>
-      `<div class="wc-gitem v" data-slot="${slot}">`
+      `<div class="wc-gitem" data-slot="${slot}">`
       + `<div class="wc-img" data-media="image" data-media-key="wd:${p.id}:${slot}"><img src="${defaultImgFor(slot)}" alt=""></div>`
       + `<button class="wc-gitem-remove" type="button" title="사진 삭제">✕</button>`
       + `</div>`
@@ -855,6 +881,7 @@
         if (window.ArthodEditor) window.ArthodEditor.reapplyMedia();
       });
     });
+    setupGalleryReveal();
     if (window.ArthodEditor) window.ArthodEditor.reapplyMedia();
   }
   renderGallery();

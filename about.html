@@ -16,6 +16,11 @@
     .site-nav.scrolled { background: rgba(0,0,0,.8) !important; backdrop-filter: blur(16px); border-color: transparent !important; }
     .nav-links a { color: rgba(255,255,255,.6) !important; background: linear-gradient(#fff,#fff) no-repeat left center / 0% 100% !important; }
     .nav-links a:hover { background-size: 100% 100% !important; color: #000 !important; }
+    .nav-links a.active {
+      background-size: 100% 100% !important;
+      color: #000 !important;
+      font-weight: 600;
+    }
 
     /* ── Hero ── */
     .ab-hero {
@@ -24,12 +29,59 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: clamp(48px,8vh,100px) var(--px) clamp(48px,6vh,80px);
+      padding: calc(var(--nav-h) + clamp(28px,5vh,64px)) var(--px) clamp(40px,6vh,76px);
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
     }
+    .ab-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+      background-size: clamp(42px,6vw,86px) clamp(42px,6vw,86px);
+      mask-image: linear-gradient(to bottom, transparent 0%, #000 18%, #000 74%, transparent 100%);
+      opacity: .55;
+      z-index: -2;
+    }
+    .ab-hero::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 16%;
+      width: 1px;
+      height: 68%;
+      background: linear-gradient(to bottom, transparent, rgba(255,255,255,.35), transparent);
+      transform: translateX(-50%);
+      z-index: -1;
+    }
+    .ab-hero-frame {
+      position: absolute;
+      inset: calc(var(--nav-h) + 16px) clamp(14px,2vw,28px) clamp(14px,2vw,28px);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 18px;
+      pointer-events: none;
+      z-index: -1;
+    }
+    .ab-hero-frame::before,
+    .ab-hero-frame::after {
+      content: '';
+      position: absolute;
+      width: clamp(90px,16vw,240px);
+      height: 1px;
+      background: rgba(255,255,255,.22);
+    }
+    .ab-hero-frame::before { left: clamp(18px,3vw,48px); top: clamp(18px,3vw,48px); }
+    .ab-hero-frame::after { right: clamp(18px,3vw,48px); bottom: clamp(18px,3vw,48px); }
     .ab-hero-top {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
+      position: relative;
+      z-index: 1;
+      gap: 24px;
     }
     .ab-hero-label {
       font-family: var(--font-mono);
@@ -46,16 +98,47 @@
     }
     .ab-hero-center {
       text-align: center;
-      padding: clamp(40px,6vh,80px) 0;
+      padding: clamp(34px,6vh,76px) 0;
+      position: relative;
+      z-index: 1;
+    }
+    .ab-hero-kicker {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.36);
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: clamp(18px,3vh,34px);
+    }
+    .ab-hero-kicker::before,
+    .ab-hero-kicker::after {
+      content: '';
+      width: clamp(28px,5vw,78px);
+      height: 1px;
+      background: rgba(255,255,255,.2);
     }
     .ab-hero-title {
       font-family: var(--font-d);
-      font-size: clamp(64px,13vw,200px);
+      font-size: clamp(62px,14vw,214px);
       font-weight: 900;
-      letter-spacing: -.05em;
-      line-height: .9;
+      letter-spacing: -.065em;
+      line-height: .82;
       color: #fff;
       display: block;
+      text-transform: uppercase;
+      text-shadow: 0 0 44px rgba(255,255,255,.12);
+    }
+    .ab-hero-title span {
+      display: inline-block;
+    }
+    .ab-hero-title .thin {
+      font-weight: 350;
+      letter-spacing: -.02em;
+      color: rgba(255,255,255,.74);
+      font-style: italic;
     }
     .ab-hero-sub {
       display: flex;
@@ -66,6 +149,14 @@
       border-top: 1px solid rgba(255,255,255,.1);
       border-bottom: 1px solid rgba(255,255,255,.1);
       padding: clamp(20px,3vh,36px) 0;
+      position: relative;
+    }
+    .ab-hero-sub::before,
+    .ab-hero-sub::after {
+      content: '';
+      width: clamp(24px,5vw,88px);
+      height: 1px;
+      background: rgba(255,255,255,.24);
     }
     .ab-hs-word {
       font-family: var(--font-d);
@@ -87,41 +178,76 @@
       gap: 40px;
       border-top: 1px solid rgba(255,255,255,.1);
       padding-top: clamp(24px,3vh,40px);
+      position: relative;
+      z-index: 1;
     }
     .ab-hero-desc {
       font-size: clamp(15px,1.4vw,18px);
       line-height: 1.75;
       color: rgba(255,255,255,.55);
-      max-width: 480px;
+      max-width: 560px;
     }
     .ab-hero-info {
       text-align: right;
       flex-shrink: 0;
+      display: grid;
+      grid-template-columns: repeat(3, auto);
+      gap: 10px;
+      align-items: end;
     }
     .ab-hero-info p {
       font-family: var(--font-mono);
       font-size: 11px;
       letter-spacing: .1em;
-      color: rgba(255,255,255,.3);
-      line-height: 1.9;
+      color: rgba(255,255,255,.42);
+      line-height: 1.2;
+      border: 1px solid rgba(255,255,255,.13);
+      border-radius: 999px;
+      padding: 9px 12px;
+      white-space: nowrap;
     }
 
     /* ── Statement ── */
     .ab-statement {
-      padding: clamp(80px,14vh,160px) var(--px);
+      padding: clamp(100px,15vh,190px) var(--px);
       border-bottom: 1px solid var(--border);
       text-align: center;
+      position: relative;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(15,14,12,.035), transparent 28%, transparent 72%, rgba(15,14,12,.035)),
+        var(--bg);
+    }
+    .ab-statement::before {
+      content: 'ART + METHOD';
+      position: absolute;
+      top: clamp(28px,5vh,56px);
+      left: var(--px);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: .22em;
+      color: var(--ink-4);
+    }
+    .ab-statement::after {
+      content: '';
+      position: absolute;
+      left: var(--px);
+      right: var(--px);
+      top: clamp(56px,8vh,92px);
+      height: 1px;
+      background: var(--border);
     }
     .ab-statement-q {
       font-family: var(--font-d);
-      font-size: clamp(28px,4.5vw,64px);
-      font-weight: 700;
-      text-align: center;
+      font-size: clamp(32px,5vw,76px);
+      font-weight: 800;
+      text-align: left;
       letter-spacing: -.04em;
-      line-height: 1.15;
+      line-height: 1.06;
       color: var(--ink);
-      max-width: 900px;
-      margin: 0 auto clamp(40px,6vh,72px);
+      max-width: 1080px;
+      margin: 0 auto clamp(44px,7vh,82px);
+      position: relative;
     }
     .ab-statement-q em {
       font-style: italic;
@@ -131,15 +257,38 @@
     .ab-statement-body {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: clamp(32px,5vw,96px);
-      max-width: 900px;
+      gap: 1px;
+      max-width: 1080px;
       margin: 0 auto;
       text-align: left;
+      background: var(--border);
+      border: 1px solid var(--border);
     }
     .ab-statement-body p {
       font-size: clamp(15px,1.3vw,17px);
       line-height: 1.9;
       color: var(--ink-2);
+      background: rgba(255,255,255,.92);
+      padding: clamp(28px,4vw,48px);
+      position: relative;
+      min-height: 240px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    .ab-statement-body p::before {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: .16em;
+      color: var(--ink-4);
+      margin-bottom: clamp(36px,6vw,76px);
+    }
+    .ab-statement-body p:first-child::before {
+      content: '01 / THINK';
+    }
+    .ab-statement-body p:last-child::before {
+      content: '02 / BUILD';
     }
 
     /* ── Stats ── */
@@ -292,6 +441,59 @@
       border-bottom: 1px solid var(--border);
       padding-bottom: 20px;
     }
+    .ab-timeline .hr {
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity .78s ease, transform .78s cubic-bezier(0,0,.2,1);
+    }
+    .ab-timeline .hr:nth-child(1) { transition-delay: 0s; }
+    .ab-timeline .hr:nth-child(2) { transition-delay: .09s; }
+    .ab-timeline .hr:nth-child(3) { transition-delay: .18s; }
+    .ab-timeline .hr:nth-child(4) { transition-delay: .27s; }
+    .ab-timeline .hr:nth-child(5) { transition-delay: .36s; }
+    .ab-timeline .hr:nth-child(6) { transition-delay: .45s; }
+    .ab-timeline .hr:nth-child(7) { transition-delay: .54s; }
+    .ab-timeline .hr.in {
+      opacity: 1;
+      transform: none;
+    }
+    .ab-tl-item .ab-tl-year,
+    .ab-tl-item .ab-tl-name,
+    .ab-tl-item .ab-tl-desc {
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity .9s ease, transform .9s cubic-bezier(0,0,.2,1);
+    }
+    .ab-tl-item.in .ab-tl-year {
+      opacity: 1;
+      transform: none;
+      transition-delay: .05s;
+    }
+    .ab-tl-item.in .ab-tl-name {
+      opacity: 1;
+      transform: none;
+      transition-delay: .18s;
+    }
+    .ab-tl-item.in .ab-tl-desc {
+      opacity: 1;
+      transform: none;
+      transition-delay: .32s;
+    }
+    .ab-tl-header .ab-tl-title,
+    .ab-tl-header .ab-tl-sub {
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity .9s ease, transform .9s cubic-bezier(0,0,.2,1);
+    }
+    .ab-tl-header.in .ab-tl-title {
+      opacity: 1;
+      transform: none;
+    }
+    .ab-tl-header.in .ab-tl-sub {
+      opacity: 1;
+      transform: none;
+      transition-delay: .18s;
+    }
     .ab-tl-title {
       font-family: var(--font-d);
       font-size: clamp(28px,4vw,52px);
@@ -406,12 +608,65 @@
         max-width: 100%;
         overflow-wrap: anywhere;
       }
+      .ab-hero {
+        min-height: 100svh;
+        padding-top: calc(var(--nav-h) + 32px);
+      }
+      .ab-hero::after {
+        left: auto;
+        right: var(--px);
+        opacity: .55;
+      }
+      .ab-hero-top {
+        flex-direction: column;
+        gap: 8px;
+      }
+      .ab-hero-center {
+        text-align: left;
+      }
+      .ab-hero-kicker {
+        justify-content: flex-start;
+      }
+      .ab-hero-kicker::after {
+        display: none;
+      }
+      .ab-hero-title {
+        line-height: .9;
+        letter-spacing: -.055em;
+      }
+      .ab-hero-sub {
+        justify-content: flex-start;
+        gap: clamp(14px,5vw,28px);
+        overflow-x: hidden;
+      }
+      .ab-hero-sub::before,
+      .ab-hero-sub::after {
+        display: none;
+      }
       .ab-hero-bottom { flex-direction:column; align-items:flex-start; }
       .ab-hero-info { text-align:left; }
+      .ab-statement-q {
+        text-align: left;
+      }
     }
     @media(max-width:600px){
       .ab-stats-grid { grid-template-columns:1fr 1fr; }
       .ab-tl-item { grid-template-columns:70px 1fr; gap:20px; }
+      .ab-hero-frame {
+        inset: calc(var(--nav-h) + 10px) 8px 8px;
+        border-radius: 12px;
+      }
+      .ab-hero-info {
+        grid-template-columns: 1fr;
+        width: 100%;
+      }
+      .ab-hero-info p {
+        width: 100%;
+        white-space: normal;
+      }
+      .ab-statement-body p {
+        min-height: 0;
+      }
     }
   </style>
 </head>
@@ -423,7 +678,7 @@
     <div class="nav-wrap">
       <a href="index.html" class="nav-logo"><img src="logo.png" alt="Arthod"></a>
       <nav class="nav-links">
-        <a href="about.html" style="font-weight:600">About</a>
+        <a href="about.html">About</a>
         <a href="works.html">Works</a>
         <a href="services.html">Services</a>
         <a href="contact.html">Contact</a>
@@ -449,13 +704,15 @@
 
     <!-- Hero -->
     <div class="ab-hero">
+      <div class="ab-hero-frame"></div>
       <div class="ab-hero-top r">
         <span class="ab-hero-label">About — Arthod</span>
         <span class="ab-hero-year">Seoul · Est. 2018</span>
       </div>
 
       <div class="ab-hero-center r d1">
-        <span class="ab-hero-title">ARTHOD</span>
+        <span class="ab-hero-kicker">Media Art Studio</span>
+        <span class="ab-hero-title"><span>ART</span><span class="thin">HOD</span></span>
         <div class="ab-hero-sub">
           <span class="ab-hs-word">Art</span>
           <span class="ab-hs-plus">+</span>
@@ -529,46 +786,46 @@
 
     <!-- Timeline -->
     <div class="ab-timeline">
-      <div class="ab-tl-header r">
+      <div class="ab-tl-header hr">
         <span class="ab-tl-title">History</span>
         <span class="ab-tl-sub">2018 — Present</span>
       </div>
-      <div class="ab-tl-item r">
+      <div class="ab-tl-item hr">
         <span class="ab-tl-year">2024</span>
         <div>
           <div class="ab-tl-name">빛의 파동 · 공간 매핑</div>
           <p class="ab-tl-desc">인터랙티브 LED 설치와 LiDAR 기반 프로젝션 매핑 2개 작품 발표. 서울 문화예술센터 그룹전 참여.</p>
         </div>
       </div>
-      <div class="ab-tl-item r d1">
+      <div class="ab-tl-item hr">
         <span class="ab-tl-year">2023</span>
         <div>
           <div class="ab-tl-name">소리의 형태 · 잔상</div>
           <p class="ab-tl-desc">라이브 AV 퍼포먼스 시리즈 런칭. 도시 데이터 기반 비디오 설치로 미디어아트 페스티벌 수상.</p>
         </div>
       </div>
-      <div class="ab-tl-item r d2">
+      <div class="ab-tl-item hr">
         <span class="ab-tl-year">2022</span>
         <div>
           <div class="ab-tl-name">디지털 정원 · 흐름</div>
           <p class="ab-tl-desc">제너러티브 아트 시스템 개발. WebGL 기반 실시간 비주얼과 기상 데이터 연동 유체 시뮬레이션 발표.</p>
         </div>
       </div>
-      <div class="ab-tl-item r">
+      <div class="ab-tl-item hr">
         <span class="ab-tl-year">2021</span>
         <div>
           <div class="ab-tl-name">도시의 피부 · 청각의 색</div>
           <p class="ab-tl-desc">첫 번째 미디어 파사드 프로젝트 완성. 공공 건물 외벽 대규모 프로젝션 매핑 및 라이브 퍼포먼스.</p>
         </div>
       </div>
-      <div class="ab-tl-item r d1">
+      <div class="ab-tl-item hr">
         <span class="ab-tl-year">2019–20</span>
         <div>
           <div class="ab-tl-name">브랜드 협업 확대</div>
           <p class="ab-tl-desc">국내 주요 브랜드 전시 부스 및 팝업 경험 디자인 다수 진행. 기업 오프닝 세레모니 프로젝션 매핑.</p>
         </div>
       </div>
-      <div class="ab-tl-item r d2">
+      <div class="ab-tl-item hr">
         <span class="ab-tl-year">2018</span>
         <div>
           <div class="ab-tl-name">Arthod 설립</div>
@@ -640,6 +897,21 @@
         }
       }, { threshold: 0.25 });
       obs.observe(phil);
+    }
+
+    /* ── History: scroll dissolve sequence ── */
+    const historyItems = document.querySelectorAll('.ab-timeline .hr');
+    if (!('IntersectionObserver' in window)) {
+      historyItems.forEach(item => item.classList.add('in'));
+    } else {
+      const historyObs = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('in');
+          historyObs.unobserve(entry.target);
+        });
+      }, { threshold: 0.04, rootMargin: '0px 0px 18% 0px' });
+      historyItems.forEach(item => historyObs.observe(item));
     }
 
     /* ── ART: 자기장 글자 반발 효과 ── */
@@ -720,6 +992,6 @@
       requestAnimationFrame(tick);
     })();
   </script>
-  <script src="main.js"></script>
+  <script src="main.js?v=youtube-controls-1"></script>
 </body>
 </html>

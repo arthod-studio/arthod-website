@@ -77,6 +77,45 @@ function updateNav() {
 updateNav();
 window.addEventListener('scroll', updateNav, { passive: true });
 
+/* ── Nav: reflect current page ───────────────────────────────*/
+(function () {
+  const order = ['about.html', 'works.html', 'services.html', 'contact.html'];
+  const desktopLinks = [...document.querySelectorAll('.nav-links a')];
+  const mobileLinks = [...document.querySelectorAll('.mobile-link')];
+  const links = [...desktopLinks, ...mobileLinks];
+  if (!links.length) return;
+
+  const clearInlineActive = () => {
+    links.forEach(link => {
+      link.style.fontWeight = '';
+      if (link.closest('.nav-links')) link.style.color = '';
+    });
+  };
+
+  const setActive = href => {
+    links.forEach(link => {
+      const same = (link.getAttribute('href') || '').split('#')[0] === href;
+      link.classList.toggle('active', same);
+      link.setAttribute('aria-current', same ? 'page' : 'false');
+    });
+  };
+
+  function activeFromPage() {
+    const file = (location.pathname.split('/').pop() || 'index.html').split('?')[0];
+    if (file === 'work.html') return 'works.html';
+    return order.includes(file) ? file : null;
+  }
+
+  function updateActiveNav() {
+    const active = activeFromPage();
+    clearInlineActive();
+    if (active) setActive(active);
+  }
+
+  updateActiveNav();
+  window.addEventListener('pageshow', updateActiveNav);
+})();
+
 /* ── Mobile menu ─────────────────────────────────────────────*/
 const toggle  = document.getElementById('nav-toggle');
 const overlay = document.getElementById('mobile-overlay');
@@ -110,18 +149,22 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
 
 /* ── Scroll reveal ───────────────────────────────────────────*/
 (function () {
-  const rEls = () => document.querySelectorAll('.r');
-  // 어떤 이유로든 트랜지션이 끝나지 않고 붙잡혀 있는 경우를 대비해,
-  // 보이기로 확정된 요소는 트랜지션을 끄고 최종값을 강제로 확정한다 (opacity가 0에 멈추는 문제 방지)
+  const rEls = () => [...document.querySelectorAll('.r')];
+
+  function stagger(selector, step, max) {
+    document.querySelectorAll(selector).forEach((el, i) => {
+      if (/\bd\d\b/.test(el.className)) return;
+      el.style.setProperty('--r-delay', Math.min(i * step, max).toFixed(2) + 's');
+    });
+  }
+
+  stagger('.port-grid .port-card', 0.10, 0.60);
+  stagger('.svc-list .svc-entry', 0.12, 0.72);
+  stagger('.process-steps .process-step', 0.12, 0.48);
+  stagger('.faq-list .faq-item', 0.12, 0.48);
+
   function settle(el) {
     el.classList.add('v');
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        el.style.setProperty('transition', 'none', 'important');
-        el.style.setProperty('opacity', '1', 'important');
-        el.style.setProperty('transform', 'none', 'important');
-      });
-    });
   }
   if (!('IntersectionObserver' in window)) {
     rEls().forEach(settle);
@@ -132,26 +175,12 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
       entries.forEach(e => {
         if (e.isIntersecting) { settle(e.target); obs.unobserve(e.target); }
       });
-    }, { threshold: 0.07, rootMargin: '0px 0px -24px 0px' });
+    }, { threshold: 0.08, rootMargin: '0px 0px -8% 0px' });
     rEls().forEach(el => obs.observe(el));
-    // 폴백: 관찰자가 놓친 요소도 2초 후 강제 표시 (하얀 화면 방지)
-    setTimeout(() => rEls().forEach(settle), 2000);
   } catch (err) {
     rEls().forEach(settle);
   }
 })();
-
-// 최후 안전장치: 페이지 로드 완료 후에도 안 보이는 reveal 요소가 있으면 강제 표시
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    document.querySelectorAll('.r:not(.v), .wr:not(.v)').forEach(el => {
-      el.classList.add('v');
-      el.style.setProperty('transition', 'none', 'important');
-      el.style.setProperty('opacity', '1', 'important');
-      el.style.setProperty('transform', 'none', 'important');
-    });
-  }, 2500);
-});
 
 /* ── Work card: video hover play ────────────────────────────*/
 document.querySelectorAll('.work-card').forEach(card => {
@@ -530,7 +559,16 @@ if (fv) {
       const params = new URLSearchParams(embedUrl.split('?')[1] || '');
       params.set('autoplay', '1');
       params.set('mute', '0');
-      if (info && info.kind === 'youtube') { params.set('controls', '1'); params.set('muted', '0'); }
+      if (info && info.kind === 'youtube') {
+        params.set('controls', '1');
+        params.set('muted', '0');
+        params.set('cc_load_policy', '0');
+        params.set('iv_load_policy', '3');
+        params.set('disablekb', '0');
+        params.set('fs', '1');
+        params.set('enablejsapi', '1');
+        params.set('playsinline', '1');
+      }
       if (info && info.kind === 'vimeo') { params.set('muted', '0'); params.set('background', '0'); }
       const liveUrl = base + '?' + params.toString();
       const ifr = document.createElement('iframe');
@@ -540,6 +578,25 @@ if (fv) {
       ifr.setAttribute('allowfullscreen', '');
       ifr.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:0';
       wrap.appendChild(ifr);
+      if (info && info.kind === 'youtube') {
+        const send = (func, args = []) => {
+          try {
+            ifr.contentWindow.postMessage(JSON.stringify({
+              event: 'command',
+              func,
+              args
+            }), '*');
+          } catch (err) {}
+        };
+        ifr.addEventListener('load', () => {
+          setTimeout(() => {
+            send('unMute');
+            send('setVolume', [80]);
+            send('unloadModule', ['captions']);
+            send('unloadModule', ['cc']);
+          }, 700);
+        }, { once: true });
+      }
       poster.remove();
     };
     poster.addEventListener('click', startPlayback);
@@ -600,7 +657,7 @@ if (fv) {
       const id = m[1];
       return 'https://www.youtube.com/embed/' + id +
         '?autoplay=0&mute=0&loop=1&playlist=' + id +
-        '&controls=1&showinfo=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&cc_load_policy=0&enablejsapi=1';
+        '&controls=1&showinfo=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&cc_load_policy=0&disablekb=0&fs=1&enablejsapi=1';
     }
     // Vimeo
     m = u.match(/vimeo\.com\/(?:video\/)?(\d+)/);

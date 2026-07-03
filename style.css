@@ -155,6 +155,22 @@ body.ch-click #cursor-dot{width:12px;height:12px}
   color: #fff;
 }
 
+.nav-links a.active{
+  background-size:100% 100%;
+  color:#fff;
+  font-weight:600;
+}
+
+.hero-visible .nav-links a.active{
+  background-size:100% 100%;
+  color:#000;
+}
+
+.mobile-link.active{
+  color:var(--ink);
+  font-weight:800;
+}
+
 
 .nav-toggle{display:none;flex-direction:column;gap:5px;padding:6px}
 .nav-toggle span{display:block;width:22px;height:1.5px;background:var(--ink);transition:transform .3s var(--ease),opacity .3s}
@@ -922,9 +938,9 @@ body.editing [contenteditable="true"]:focus{
 }
 
 /* ── Reveal ────────────────────────────────────────────────── */
-.r{opacity:0;transform:translateY(24px);transition:opacity .75s var(--ease-o),transform .75s var(--ease-o)}
+.r{opacity:0;transform:translateY(24px);transition:opacity 1s var(--ease-o),transform 1s var(--ease-o);transition-delay:var(--r-delay,0s)}
 .r.v{opacity:1;transform:none}
-.r.d1{transition-delay:.1s}.r.d2{transition-delay:.2s}.r.d3{transition-delay:.3s}.r.d4{transition-delay:.4s}
+.r.d1{--r-delay:.12s}.r.d2{--r-delay:.24s}.r.d3{--r-delay:.36s}.r.d4{--r-delay:.48s}.r.d5{--r-delay:.60s}.r.d6{--r-delay:.72s}
 
 @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
 
