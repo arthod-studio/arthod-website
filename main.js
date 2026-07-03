@@ -1,0 +1,1605 @@
+/* ============================================================
+   ARTHOD — main.js
+   ============================================================ */
+'use strict';
+
+/* ── Disable back/forward swipe gesture ──────────────────── */
+window.addEventListener('wheel', e => {
+  if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) e.preventDefault();
+}, { passive: false });
+
+/* ── Custom Cursor (mix-blend-mode: difference) ──────────────
+   Cursor element uses mix-blend-mode: difference in CSS.
+   Cursor color = white → appears black on white bg,
+   white on dark bg → always visible, never obstructs text.
+   ─────────────────────────────────────────────────────────── */
+const dot  = document.getElementById('cursor-dot');
+const ring = document.getElementById('cursor-ring');
+
+let mx = 0, my = 0, rx = 0, ry = 0;
+let cursorOn = false;
+const isTouch = window.matchMedia('(hover:none)').matches;
+
+if (!isTouch && dot && ring) {
+  document.body.classList.add('no-cursor');
+
+  const showCursor = () => {
+    if (!cursorOn) {
+      dot.style.opacity  = '1';
+      ring.style.opacity = '1';
+      cursorOn = true;
+    }
+  };
+
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    dot.style.left = mx + 'px';
+    dot.style.top  = my + 'px';
+    showCursor();
+  });
+
+  document.addEventListener('mouseleave', () => {
+    dot.style.opacity = ring.style.opacity = '0';
+    cursorOn = false;
+  });
+
+  document.addEventListener('mouseenter', showCursor);
+
+  // Smooth ring lag
+  (function raf() {
+    rx += (mx - rx) * 0.1;
+    ry += (my - ry) * 0.1;
+    ring.style.left = rx + 'px';
+    ring.style.top  = ry + 'px';
+    requestAnimationFrame(raf);
+  })();
+
+  // Hover + click states
+  document.querySelectorAll('a,button,.h').forEach(el => {
+    el.addEventListener('mouseenter', () => document.body.classList.add('ch-hover'));
+    el.addEventListener('mouseleave', () => document.body.classList.remove('ch-hover'));
+  });
+  document.addEventListener('mousedown', () => document.body.classList.add('ch-click'));
+  document.addEventListener('mouseup',   () => document.body.classList.remove('ch-click'));
+}
+
+/* ── Nav: transparent on hero, solid after ───────────────────*/
+const nav  = document.getElementById('site-nav');
+const hero = document.querySelector('.hero-wrap');
+
+function updateNav() {
+  const heroBottom = hero ? hero.getBoundingClientRect().bottom : 0;
+  nav.classList.toggle('scrolled', window.scrollY > 20);
+  // keep nav links white while hero is visible
+  document.body.classList.toggle('hero-visible', heroBottom > 60);
+}
+
+updateNav();
+window.addEventListener('scroll', updateNav, { passive: true });
+
+/* ── Mobile menu ─────────────────────────────────────────────*/
+const toggle  = document.getElementById('nav-toggle');
+const overlay = document.getElementById('mobile-overlay');
+
+toggle?.addEventListener('click', () => {
+  const open = overlay.classList.toggle('open');
+  toggle.classList.toggle('open', open);
+  document.body.style.overflow = open ? 'hidden' : '';
+});
+
+document.querySelectorAll('.mobile-link').forEach(link => {
+  link.addEventListener('click', () => {
+    overlay.classList.remove('open');
+    toggle?.classList.remove('open');
+    document.body.style.overflow = '';
+  });
+});
+
+/* ── Smooth scroll ───────────────────────────────────────────*/
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const id = a.getAttribute('href');
+    if (!id || id === '#') return;
+    const target = document.querySelector(id);
+    if (!target) return;
+    e.preventDefault();
+    const navH = nav ? nav.offsetHeight : 56;
+    window.scrollTo({ top: target.offsetTop - navH, behavior: 'smooth' });
+  });
+});
+
+/* ── Scroll reveal ───────────────────────────────────────────*/
+(function () {
+  const rEls = () => document.querySelectorAll('.r');
+  // 어떤 이유로든 트랜지션이 끝나지 않고 붙잡혀 있는 경우를 대비해,
+  // 보이기로 확정된 요소는 트랜지션을 끄고 최종값을 강제로 확정한다 (opacity가 0에 멈추는 문제 방지)
+  function settle(el) {
+    el.classList.add('v');
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        el.style.setProperty('transition', 'none', 'important');
+        el.style.setProperty('opacity', '1', 'important');
+        el.style.setProperty('transform', 'none', 'important');
+      });
+    });
+  }
+  if (!('IntersectionObserver' in window)) {
+    rEls().forEach(settle);
+    return;
+  }
+  try {
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) { settle(e.target); obs.unobserve(e.target); }
+      });
+    }, { threshold: 0.07, rootMargin: '0px 0px -24px 0px' });
+    rEls().forEach(el => obs.observe(el));
+    // 폴백: 관찰자가 놓친 요소도 2초 후 강제 표시 (하얀 화면 방지)
+    setTimeout(() => rEls().forEach(settle), 2000);
+  } catch (err) {
+    rEls().forEach(settle);
+  }
+})();
+
+// 최후 안전장치: 페이지 로드 완료 후에도 안 보이는 reveal 요소가 있으면 강제 표시
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.querySelectorAll('.r:not(.v), .wr:not(.v)').forEach(el => {
+      el.classList.add('v');
+      el.style.setProperty('transition', 'none', 'important');
+      el.style.setProperty('opacity', '1', 'important');
+      el.style.setProperty('transform', 'none', 'important');
+    });
+  }, 2500);
+});
+
+/* ── Work card: video hover play ────────────────────────────*/
+document.querySelectorAll('.work-card').forEach(card => {
+  const vid = card.querySelector('.card-video');
+  if (!vid) return;
+  let ready = false;
+  vid.addEventListener('canplay', () => { ready = true; });
+
+  card.addEventListener('mouseenter', () => {
+    if (ready) { vid.play().catch(() => {}); card.classList.add('playing'); }
+  });
+  card.addEventListener('mouseleave', () => {
+    vid.pause(); vid.currentTime = 0; card.classList.remove('playing');
+  });
+
+  // Mobile: show overlay on tap
+  card.addEventListener('touchstart', e => {
+    const was = card.classList.contains('tap');
+    document.querySelectorAll('.work-card.tap').forEach(c => c.classList.remove('tap'));
+    if (!was) { card.classList.add('tap'); e.preventDefault(); }
+  }, { passive: false });
+});
+
+/* Inject mobile tap-overlay style */
+const mStyle = document.createElement('style');
+mStyle.textContent = '@media(hover:none){.work-card .card-overlay{opacity:0}.work-card.tap .card-overlay{opacity:1}}';
+document.head.appendChild(mStyle);
+
+/* ── Particles for a4 card ───────────────────────────────────*/
+const a4c = document.getElementById('a4c');
+if (a4c) {
+  const s = document.createElement('style');
+  s.textContent = '@keyframes pfloat{0%{transform:translateY(110%);opacity:0}10%{opacity:.7}90%{opacity:.4}100%{transform:translateY(-10%);opacity:0}}';
+  document.head.appendChild(s);
+  for (let i = 0; i < 28; i++) {
+    const p = document.createElement('div');
+    const sz = Math.random() * 2.5 + .5;
+    Object.assign(p.style, {
+      position:'absolute', borderRadius:'50%', background:'#2997ff',
+      width:sz+'px', height:sz+'px',
+      left:Math.random()*100+'%', bottom:'-5%',
+      opacity:Math.random()*.7+.1,
+      animationName:'pfloat',
+      animationDuration:(Math.random()*14+7)+'s',
+      animationDelay:(Math.random()*14)+'s',
+      animationTimingFunction:'linear',
+      animationIterationCount:'infinite',
+    });
+    a4c.appendChild(p);
+  }
+}
+
+/* ── Hero video: fade in on load ─────────────────────────────*/
+const hv = document.getElementById('hero-video');
+if (hv) {
+  const load = () => hv.classList.add('loaded');
+  hv.addEventListener('canplay', load);
+  if (hv.readyState >= 3) load();
+}
+const fv = document.getElementById('feat-video');
+if (fv) {
+  const load = () => fv.classList.add('loaded');
+  fv.addEventListener('canplay', load);
+  if (fv.readyState >= 3) load();
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   EDIT MODE  —  텍스트 · 사진 · 영상을 직접 수정
+   ─────────────────────────────────────────────────────────
+   • 텍스트  : 클릭 후 바로 입력  (localStorage 저장)
+   • 사진    : 클릭 → 파일 선택 → 교체  (IndexedDB 저장)
+   • 영상    : 히어로 클릭 → 영상 파일 선택  (IndexedDB 저장)
+   모든 수정은 이 브라우저에 저장되어 새로고침해도 유지됩니다.
+   ══════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  const TXT_PREFIX = 'arthod-edit:';
+  const _rawPage = (location.pathname.split('/').pop() || 'index').replace('.html', '') || 'index';
+  // 세부페이지(work.html)는 모두 같은 파일이라, 작품 id를 붙여 페이지별로 키를 분리
+  // work.html 자체가 "id 파라미터 없으면 01번을 기본으로 표시"하는 규칙을 쓰므로,
+  // 텍스트 저장 키도 동일한 기본값을 따라야 화면에 보이는 작품과 저장 위치가 항상 일치함
+  const _workId = _rawPage === 'work' ? (new URLSearchParams(location.search).get('id') || '01') : null;
+  const PAGE = (_rawPage === 'work' && _workId) ? ('work' + _workId) : _rawPage;
+
+  /* ── 1. 수정 가능한 텍스트 (내용 카피만 — 장식/애니메이션 요소 제외) ── */
+  const TEXT_SELECTORS = [
+    // About
+    '.ab-hero-label', '.ab-hero-year', '.ab-hero-title', '.ab-hs-word', '.ab-hero-desc', '.ab-hero-info p',
+    '.ab-statement-q', '.ab-statement-body p', '.ab-phil-tag', '.ab-phil-list li',
+    '.ab-tl-title', '.ab-tl-sub', '.ab-tl-year', '.ab-tl-name', '.ab-tl-desc', '.ab-cta h2',
+    // Works
+    '.wp-title', '.wp-subtitle', '.wp-count', '.wp-right p',
+    // Work detail  (제목·영문·타입·연도는 공유 저장소로 분리 관리 → 아래 tagShared)
+    '.wm-val', '.wb-section-label', '.wb-desc',
+    '.spec-val', '.wc-text-block h3', '.wc-about-body', '.wc-caption', '.wn-label', '.wn-title',
+    // Services
+    '.page-title', '.page-hero-right p', '.svc-entry-name', '.svc-entry-desc', '.svc-tag',
+    '.process-title', '.step-name', '.step-desc', '.cta-band h2',
+    // Contact
+    '.contact-eyebrow', '.contact-big-title', '.contact-desc', '.cdi-label', '.cdi-value',
+    '.form-title', '.form-field label', '.form-note', '.faq-title', '.faq-q h3', '.faq-a',
+    // Footer (모든 페이지 공통)
+    '.f-logo', '.f-tag', '.f-col h4', '.f-col ul a', '.f-copy', '.mob-foot span',
+  ];
+
+  let keyed = [];
+  function assignKeys() {
+    keyed = [];
+    TEXT_SELECTORS.forEach(sel => {
+      const slug = sel.replace(/[^a-z0-9]+/gi, '').toLowerCase(); // 선택자별 안정 키(폴백용)
+      document.querySelectorAll(sel).forEach((el, n) => {
+        if (el.dataset.editKey) return;
+        if (el.dataset.shared || el.dataset.mirror) return; // 공유 필드는 별도 관리
+        if (el.parentElement && el.parentElement.closest('[data-edit-key]')) return; // 중첩 방지
+        // data-ek가 있으면 그 이름으로 영구 고정 키 사용 (코드가 바뀌어도 안전)
+        // 없으면 기존 방식(선택자+등장순서)으로 폴백
+        el.dataset.editKey = PAGE + ':' + (el.dataset.ek ? el.dataset.ek : (slug + ':' + n));
+        keyed.push(el);
+      });
+    });
+  }
+  function restoreText() {
+    keyed.forEach(el => {
+      const v = localStorage.getItem(TXT_PREFIX + el.dataset.editKey);
+      if (v !== null) el.innerHTML = v;
+    });
+  }
+  function saveText() {
+    keyed.forEach(el => localStorage.setItem(TXT_PREFIX + el.dataset.editKey, el.innerHTML));
+  }
+
+  /* ── 1c. 텍스트 스타일 오버라이드 (폰트 · 크기 · 굵기 · 정렬 · 색상) ── */
+  const STYLE_PREFIX = 'arthod-style:';
+  const FONT_OPTIONS = [
+    { label: '기본', value: '' },
+    { label: 'Pretendard', value: "'Pretendard', -apple-system, sans-serif" },
+    { label: 'Serif', value: "'Noto Serif KR', Georgia, serif" },
+    { label: 'Mono', value: "var(--font-mono, ui-monospace, monospace)" },
+    { label: 'Playfair', value: "'Playfair Display', Georgia, serif" },
+  ];
+  function styleKey(el) { return el.dataset.editKey || el.dataset.shared; }
+  function applyStyleRec(el, rec) {
+    if (!rec) return;
+    if (rec.font) el.style.fontFamily = rec.font; else el.style.removeProperty('font-family');
+    if (rec.size) el.style.fontSize = rec.size + 'px'; else el.style.removeProperty('font-size');
+    if (rec.weight) el.style.fontWeight = rec.weight; else el.style.removeProperty('font-weight');
+    if (rec.italic) el.style.fontStyle = 'italic'; else el.style.removeProperty('font-style');
+    if (rec.align) el.style.textAlign = rec.align; else el.style.removeProperty('text-align');
+    if (rec.color) el.style.color = rec.color; else el.style.removeProperty('color');
+  }
+  function restoreStyles() {
+    [...keyed, ...sharedEls].forEach(el => {
+      const k = styleKey(el); if (!k) return;
+      const raw = localStorage.getItem(STYLE_PREFIX + k);
+      if (raw) { try { applyStyleRec(el, JSON.parse(raw)); } catch (e) {} }
+    });
+  }
+  function getStyleRec(el) {
+    const k = styleKey(el); if (!k) return {};
+    try { return JSON.parse(localStorage.getItem(STYLE_PREFIX + k)) || {}; } catch (e) { return {}; }
+  }
+  function setStyleRec(el, patch) {
+    const k = styleKey(el); if (!k) return;
+    const rec = Object.assign(getStyleRec(el), patch);
+    localStorage.setItem(STYLE_PREFIX + k, JSON.stringify(rec));
+    applyStyleRec(el, rec);
+  }
+
+  /* ── 1b. 작품 공유 필드 (제목·영문명·타입·연도 — 작품 ID 기준 단일 소스) ──
+     Works 카드 · 상세 페이지 · Next Project 가 모두 같은 값을 읽어,
+     어느 페이지에서 고쳐도 전부 반영됩니다. */
+  const SHARED_PREFIX = 'arthod-proj:';
+  let sharedEls = [];
+  function tagShared() {
+    sharedEls = [];
+    const tagOne = (el, field) => { if (!el) return; el.dataset.shared = field; sharedEls.push(el); };
+    // Works 목록 카드
+    document.querySelectorAll('.port-card').forEach(card => {
+      const m = (card.getAttribute('href') || '').match(/id=(\w+)/);
+      if (!m) return;
+      const id = m[1];
+      tagOne(card.querySelector('.card-ko'), id + ':ko');
+      tagOne(card.querySelector('.card-en'), id + ':en');
+      tagOne(card.querySelector('.card-type'), id + ':project');
+      tagOne(card.querySelector('.card-yr'), id + ':year');
+      tagOne(card.querySelector('.card-project'), id + ':project');
+    });
+    // 작품 상세 페이지
+    if (document.querySelector('.work-hero-title')) {
+      const id = (new URLSearchParams(location.search).get('id') || '01').padStart(2, '0');
+      tagOne(document.querySelector('.wht-ko'), id + ':ko');
+      tagOne(document.querySelector('.wht-en'), id + ':en');
+      document.querySelectorAll('.work-meta-bar .wm-item').forEach(item => {
+        const label = (item.querySelector('.wm-label')?.textContent || '').trim().toLowerCase();
+        const val = item.querySelector('.wm-val');
+        if (label === 'year') tagOne(val, id + ':year');
+        else if (label === 'project') tagOne(val, id + ':project');
+        else if (label === 'client') tagOne(val, id + ':clientorg');
+      });
+      // Next Project 제목 — 미러(읽기 전용): 다음 작품의 국문 제목을 반영
+      const wn = document.querySelector('.wn-title');
+      const nextHref = document.querySelector('.work-next')?.getAttribute('href') || '';
+      const nm = nextHref.match(/id=(\w+)/);
+      if (wn && nm) wn.dataset.mirror = nm[1] + ':ko';
+    }
+  }
+  function restoreShared() {
+    sharedEls.forEach(el => {
+      const v = localStorage.getItem(SHARED_PREFIX + el.dataset.shared);
+      if (v !== null) el.textContent = v;
+    });
+  }
+  function applyMirrors() {
+    document.querySelectorAll('[data-mirror]').forEach(el => {
+      const v = localStorage.getItem(SHARED_PREFIX + el.dataset.mirror);
+      if (v !== null) el.textContent = v;
+    });
+    const wht = document.querySelector('.wht-ko');
+    if (wht && document.querySelector('.work-hero-title')) {
+      document.title = wht.textContent.trim() + ' — ARTHOD';
+    }
+  }
+  function saveShared() {
+    sharedEls.forEach(el => {
+      localStorage.setItem(SHARED_PREFIX + el.dataset.shared, el.textContent.trim());
+    });
+  }
+
+  /* ── 2. 미디어 저장소 (IndexedDB — 사진/영상 Blob) ── */
+  const DB_NAME = 'arthod-media';
+  let _dbp = null;
+  function db() {
+    if (_dbp) return _dbp;
+    _dbp = new Promise((res, rej) => {
+      const r = indexedDB.open(DB_NAME, 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('m');
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    });
+    return _dbp;
+  }
+  async function mediaGet(k) {
+    try {
+      const d = await db();
+      return await new Promise(res => {
+        const t = d.transaction('m').objectStore('m').get(k);
+        t.onsuccess = () => res(t.result || null);
+        t.onerror = () => res(null);
+      });
+    } catch (e) { return null; }
+  }
+  async function mediaSet(k, v) {
+    try {
+      const d = await db();
+      return await new Promise((res, rej) => {
+        const tx = d.transaction('m', 'readwrite');
+        tx.objectStore('m').put(v, k);
+        tx.oncomplete = () => res();
+        tx.onerror = () => rej(tx.error);
+      });
+    } catch (e) { /* ignore */ }
+  }
+  async function mediaClear() {
+    try {
+      const d = await db();
+      return await new Promise(res => {
+        const tx = d.transaction('m', 'readwrite');
+        tx.objectStore('m').clear();
+        tx.oncomplete = () => res();
+      });
+    } catch (e) { /* ignore */ }
+  }
+
+  async function mediaDelete(k) {
+    try {
+      const d = await db();
+      return await new Promise(res => {
+        const tx = d.transaction('m', 'readwrite');
+        tx.objectStore('m').delete(k);
+        tx.oncomplete = () => res();
+      });
+    } catch (e) { /* ignore */ }
+  }
+  async function mediaAll() {
+    try {
+      const d = await db();
+      return await new Promise(res => {
+        const store = d.transaction('m').objectStore('m');
+        const kr = store.getAllKeys(); const vr = store.getAll();
+        let keys = null, vals = null;
+        const done = () => { if (keys && vals) res(keys.map((k, i) => ({ key: k, rec: vals[i] }))); };
+        kr.onsuccess = () => { keys = kr.result; done(); };
+        vr.onsuccess = () => { vals = vr.result; done(); };
+        kr.onerror = vr.onerror = () => res([]);
+      });
+    } catch (e) { return []; }
+  }
+  function humanLabel(key) {
+    if (key === 'home:hero') return '홈 — 히어로 배경';
+    if (key.indexOf('wimg:') === 0) return '작품 ' + key.split(':')[1] + ' — 대표 이미지 (Works 카드·상세 공용)';
+    if (key.indexOf('works:') === 0) { const m = key.match(/id=(\d+)/); return 'Works — 작품 ' + (m ? m[1] : ''); }
+    if (key.indexOf('svc:') === 0) return 'Services — ' + (parseInt(key.split(':')[1], 10) + 1) + '번';
+    if (key.indexOf('wd:') === 0) {
+      const p = key.split(':'); const id = p[1]; const slot = p[2];
+      let s = slot;
+      if (slot[0] === 's') s = '슬라이드 ' + (parseInt(slot.slice(1), 10) + 1);
+      else if (slot === 'c0') s = '대표 이미지';
+      else if (slot[0] === 'g') s = '갤러리 ' + slot.slice(1);
+      return '작품 ' + id + ' — ' + s;
+    }
+    return key;
+  }
+
+  /* ── 3. 미디어 슬롯 태깅 (정적 요소) ── */
+  function tagMedia() {
+    const hero = document.querySelector('.hero-card');
+    if (hero && !hero.dataset.media) {
+      hero.dataset.media = 'hero';
+      hero.dataset.mediaKey = 'home:hero';
+    }
+    document.querySelectorAll('.port-card').forEach(pc => {
+      const inner = pc.querySelector('.card-inner');
+      if (inner && !inner.dataset.media) {
+        const m = (pc.getAttribute('href') || '').match(/id=(\w+)/);
+        inner.dataset.media = 'image';
+        // Works 카드 이미지 = 상세 페이지 대표 이미지 (공용 키)
+        inner.dataset.mediaKey = m ? ('wimg:' + m[1]) : ('works:' + pc.getAttribute('href'));
+      }
+    });
+    document.querySelectorAll('.svc-entry').forEach((e, i) => {
+      if (e.querySelector('.svc-img') && !e.dataset.media) {
+        e.dataset.media = 'image';
+        e.dataset.mediaKey = 'svc:' + i;
+      }
+    });
+  }
+
+  /* ── 4. 미디어 적용 ── */
+  function applyImage(container, url) {
+    const img = container.querySelector('img');
+    if (img) { img.src = url; }
+    else {
+      const bg = container.querySelector('.card-bg, .svc-img, .whs-slide');
+      if (bg) bg.style.backgroundImage = `url("${url}")`;
+      else container.style.backgroundImage = `url("${url}")`;
+    }
+    const pc = container.closest('.port-card');
+    if (pc) pc.setAttribute('data-custom-img', '1');
+    markCustom(container);
+  }
+  // 유튜브/비메오 iframe: 클릭 전엔 썸네일+재생 버튼만 보여주고,
+  // 실제 클릭(사용자 제스처)이 발생했을 때만 autoplay+소리 켜진 iframe을 새로 로드한다.
+  // → 브라우저 자동재생 정책에 걸리지 않아 소리가 확실히 나온다.
+  function embedIdInfo(embedUrl) {
+    let m = embedUrl.match(/youtube\.com\/embed\/([\w-]{11})/);
+    if (m) return { kind: 'youtube', id: m[1] };
+    m = embedUrl.match(/player\.vimeo\.com\/video\/(\d+)/);
+    if (m) return { kind: 'vimeo', id: m[1] };
+    return null;
+  }
+  function buildClickToPlay(wrap, embedUrl) {
+    const info = embedIdInfo(embedUrl);
+    const poster = document.createElement('div');
+    poster.className = 'media-poster';
+    poster.style.cssText = 'position:absolute;inset:0;z-index:5;cursor:pointer;background:#000 center/cover no-repeat;display:flex;align-items:center;justify-content:center';
+    if (info && info.kind === 'youtube') {
+      poster.style.backgroundImage = `url("https://img.youtube.com/vi/${info.id}/hqdefault.jpg")`;
+    }
+    poster.innerHTML = '<div class="media-play-btn">▶</div>';
+    const startPlayback = () => {
+      // 기존에 저장된 embedUrl에 옛 파라미터(autoplay/mute/controls 등)가 섞여 있어도
+      // 확실하게 "재생+소리 켜짐" 상태가 되도록 URL을 새로 구성한다.
+      const base = embedUrl.split('?')[0];
+      const params = new URLSearchParams(embedUrl.split('?')[1] || '');
+      params.set('autoplay', '1');
+      params.set('mute', '0');
+      if (info && info.kind === 'youtube') { params.set('controls', '1'); params.set('muted', '0'); }
+      if (info && info.kind === 'vimeo') { params.set('muted', '0'); params.set('background', '0'); }
+      const liveUrl = base + '?' + params.toString();
+      const ifr = document.createElement('iframe');
+      ifr.src = liveUrl;
+      ifr.allow = 'autoplay; encrypted-media; picture-in-picture';
+      ifr.setAttribute('frameborder', '0');
+      ifr.setAttribute('allowfullscreen', '');
+      ifr.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:0';
+      wrap.appendChild(ifr);
+      poster.remove();
+    };
+    poster.addEventListener('click', startPlayback);
+    wrap.appendChild(poster);
+  }
+  function applyHero(rec) {
+    const card = document.querySelector('.hero-card');
+    if (!card) return;
+    card.querySelectorAll('.hero-user-media').forEach(n => n.remove());
+    const ph = card.querySelector('.hero-placeholder');
+    if (ph) ph.style.display = 'none';
+    if (rec.kind === 'embed') {
+      const wrap = document.createElement('div');
+      wrap.className = 'hero-user-media';
+      wrap.style.cssText = 'position:absolute;inset:0;overflow:hidden;z-index:1';
+      card.appendChild(wrap);
+      buildClickToPlay(wrap, rec.embedUrl);
+    } else if (rec.kind === 'video') {
+      const url = URL.createObjectURL(rec.blob);
+      const v = document.createElement('video');
+      v.className = 'hero-user-media';
+      v.src = url;
+      v.autoplay = v.muted = v.loop = true;
+      v.playsInline = true;
+      v.setAttribute('muted', '');
+      v.setAttribute('playsinline', '');
+      v.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1';
+      card.appendChild(v);
+      v.play().catch(() => {});
+    } else {
+      const url = URL.createObjectURL(rec.blob);
+      const d = document.createElement('div');
+      d.className = 'hero-user-media';
+      d.style.cssText = `position:absolute;inset:0;background:url("${url}") center/cover no-repeat;z-index:1`;
+      card.appendChild(d);
+    }
+    markCustom(card);
+  }
+  async function applyAllMedia() {
+    const els = document.querySelectorAll('[data-media]');
+    for (const el of els) {
+      const rec = await mediaGet(el.dataset.mediaKey);
+      if (!rec) continue;
+      if (el.dataset.media === 'hero') applyHero(rec);
+      else if (el.dataset.mediaRich === '1') applyRichMedia(el, rec);
+      else applyImage(el, URL.createObjectURL(rec.blob));
+    }
+  }
+
+  /* ── 5. 파일 선택기 · 영상 링크 ── */
+  // 유튜브/비메오 URL → 자동재생·음소거·반복 임베드 URL
+  function toEmbedUrl(raw) {
+    const u = (raw || '').trim();
+    if (!u) return null;
+    // YouTube
+    let m = u.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/);
+    if (m) {
+      const id = m[1];
+      return 'https://www.youtube.com/embed/' + id +
+        '?autoplay=0&mute=0&loop=1&playlist=' + id +
+        '&controls=1&showinfo=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&cc_load_policy=0&enablejsapi=1';
+    }
+    // Vimeo
+    m = u.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+    if (m) {
+      return 'https://player.vimeo.com/video/' + m[1] +
+        '?autoplay=0&muted=0&loop=1&byline=0&title=0&portrait=0';
+    }
+    return null;
+  }
+
+  function openHeroChoice(el) {
+    const isHero = el.dataset.media === 'hero';
+    const prev = document.querySelector('.hero-choice');
+    if (prev) prev.remove();
+    const box = document.createElement('div');
+    box.className = 'hero-choice';
+    box.innerHTML =
+      '<div class="hc-inner">'
+      + `<div class="hc-title">${isHero ? '히어로 배경 500' : '미디어'} 설정</div>`
+      + '<button class="hc-file" type="button">🖼 파일 업로드 (사진·영상)</button>'
+      + '<div class="hc-or">또는 영상 링크</div>'
+      + '<input class="hc-url" type="text" placeholder="유튜브 / 비메오 링크 붙여넣기" />'
+      + '<div class="hc-err"></div>'
+      + '<div class="hc-row"><button class="hc-cancel" type="button">취소</button>'
+      + '<button class="hc-apply" type="button">링크 적용</button></div>'
+      + '</div>';
+    box.querySelector('.hc-title').textContent = (isHero ? '히어로 배경' : '사진·영상') + ' 설정';
+    document.body.appendChild(box);
+    const close = () => box.remove();
+    box.addEventListener('click', ev => { if (ev.target === box) close(); });
+    box.querySelector('.hc-cancel').addEventListener('click', close);
+    box.querySelector('.hc-file').addEventListener('click', () => { close(); pickFile(el); });
+    const urlInput = box.querySelector('.hc-url');
+    const err = box.querySelector('.hc-err');
+    const apply = async () => {
+      const embedUrl = toEmbedUrl(urlInput.value);
+      if (!embedUrl) { err.textContent = '유튜브 또는 비메오 링크를 인식하지 못했습니다.'; return; }
+      const rec = { kind: 'embed', embedUrl, src: urlInput.value.trim() };
+      await mediaSet(el.dataset.mediaKey, rec);
+      if (isHero) applyHero(rec); else applyRichMedia(el, rec);
+      close();
+      toast('영상 링크가 적용되었습니다');
+      refreshCount();
+    };
+    box.querySelector('.hc-apply').addEventListener('click', apply);
+    urlInput.addEventListener('keydown', e => { if (e.key === 'Enter') apply(); });
+    setTimeout(() => urlInput.focus(), 50);
+  }
+
+  // 히어가 아닌 일반 슬롯(예: '작품에 대하여' 위 대표 이미지)에 사진/영상/링크를 적용
+  function applyRichMedia(el, rec) {
+    el.querySelectorAll(':scope > .rich-media-el').forEach(n => n.remove());
+    const img = el.querySelector('img');
+    if (rec.kind === 'embed') {
+      if (img) img.style.display = 'none';
+      const wrap = document.createElement('div');
+      wrap.className = 'rich-media-el';
+      wrap.style.cssText = 'position:absolute;inset:0;overflow:hidden;z-index:1';
+      el.insertBefore(wrap, el.firstChild);
+      buildClickToPlay(wrap, rec.embedUrl);
+    } else if (rec.kind === 'video') {
+      if (img) img.style.display = 'none';
+      const v = document.createElement('video');
+      v.className = 'rich-media-el';
+      v.src = URL.createObjectURL(rec.blob);
+      v.autoplay = v.muted = v.loop = true;
+      v.playsInline = true;
+      v.setAttribute('muted', '');
+      v.setAttribute('playsinline', '');
+      v.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1';
+      el.insertBefore(v, el.firstChild);
+      v.play().catch(() => {});
+    } else if (img) {
+      img.style.display = 'block';
+      img.src = URL.createObjectURL(rec.blob);
+    }
+    markCustom(el);
+  }
+
+  function pickFile(el) {
+    const allowVideo = el.dataset.media === 'hero' || el.dataset.mediaRich === '1';
+    const isHero = el.dataset.media === 'hero';
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = allowVideo ? 'image/*,video/*' : 'image/*';
+    input.style.display = 'none';
+    document.body.appendChild(input);
+    input.addEventListener('change', async () => {
+      const f = input.files && input.files[0];
+      input.remove();
+      if (!f) return;
+      const kind = f.type.startsWith('video') ? 'video' : 'image';
+      await mediaSet(el.dataset.mediaKey, { blob: f, kind });
+      if (isHero) applyHero({ blob: f, kind });
+      else if (el.dataset.mediaRich === '1') applyRichMedia(el, { blob: f, kind });
+      else applyImage(el, URL.createObjectURL(f));
+      toast(kind === 'video' ? '영상이 교체되었습니다' : '사진이 교체되었습니다');
+      refreshCount();
+    });
+    input.click();
+  }
+
+  function openPicker(el) {
+    if (el.dataset.media === 'hero' || el.dataset.mediaRich === '1') openHeroChoice(el);
+    else pickFile(el);
+  }
+
+  /* ── 5b. 커스텀 표시 · 되돌리기 · 미디어 관리 ── */
+  function markCustom(el) {
+    if (!el) return;
+    el.dataset.hasCustom = '1';
+    if (el.querySelector(':scope > .media-revert')) return;
+    const b = document.createElement('button');
+    b.className = 'media-revert';
+    b.type = 'button';
+    b.textContent = '✕ 되돌리기';
+    b.dataset.revertKey = el.dataset.mediaKey || '';
+    el.appendChild(b);
+  }
+
+  /* 크기 · 위치 조절 핸들 (모든 미디어 슬롯에 부착 — 클릭과 분리된 드래그 전용 핸들) */
+  function attachSizeHandle(el) {
+    if (el.dataset.media === 'hero' || el.querySelector(':scope > .size-handle')) return;
+    const h = document.createElement('div');
+    h.className = 'size-handle';
+    h.title = '드래그해서 높이 조절';
+    el.appendChild(h);
+    let startY = 0, startH = 0;
+    const onMove = (e) => {
+      const y = e.touches ? e.touches[0].clientY : e.clientY;
+      const dh = y - startY;
+      const newH = Math.max(80, startH + dh);
+      el.style.height = newH + 'px';
+    };
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onUp);
+      const h2 = el.getBoundingClientRect().height;
+      if (el.dataset.mediaKey) setLayoutRec(el.dataset.mediaKey, { h: Math.round(h2) });
+      toast('사진 크기가 저장되었습니다');
+    };
+    const onDown = (e) => {
+      e.preventDefault(); e.stopPropagation();
+      startY = e.touches ? e.touches[0].clientY : e.clientY;
+      startH = el.getBoundingClientRect().height;
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+      document.addEventListener('touchmove', onMove, { passive: false });
+      document.addEventListener('touchend', onUp);
+    };
+    h.addEventListener('mousedown', onDown);
+    h.addEventListener('touchstart', onDown, { passive: false });
+  }
+  function attachPanHandle(el) {
+    if (el.dataset.media === 'hero' || el.querySelector(':scope > .pan-handle')) return;
+    const h = document.createElement('div');
+    h.className = 'pan-handle';
+    h.title = '드래그해서 사진 위치(크롭) 조절';
+    h.textContent = '✥';
+    el.appendChild(h);
+    let startX = 0, startY = 0, curX = 50, curY = 50;
+    const target = () => el.querySelector('.card-bg, .svc-img, .whs-slide, img') || el;
+    const onMove = (e) => {
+      const x = e.touches ? e.touches[0].clientX : e.clientX;
+      const y = e.touches ? e.touches[0].clientY : e.clientY;
+      const rect = el.getBoundingClientRect();
+      const dxPct = ((x - startX) / rect.width) * 100;
+      const dyPct = ((y - startY) / rect.height) * 100;
+      const nx = Math.min(100, Math.max(0, curX + dxPct));
+      const ny = Math.min(100, Math.max(0, curY + dyPct));
+      const t = target();
+      const pos = nx.toFixed(0) + '% ' + ny.toFixed(0) + '%';
+      if (t.tagName === 'IMG') t.style.objectPosition = pos; else t.style.backgroundPosition = pos;
+      h.dataset.pending = pos;
+    };
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onUp);
+      if (h.dataset.pending && el.dataset.mediaKey) {
+        const [px, py] = h.dataset.pending.split(' ');
+        curX = parseFloat(px); curY = parseFloat(py);
+        setLayoutRec(el.dataset.mediaKey, { pos: h.dataset.pending });
+        toast('사진 위치가 저장되었습니다');
+      }
+    };
+    const onDown = (e) => {
+      e.preventDefault(); e.stopPropagation();
+      startX = e.touches ? e.touches[0].clientX : e.clientX;
+      startY = e.touches ? e.touches[0].clientY : e.clientY;
+      const rec = getLayoutRec(el.dataset.mediaKey || '');
+      if (rec.pos) { const [px, py] = rec.pos.split(' '); curX = parseFloat(px); curY = parseFloat(py); }
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+      document.addEventListener('touchmove', onMove, { passive: false });
+      document.addEventListener('touchend', onUp);
+    };
+    h.addEventListener('mousedown', onDown);
+    h.addEventListener('touchstart', onDown, { passive: false });
+  }
+  function attachMediaHandles() {
+    document.querySelectorAll('[data-media]').forEach(el => { attachSizeHandle(el); attachPanHandle(el); });
+  }
+  async function revertSlot(key) {
+    await mediaDelete(key);
+    toast('되돌렸습니다');
+    setTimeout(() => location.reload(), 300);
+  }
+
+  let panel = null;
+  function buildManager() {
+    panel = document.createElement('div');
+    panel.className = 'media-mgr';
+    panel.innerHTML =
+      '<div class="mm-head"><span>📁 업로드한 사진·영상</span><button class="mm-close" type="button">✕</button></div>'
+      + '<div class="mm-note"></div><div class="mm-list"></div>';
+    document.body.appendChild(panel);
+    panel.querySelector('.mm-close').addEventListener('click', () => panel.classList.remove('open'));
+  }
+  async function refreshCount() {
+    const items = await mediaAll();
+    const c = document.querySelector('.mm-count');
+    if (c) c.textContent = items.length ? '(' + items.length + ')' : '';
+  }
+  async function openManager() {
+    panel.classList.add('open');
+    const list = panel.querySelector('.mm-list');
+    const note = panel.querySelector('.mm-note');
+    list.innerHTML = '<div class="mm-empty">불러오는 중…</div>';
+    const items = await mediaAll();
+    if (!items.length) {
+      list.innerHTML = '<div class="mm-empty">아직 업로드한 미디어가 없습니다.<br>사진·영상 영역을 클릭해 올려보세요.</div>';
+      note.textContent = '';
+      return;
+    }
+    const total = items.reduce((s, it) => s + ((it.rec && it.rec.blob && it.rec.blob.size) || 0), 0);
+    const embeds = items.filter(it => it.rec && it.rec.kind === 'embed').length;
+    note.textContent = items.length + '개 · 약 ' + (total / 1048576).toFixed(1) + 'MB 저장됨'
+      + (embeds ? ' · 링크 ' + embeds + '개' : '');
+    list.innerHTML = '';
+    items.forEach(it => {
+      const isEmbed = it.rec.kind === 'embed';
+      const isVid = it.rec.kind === 'video';
+      const url = isEmbed ? '' : URL.createObjectURL(it.rec.blob);
+      const row = document.createElement('div');
+      row.className = 'mm-row';
+      const thumb = isEmbed
+        ? `<div class="mm-thumb mm-thumb-link">▶</div>`
+        : (isVid ? `<video class="mm-thumb" src="${url}" muted playsinline></video>`
+                 : `<div class="mm-thumb" style="background:url('${url}') center/cover"></div>`);
+      const sub = isEmbed
+        ? `영상 링크 · ${(it.rec.src || '').replace(/^https?:\/\//, '').slice(0, 28)}`
+        : `${isVid ? '영상' : '사진'} · ${(it.rec.blob.size / 1024).toFixed(0)}KB`;
+      row.innerHTML =
+        thumb
+        + `<div class="mm-meta"><div class="mm-label">${humanLabel(it.key)}</div>`
+        + `<div class="mm-sub">${sub}</div></div>`
+        + `<button class="mm-del" type="button" data-k="${it.key}">삭제</button>`;
+      list.appendChild(row);
+    });
+    list.querySelectorAll('.mm-del').forEach(b => b.addEventListener('click', async () => {
+      await mediaDelete(b.dataset.k);
+      toast('삭제했습니다');
+      setTimeout(() => location.reload(), 300);
+    }));
+  }
+
+  /* ── 5c. GitHub 백업 (작품별 사진·텍스트를 사용자 저장소로 커밋) ──
+     클라이언트에서 GitHub REST API로 커밋합니다.
+     필요한 것: Fine-grained Personal Access Token (Contents: Read/Write),
+     저장소(owner/repo), 브랜치. 토큰은 이 브라우저에만 저장됩니다. */
+  const GH_CFG = 'arthod-gh:cfg';
+  function ghCfg() { try { return JSON.parse(localStorage.getItem(GH_CFG)) || {}; } catch (e) { return {}; } }
+  function ghSaveCfg(c) { localStorage.setItem(GH_CFG, JSON.stringify(c)); }
+  function b64utf8(str) { return btoa(unescape(encodeURIComponent(str))); }
+  function blobToB64(blob) {
+    return new Promise(res => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(',')[1]); fr.readAsDataURL(blob); });
+  }
+  function extFor(rec) {
+    const t = (rec.blob && rec.blob.type) || '';
+    if (t.indexOf('png') >= 0) return 'png';
+    if (t.indexOf('webp') >= 0) return 'webp';
+    if (t.indexOf('gif') >= 0) return 'gif';
+    if (t.indexOf('mp4') >= 0) return 'mp4';
+    if (t.indexOf('webm') >= 0) return 'webm';
+    if (t.indexOf('quicktime') >= 0 || t.indexOf('mov') >= 0) return 'mov';
+    return rec.kind === 'video' ? 'mp4' : 'jpg';
+  }
+  function safeName(k) { return k.replace(/[^a-z0-9]+/gi, '_'); }
+  function workIdOf(key) {
+    if (key === 'home:hero') return 'home';
+    let m = key.match(/id=(\w+)/); if (m) return m[1];
+    m = key.match(/^wd:(\w+):/); if (m) return m[1];
+    m = key.match(/^wimg:(\w+)/); if (m) return m[1];
+    if (key.indexOf('svc:') === 0) return 'services';
+    return 'misc';
+  }
+  async function ghReq(path, opt, token) {
+    return fetch('https://api.github.com' + path, Object.assign({
+      headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' }
+    }, opt || {}));
+  }
+  async function ghGetSha(cfg, path) {
+    const r = await ghReq(`/repos/${cfg.owner}/${cfg.repo}/contents/${path}?ref=${cfg.branch}`, {}, cfg.token);
+    if (r.status === 200) { const j = await r.json(); return j.sha; }
+    return null;
+  }
+  async function ghPut(cfg, path, contentB64, msg) {
+    const sha = await ghGetSha(cfg, path);
+    const body = { message: msg, content: contentB64, branch: cfg.branch };
+    if (sha) body.sha = sha;
+    const r = await ghReq(`/repos/${cfg.owner}/${cfg.repo}/contents/${path}`, { method: 'PUT', body: JSON.stringify(body) }, cfg.token);
+    if (!r.ok) throw new Error('PUT ' + path + ' → ' + r.status + ' ' + (await r.text()).slice(0, 120));
+    return r.json();
+  }
+
+  // 전체 텍스트 + 미디어를 작품별로 백업
+  async function ghBackup(cfg, onStatus) {
+    const status = onStatus || (() => {});
+    // 1) 텍스트·스타일·레이아웃 오버라이드 수집
+    const text = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k.indexOf('arthod-edit:') === 0 || k.indexOf('arthod-proj:') === 0 || k.indexOf('arthod-style:') === 0
+        || k.indexOf('arthod-layout:') === 0 || k.indexOf('arthod-gallerylayout:') === 0 || k.indexOf('arthod-galleryitems:') === 0
+        || k.indexOf('arthod-sliderorder:') === 0 || k.indexOf('arthod-cardorder:') === 0) {
+        text[k] = localStorage.getItem(k);
+      }
+    }
+    // 2) 미디어 수집 (작품별로 그룹화 + 전체 인덱스)
+    const items = await mediaAll();
+    const perWork = {};
+    const mediaIndex = {};
+    let done = 0;
+    for (const it of items) {
+      const wid = workIdOf(it.key);
+      perWork[wid] = perWork[wid] || { images: [], videos: [], embeds: [] };
+      if (it.rec.kind === 'embed') {
+        perWork[wid].embeds.push({ key: it.key, url: it.rec.src || it.rec.embedUrl });
+        mediaIndex[it.key] = { kind: 'embed', embedUrl: it.rec.embedUrl };
+      } else {
+        const ext = extFor(it.rec);
+        const file = `backup/media/${wid}/${safeName(it.key)}.${ext}`;
+        status(`이미지 업로드 중… (${++done}/${items.length})`);
+        await ghPut(cfg, file, await blobToB64(it.rec.blob), `backup: ${it.key}`);
+        (it.rec.kind === 'video' ? perWork[wid].videos : perWork[wid].images).push({ key: it.key, file });
+        mediaIndex[it.key] = { kind: it.rec.kind, file };
+      }
+    }
+    // 3) 작품별 매니페스트 + 전체 콘텐츠 JSON
+    status('작품별 매니페스트 저장 중…');
+    for (const wid of Object.keys(perWork)) {
+      const manifest = { work: wid, savedAt: new Date().toISOString(), media: perWork[wid],
+        text: Object.fromEntries(Object.entries(text).filter(([k]) => k.indexOf(':' + wid + ':') >= 0 || k.indexOf('id=' + wid) >= 0)) };
+      await ghPut(cfg, `backup/works/${wid}.json`, b64utf8(JSON.stringify(manifest, null, 2)), `backup: work ${wid}`);
+    }
+    status('전체 콘텐츠 저장 중…');
+    const all = { savedAt: new Date().toISOString(), text, mediaIndex, works: Object.keys(perWork) };
+    await ghPut(cfg, 'backup/content.json', b64utf8(JSON.stringify(all, null, 2)), 'backup: full content');
+    return { works: Object.keys(perWork).length, media: items.length };
+  }
+
+  let ghPanel = null, ghBusy = false;
+  function buildGhPanel() {
+    ghPanel = document.createElement('div');
+    ghPanel.className = 'gh-panel';
+    const c = ghCfg();
+    ghPanel.innerHTML =
+      '<div class="mm-head"><span>☁ GitHub 백업</span><button class="gh-close" type="button">✕</button></div>'
+      + '<div class="gh-body">'
+      + '<label class="gh-l">저장소 <span>owner/repo</span></label>'
+      + `<input class="gh-repo" type="text" placeholder="my-name/arthod-site" value="${((c.owner&&c.repo)?c.owner+'/'+c.repo:'')}"/>`
+      + '<label class="gh-l">브랜치</label>'
+      + `<input class="gh-branch" type="text" placeholder="main" value="${c.branch||'main'}"/>`
+      + '<label class="gh-l">Access Token <span>Contents: Read/Write</span></label>'
+      + `<input class="gh-token" type="password" placeholder="github_pat_..." value="${c.token||''}"/>`
+      + '<label class="gh-auto"><input class="gh-autochk" type="checkbox" '+(c.auto?'checked':'')+'/> 저장할 때마다 자동 백업</label>'
+      + '<div class="gh-status"></div>'
+      + '<div class="gh-row"><button class="gh-savecfg" type="button">설정 저장</button>'
+      + '<button class="gh-now" type="button">지금 백업</button></div>'
+      + '<div class="gh-hint">토큰은 이 브라우저에만 저장됩니다. GitHub → Settings → Developer settings → Fine-grained tokens 에서 해당 저장소의 <b>Contents: Read and write</b> 권한으로 발급하세요.</div>'
+      + '</div>';
+    document.body.appendChild(ghPanel);
+    ghPanel.querySelector('.gh-close').addEventListener('click', () => ghPanel.classList.remove('open'));
+    const readForm = () => {
+      const rp = (ghPanel.querySelector('.gh-repo').value || '').trim().replace(/^https?:\/\/github\.com\//, '').replace(/\.git$/, '');
+      const [owner, repo] = rp.split('/');
+      return { owner: (owner||'').trim(), repo: (repo||'').trim(),
+        branch: (ghPanel.querySelector('.gh-branch').value || 'main').trim(),
+        token: (ghPanel.querySelector('.gh-token').value || '').trim(),
+        auto: ghPanel.querySelector('.gh-autochk').checked };
+    };
+    const setStatus = (m, err) => { const s = ghPanel.querySelector('.gh-status'); s.textContent = m; s.className = 'gh-status' + (err ? ' err' : ''); };
+    ghPanel.querySelector('.gh-savecfg').addEventListener('click', () => {
+      const cfg = readForm();
+      if (!cfg.owner || !cfg.repo) return setStatus('저장소를 owner/repo 형식으로 입력하세요.', true);
+      ghSaveCfg(cfg); setStatus('설정이 저장되었습니다.');
+    });
+    ghPanel.querySelector('.gh-now').addEventListener('click', async () => {
+      if (ghBusy) return;
+      const cfg = readForm();
+      if (!cfg.owner || !cfg.repo || !cfg.token) return setStatus('저장소와 토큰을 모두 입력하세요.', true);
+      ghSaveCfg(cfg); ghBusy = true; setStatus('백업 시작…');
+      try {
+        const r = await ghBackup(cfg, m => setStatus(m));
+        setStatus(`완료 ✓  작품 ${r.works}개 · 미디어 ${r.media}개를 백업했습니다.`);
+        toast('GitHub 백업 완료');
+      } catch (e) {
+        setStatus('실패: ' + e.message, true);
+      } finally { ghBusy = false; }
+    });
+  }
+  function openGhPanel() { if (!ghPanel) buildGhPanel(); ghPanel.classList.add('open'); }
+
+  /* ── 코드에 반영: 작은 미디어(≤4MB)를 프로젝트 파일로 내려받아 저장하도록 안내 ── */
+  let bakePanel;
+  function buildBakePanel() {
+    bakePanel = document.createElement('div');
+    bakePanel.className = 'bake-panel';
+    bakePanel.innerHTML =
+      '<div class="bake-head"><span>💾 코드에 반영</span><button class="bake-close" type="button">✕</button></div>'
+      + '<div class="bake-body">'
+      + '지금 올려둔 사진·영상을 실제 사이트 파일로 내려받습니다.<br><br>'
+      + '<b>4MB 이하</b> 파일은 자동으로 묶어 하나의 파일로 다운로드되며, 그 파일을 채팅창에 첨부해 주시면 제가 사이트에 영구 반영합니다.<br><br>'
+      + '너무 큰 파일은 목록에 따로 표시되니, 원본 파일을 직접 첨부해 주세요.'
+      + '<div class="bake-status"></div>'
+      + '</div>'
+      + '<div class="bake-body" style="padding-top:0"><button class="bake-go" type="button">내보내기 파일 만들기</button></div>';
+    document.body.appendChild(bakePanel);
+    bakePanel.querySelector('.bake-close').addEventListener('click', () => bakePanel.classList.remove('open'));
+    bakePanel.querySelector('.bake-go').addEventListener('click', runBakeExport);
+  }
+  function openBakePanel() { if (!bakePanel) buildBakePanel(); bakePanel.classList.add('open'); }
+  async function runBakeExport() {
+    const statusEl = bakePanel.querySelector('.bake-status');
+    statusEl.className = 'bake-status';
+    statusEl.textContent = '준비 중…';
+    try {
+      const LIMIT = 4 * 1024 * 1024;
+      const items = await mediaAll();
+      const text = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k.indexOf('arthod-edit:') === 0 || k.indexOf('arthod-proj:') === 0 || k.indexOf('arthod-style:') === 0 || k.indexOf('arthod-layout:') === 0 || k.indexOf('arthod-gallerylayout:') === 0 || k.indexOf('arthod-galleryitems:') === 0 || k.indexOf('arthod-sliderorder:') === 0 || k.indexOf('arthod-cardorder:') === 0) {
+          text[k] = localStorage.getItem(k);
+        }
+      }
+      const included = [];
+      const skipped = [];
+      const manifest = { savedAt: new Date().toISOString(), text, media: [] };
+      const zipParts = []; // we build a simple JSON bundle (base64 media) instead of a real zip for simplicity
+      for (const it of items) {
+        if (it.rec.kind === 'embed') {
+          manifest.media.push({ key: it.key, kind: 'embed', embedUrl: it.rec.embedUrl, src: it.rec.src });
+          continue;
+        }
+        if (!it.rec.blob) continue;
+        if (it.rec.blob.size > LIMIT) { skipped.push(it.key + ' (' + (it.rec.blob.size / 1048576).toFixed(1) + 'MB)'); continue; }
+        const b64 = await new Promise(res => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(',')[1]); fr.readAsDataURL(it.rec.blob); });
+        manifest.media.push({ key: it.key, kind: it.rec.kind, mime: it.rec.blob.type, b64 });
+        included.push(it.key);
+      }
+      const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'arthod-export.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      let msg = `✅ 내보내기 완료: ${included.length}개 미디어 포함\n`;
+      if (skipped.length) msg += `\n⚠ 용량 초과로 제외됨(직접 첨부 필요):\n- ` + skipped.join('\n- ');
+      msg += `\n\n다운로드된 arthod-export.json 파일을 채팅창에 첨부해 주세요.`;
+      statusEl.textContent = msg;
+    } catch (e) {
+      statusEl.className = 'bake-status err';
+      statusEl.textContent = '실패: ' + e.message;
+    }
+  }
+  // 저장 시 자동 백업
+  async function autoBackupIfEnabled() {
+    const cfg = ghCfg();
+    if (!cfg.auto || !cfg.owner || !cfg.repo || !cfg.token || ghBusy) return;
+    ghBusy = true;
+    try { const r = await ghBackup(cfg, () => {}); toast(`GitHub 자동 백업 완료 (${r.media}개)`); }
+    catch (e) { toast('자동 백업 실패 — 설정 확인'); }
+    finally { ghBusy = false; }
+  }
+
+  /* ── 5c. 미디어 레이아웃 (크기 · 위치) 오버라이드 ── */
+  const LAYOUT_PREFIX = 'arthod-layout:';
+  function getLayoutRec(key) { try { return JSON.parse(localStorage.getItem(LAYOUT_PREFIX + key)) || {}; } catch (e) { return {}; } }
+  function setLayoutRec(key, patch) {
+    const rec = Object.assign(getLayoutRec(key), patch);
+    localStorage.setItem(LAYOUT_PREFIX + key, JSON.stringify(rec));
+    return rec;
+  }
+  function applyLayoutRec(el, rec) {
+    if (!rec) return;
+    if (rec.h) el.style.setProperty('--user-h', rec.h + 'px'), el.style.height = rec.h + 'px';
+    if (rec.pos) {
+      const target = el.querySelector('.card-bg, .svc-img, .whs-slide, img') || el;
+      if (target.tagName === 'IMG') target.style.objectPosition = rec.pos;
+      else target.style.backgroundPosition = rec.pos;
+    }
+  }
+  function restoreLayouts() {
+    document.querySelectorAll('[data-media]').forEach(el => {
+      const key = el.dataset.mediaKey; if (!key) return;
+      const rec = getLayoutRec(key);
+      if (Object.keys(rec).length) applyLayoutRec(el, rec);
+    });
+  }
+
+  /* ── 6. 편집 UI ── */
+  let editing = false;
+  let btn, bar, toastEl;
+
+  /* 텍스트 스타일 툴바 — 폰트·크기·굵기·정렬·색상 */
+  let textToolbar = null, ttTarget = null;
+  const COLOR_OPTIONS = ['', '#c81e14', '#111111', '#6b6b6b', '#ffffff'];
+  function buildTextToolbar() {
+    textToolbar = document.createElement('div');
+    textToolbar.className = 'text-toolbar';
+    const fontOpts = FONT_OPTIONS.map(f => `<option value="${f.value}">${f.label}</option>`).join('');
+    textToolbar.innerHTML =
+      `<select class="tt-font">${fontOpts}</select>`
+      + '<button class="tt-size-m" type="button">A-</button>'
+      + '<input class="tt-size-input" type="number" min="9" max="200" title="폰트 크기(px)">'
+      + '<button class="tt-size-p" type="button">A+</button>'
+      + '<button class="tt-bold" type="button"><b>B</b></button>'
+      + '<button class="tt-italic" type="button"><i>I</i></button>'
+      + '<button class="tt-align" data-a="left" type="button">≡</button>'
+      + '<button class="tt-align" data-a="center" type="button">≣</button>'
+      + '<button class="tt-align" data-a="right" type="button">≤</button>'
+      + COLOR_OPTIONS.map(c => `<button class="tt-color" type="button" data-c="${c}" style="background:${c || 'conic-gradient(from 0deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)'}"></button>`).join('');
+    document.body.appendChild(textToolbar);
+    textToolbar.querySelector('.tt-font').addEventListener('change', (e) => { if (ttTarget) setStyleRec(ttTarget, { font: e.target.value || null }); });
+    textToolbar.querySelector('.tt-size-m').addEventListener('click', () => bumpSize(-2));
+    textToolbar.querySelector('.tt-size-p').addEventListener('click', () => bumpSize(2));
+    const sizeInput = textToolbar.querySelector('.tt-size-input');
+    const commitSize = () => {
+      if (!ttTarget) return;
+      const n = parseInt(sizeInput.value, 10);
+      if (!isNaN(n) && n > 0) setStyleRec(ttTarget, { size: Math.max(9, Math.min(200, n)) });
+    };
+    sizeInput.addEventListener('change', commitSize);
+    sizeInput.addEventListener('keydown', e => { if (e.key === 'Enter') { commitSize(); e.preventDefault(); } });
+    sizeInput.addEventListener('mousedown', e => e.stopPropagation());
+    sizeInput.addEventListener('click', e => e.stopPropagation());
+    textToolbar.querySelector('.tt-bold').addEventListener('click', () => {
+      if (!ttTarget) return;
+      // 드래그로 일부 텍스트만 선택했다면 그 부분만 볼드 처리
+      if (hasRealSelectionIn(ttTarget)) {
+        document.execCommand('bold');
+        saveTextEl(ttTarget);
+        return;
+      }
+      const cur = getStyleRec(ttTarget).weight;
+      setStyleRec(ttTarget, { weight: cur === '700' ? null : '700' });
+      textToolbar.querySelector('.tt-bold').classList.toggle('on', !cur);
+    });
+    textToolbar.querySelector('.tt-italic').addEventListener('click', () => {
+      if (!ttTarget) return;
+      if (hasRealSelectionIn(ttTarget)) {
+        document.execCommand('italic');
+        saveTextEl(ttTarget);
+        return;
+      }
+      const cur = getStyleRec(ttTarget).italic;
+      setStyleRec(ttTarget, { italic: !cur });
+      textToolbar.querySelector('.tt-italic').classList.toggle('on', !cur);
+    });
+    textToolbar.querySelectorAll('.tt-align').forEach(b => b.addEventListener('click', () => {
+      if (!ttTarget) return;
+      setStyleRec(ttTarget, { align: b.dataset.a });
+      textToolbar.querySelectorAll('.tt-align').forEach(x => x.classList.toggle('on', x === b));
+    }));
+    textToolbar.querySelectorAll('.tt-color').forEach(b => b.addEventListener('click', () => {
+      if (!ttTarget) return;
+      setStyleRec(ttTarget, { color: b.dataset.c || null });
+      textToolbar.querySelectorAll('.tt-color').forEach(x => x.classList.toggle('on', x === b));
+    }));
+    textToolbar.addEventListener('mousedown', e => e.preventDefault()); // 포커스 유지
+  }
+  function bumpSize(delta) {
+    if (!ttTarget) return;
+    const cs = getComputedStyle(ttTarget);
+    const cur = getStyleRec(ttTarget).size || parseFloat(cs.fontSize);
+    const next = Math.max(9, Math.round(cur + delta));
+    setStyleRec(ttTarget, { size: next });
+    const sizeInput = textToolbar.querySelector('.tt-size-input');
+    if (sizeInput) sizeInput.value = next;
+  }
+  // 실제로 텍스트 일부가 드래그 선택돼 있는지 확인 (커서만 있는 경우는 제외)
+  function hasRealSelectionIn(el) {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return false;
+    const range = sel.getRangeAt(0);
+    return el.contains(range.commonAncestorContainer);
+  }
+  function saveTextEl(el) {
+    if (el.dataset.editKey) localStorage.setItem(TXT_PREFIX + el.dataset.editKey, el.innerHTML);
+  }
+  function showTextToolbar(el) {
+    ttTarget = el;
+    if (!textToolbar) buildTextToolbar();
+    const rec = getStyleRec(el);
+    textToolbar.querySelector('.tt-font').value = rec.font || '';
+    textToolbar.querySelector('.tt-size-input').value = Math.round(rec.size || parseFloat(getComputedStyle(el).fontSize));
+    textToolbar.querySelector('.tt-bold').classList.toggle('on', rec.weight === '700');
+    textToolbar.querySelector('.tt-italic').classList.toggle('on', !!rec.italic);
+    textToolbar.querySelectorAll('.tt-align').forEach(x => x.classList.toggle('on', x.dataset.a === rec.align));
+    textToolbar.querySelectorAll('.tt-color').forEach(x => x.classList.toggle('on', (x.dataset.c || null) === (rec.color || null)));
+    const r = el.getBoundingClientRect();
+    textToolbar.style.display = 'flex';
+    const top = r.top + window.scrollY - textToolbar.offsetHeight - 10;
+    textToolbar.style.top = Math.max(8, top) + 'px';
+    textToolbar.style.left = Math.min(window.innerWidth - textToolbar.offsetWidth - 12, Math.max(12, r.left + window.scrollX)) + 'px';
+  }
+  function hideTextToolbar() { if (textToolbar) textToolbar.style.display = 'none'; ttTarget = null; }
+  function onEditFocusIn(e) {
+    const el = e.target;
+    if (el && el.getAttribute && el.getAttribute('contenteditable') === 'true') showTextToolbar(el);
+  }
+  function onEditFocusOut(e) {
+    setTimeout(() => {
+      if (textToolbar && textToolbar.contains(document.activeElement)) return;
+      const ae = document.activeElement;
+      if (ae && ae.getAttribute && ae.getAttribute('contenteditable') === 'true') return;
+      hideTextToolbar();
+    }, 120);
+  }
+
+  function buildUI() {
+    btn = document.createElement('button');
+    btn.className = 'edit-btn';
+    btn.innerHTML = '<span class="edit-dot"></span><span class="edit-label">편집 모드</span>';
+    document.body.appendChild(btn);
+
+    bar = document.createElement('div');
+    bar.className = 'edit-bar';
+    bar.innerHTML =
+      '<span style="display:flex;align-items:center;gap:7px"><span style="font-size:14px">✏️</span>'
+      + '텍스트·사진·영상을 클릭해 수정하세요</span>'
+      + '<button class="edit-mgr" type="button">📁 내 미디어 <span class="mm-count"></span></button>'
+      + '<button class="edit-gh" type="button">☁ 백업</button>'
+      + '<button class="edit-bake" type="button">💾 코드에 반영</button>'
+      + '<button class="edit-reset" type="button">초기화</button>'
+      + '<button class="edit-save" type="button">저장 완료</button>';
+    document.body.appendChild(bar);
+
+    const style = document.createElement('style');
+    style.textContent = `
+      body.editing #cursor{display:none}
+      body.editing [data-media]{outline:2px dashed rgba(0,110,230,.55);outline-offset:-2px;cursor:pointer!important;position:relative}
+      .size-handle{display:none}
+      .pan-handle{display:none}
+      body.editing [data-media] > .size-handle{
+        display:flex;position:absolute;left:50%;bottom:6px;transform:translateX(-50%);z-index:63;
+        width:34px;height:14px;border-radius:7px;background:rgba(0,90,220,.92);cursor:ns-resize;
+        align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,.25);
+      }
+      body.editing [data-media] > .size-handle::after{content:'⋮⋮';color:#fff;font-size:9px;letter-spacing:-1px;transform:rotate(90deg)}
+      body.editing [data-media] > .pan-handle{
+        display:flex;position:absolute;top:10px;left:10px;z-index:63;width:26px;height:26px;border-radius:50%;
+        background:rgba(0,90,220,.92);color:#fff;align-items:center;justify-content:center;font-size:13px;
+        cursor:move;box-shadow:0 3px 10px rgba(0,0,0,.25);
+      }
+      body.editing [data-media="hero"] > .size-handle,body.editing [data-media="hero"] > .pan-handle{display:none}
+      .text-toolbar{
+        position:absolute;display:none;align-items:center;gap:4px;z-index:1100;
+        background:#1b1a18;border-radius:9px;padding:6px 7px;box-shadow:0 10px 28px rgba(0,0,0,.35);
+      }
+      .text-toolbar select.tt-font{
+        font-size:11px;background:#2a2926;color:#fff;border:1px solid #3c3b38;border-radius:5px;padding:5px 6px;
+        font-family:inherit;max-width:96px;
+      }
+      .text-toolbar input.tt-size-input{
+        width:40px;font-size:12px;text-align:center;background:#2a2926;color:#fff;border:1px solid #3c3b38;
+        border-radius:5px;padding:5px 2px;font-family:inherit;-moz-appearance:textfield;
+      }
+      .text-toolbar input.tt-size-input::-webkit-outer-spin-button,
+      .text-toolbar input.tt-size-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+      .text-toolbar button{
+        font-size:12px;font-weight:700;color:#fff;background:#2a2926;border:1px solid #3c3b38;border-radius:5px;
+        padding:5px 8px;cursor:pointer;line-height:1;
+      }
+      .text-toolbar button:hover{background:#3a3936}
+      .text-toolbar button.on{background:#c81e14;border-color:#c81e14}
+      .text-toolbar button.tt-color{width:20px;height:20px;padding:0;border-radius:50%;border:1px solid #4a4945}
+      .text-toolbar button.tt-color.on{outline:2px solid #fff;outline-offset:1px}
+      body.editing [data-media]:hover{outline-color:rgba(0,110,230,.95);outline-style:solid}
+      body.editing [data-media]::after{
+        content:'사진 변경 ↑';position:absolute;top:10px;left:10px;z-index:60;
+        font:600 11px/1 var(--font-mono,ui-monospace,monospace);letter-spacing:.04em;color:#fff;
+        background:rgba(0,90,220,.92);padding:7px 11px;border-radius:5px;pointer-events:none;
+        box-shadow:0 4px 14px rgba(0,0,0,.25);
+      }
+      body.editing [data-media="hero"]::after{content:'사진·영상 변경 ↑'}
+      body.editing [data-media][data-has-custom]::after{content:'사진 교체 ↑'}
+      body.editing [data-media="hero"][data-has-custom]::after{content:'사진·영상 교체 ↑'}
+      body.editing [contenteditable="true"]:empty::before{content:'텍스트 입력';color:var(--ink-4,#aaa)}
+      .media-revert{position:absolute;top:10px;right:10px;z-index:62;display:none;align-items:center;gap:6px;
+        font:600 11px/1 var(--font-mono,ui-monospace,monospace);color:#fff;background:rgba(200,30,20,.92);
+        padding:7px 11px;border-radius:5px;cursor:pointer;border:none;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+      body.editing [data-media][data-has-custom] > .media-revert{display:inline-flex}
+      .edit-mgr{font-size:12px;font-weight:500;color:var(--ink-2,#333);background:none;border:1px solid var(--border,#e8e6e2);
+        padding:6px 12px;border-radius:4px;cursor:pointer;transition:border-color .2s}
+      .edit-mgr:hover{border-color:var(--ink,#111)}
+      .mm-count{color:var(--ink-3,#888);font-weight:600}
+      .media-mgr{position:fixed;right:24px;bottom:88px;z-index:1001;width:340px;max-height:62vh;
+        background:#fff;border:1px solid var(--border,#e8e6e2);border-radius:12px;
+        box-shadow:0 14px 44px rgba(0,0,0,.24);display:none;flex-direction:column;overflow:hidden}
+      .media-mgr.open{display:flex}
+      .mm-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;
+        border-bottom:1px solid var(--border,#eee);font-size:13px;font-weight:700;color:var(--ink,#111)}
+      .mm-close{cursor:pointer;border:none;background:none;font-size:14px;color:var(--ink-3,#888);line-height:1}
+      .mm-note{padding:9px 16px;font-size:11px;color:var(--ink-3,#888);border-bottom:1px solid var(--border,#f0f0f0)}
+      .mm-list{overflow-y:auto;padding:8px}
+      .mm-empty{padding:28px 16px;text-align:center;font-size:13px;color:var(--ink-3,#999);line-height:1.7}
+      .mm-row{display:flex;align-items:center;gap:12px;padding:8px;border-radius:8px}
+      .mm-row:hover{background:var(--bg-warm,#f7f6f3)}
+      .mm-thumb{width:54px;height:40px;border-radius:6px;flex-shrink:0;object-fit:cover;background:#ddd}
+      .mm-meta{flex:1;min-width:0}
+      .mm-label{font-size:13px;font-weight:600;color:var(--ink,#111);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .mm-sub{font-size:11px;color:var(--ink-4,#aaa);margin-top:2px}
+      .mm-del{flex-shrink:0;font-size:11px;font-weight:600;color:#c81e14;background:none;
+        border:1px solid rgba(200,30,20,.3);padding:6px 12px;border-radius:5px;cursor:pointer}
+      .mm-del:hover{background:rgba(200,30,20,.08)}
+      .mm-thumb-link{display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;
+        background:linear-gradient(135deg,#c81e14,#7a1410)}
+      .media-poster:hover .media-play-btn{background:rgba(0,0,0,.85);transform:scale(1.08)}
+      .media-play-btn{
+        width:76px;height:76px;border-radius:50%;background:rgba(0,0,0,.6);border:2px solid rgba(255,255,255,.85);
+        color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center;padding-left:5px;
+        transition:background .2s,transform .2s;
+      }
+      .edit-gh{font-size:12px;font-weight:500;color:var(--ink-2,#333);background:none;border:1px solid var(--border,#e8e6e2);
+        padding:6px 12px;border-radius:4px;cursor:pointer;transition:border-color .2s}
+      .edit-gh:hover{border-color:var(--ink,#111)}
+      .edit-bake{font-size:12px;font-weight:500;color:var(--ink-2,#333);background:none;border:1px solid var(--border,#e8e6e2);
+        padding:6px 12px;border-radius:4px;cursor:pointer;transition:border-color .2s}
+      .edit-bake:hover{border-color:var(--ink,#111)}
+      .bake-panel{position:fixed;right:24px;bottom:88px;z-index:1003;width:340px;max-height:70vh;
+        background:#fff;border:1px solid var(--border,#e8e6e2);border-radius:12px;
+        box-shadow:0 14px 44px rgba(0,0,0,.24);display:none;flex-direction:column;overflow:hidden}
+      .bake-panel.open{display:flex}
+      .bake-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border,#eee);font-size:13px;font-weight:700}
+      .bake-close{cursor:pointer;border:none;background:none;font-size:14px;color:var(--ink-3,#888)}
+      .bake-body{padding:14px 16px;font-size:12px;color:var(--ink-3,#666);line-height:1.7;overflow-y:auto}
+      .bake-status{margin-top:10px;font-size:12px;color:var(--ink-2,#333);white-space:pre-wrap;word-break:break-word}
+      .bake-status.err{color:#c81e14}
+      .bake-go{width:100%;margin-top:12px;padding:11px;font-size:13px;font-weight:700;color:#fff;background:var(--ink,#111);border:none;border-radius:8px;cursor:pointer}
+      .bake-go:hover{opacity:.85}
+      .gh-panel{position:fixed;right:24px;bottom:88px;z-index:1002;width:340px;
+        background:#fff;border:1px solid var(--border,#e8e6e2);border-radius:12px;
+        box-shadow:0 14px 44px rgba(0,0,0,.24);display:none;flex-direction:column;overflow:hidden}
+      .gh-panel.open{display:flex}
+      .gh-close{cursor:pointer;border:none;background:none;font-size:14px;color:var(--ink-3,#888);line-height:1}
+      .gh-body{padding:14px 16px;display:flex;flex-direction:column;gap:7px}
+      .gh-l{font-size:11px;font-weight:600;color:var(--ink-2,#333);margin-top:6px}
+      .gh-l span{font-weight:400;color:var(--ink-4,#aaa)}
+      .gh-panel input[type=text],.gh-panel input[type=password]{width:100%;padding:9px 11px;font-size:12px;
+        color:var(--ink,#111);border:1px solid var(--border,#e0ded9);border-radius:7px;outline:none;box-sizing:border-box;font-family:inherit}
+      .gh-panel input:focus{border-color:var(--ink,#111)}
+      .gh-auto{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-2,#333);margin-top:8px;cursor:pointer}
+      .gh-status{min-height:16px;font-size:11px;color:var(--ink-3,#666);margin-top:4px;word-break:break-word}
+      .gh-status.err{color:#c81e14}
+      .gh-row{display:flex;gap:8px;margin-top:8px}
+      .gh-savecfg,.gh-now{flex:1;padding:10px;font-size:12px;font-weight:600;border-radius:7px;cursor:pointer}
+      .gh-savecfg{background:none;border:1px solid var(--border,#e0ded9);color:var(--ink-2,#333)}
+      .gh-savecfg:hover{border-color:var(--ink,#111)}
+      .gh-now{background:var(--ink,#111);border:none;color:#fff}
+      .gh-now:hover{opacity:.85}
+      .gh-hint{font-size:10px;line-height:1.6;color:var(--ink-4,#aaa);margin-top:10px}
+      .hero-choice{position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;
+        background:rgba(15,14,12,.5);backdrop-filter:blur(3px)}
+      .hero-choice .hc-inner{width:min(90vw,420px);background:#fff;border-radius:14px;padding:26px;
+        box-shadow:0 24px 70px rgba(0,0,0,.35);font-family:inherit}
+      .hc-title{font-size:16px;font-weight:700;color:var(--ink,#111);margin-bottom:18px}
+      .hc-file{width:100%;padding:14px;font-size:13px;font-weight:600;color:#fff;background:var(--ink,#111);
+        border:none;border-radius:8px;cursor:pointer;transition:opacity .2s}
+      .hc-file:hover{opacity:.85}
+      .hc-or{text-align:center;font-size:11px;color:var(--ink-4,#aaa);margin:16px 0 10px;
+        letter-spacing:.06em;text-transform:uppercase}
+      .hc-url{width:100%;padding:12px 14px;font-size:13px;color:var(--ink,#111);border:1px solid var(--border,#e0ded9);
+        border-radius:8px;outline:none;box-sizing:border-box;font-family:inherit}
+      .hc-url:focus{border-color:var(--ink,#111)}
+      .hc-err{min-height:16px;font-size:11px;color:#c81e14;margin:6px 2px 0}
+      .hc-row{display:flex;gap:8px;margin-top:14px}
+      .hc-cancel,.hc-apply{flex:1;padding:11px;font-size:13px;font-weight:600;border-radius:8px;cursor:pointer}
+      .hc-cancel{background:none;border:1px solid var(--border,#e0ded9);color:var(--ink-2,#333)}
+      .hc-cancel:hover{border-color:var(--ink,#111)}
+      .hc-apply{background:var(--accent,#c81e14);border:none;color:#fff}
+      .hc-apply:hover{opacity:.88}
+      #ed-toast{
+        position:fixed;left:50%;bottom:84px;transform:translateX(-50%) translateY(10px);
+        z-index:1000;background:var(--ink,#111);color:#fff;font-size:13px;font-weight:500;
+        padding:11px 22px;border-radius:40px;box-shadow:0 6px 24px rgba(0,0,0,.22);
+        opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;letter-spacing:.02em;
+      }
+      #ed-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    `;
+    document.head.appendChild(style);
+
+    btn.addEventListener('click', () => setEdit(!editing));
+    bar.querySelector('.edit-save').addEventListener('click', () => setEdit(false));
+    bar.querySelector('.edit-reset').addEventListener('click', async () => {
+      if (!confirm('모든 수정 내용(텍스트·사진·영상)을 초기화할까요?')) return;
+      keyed.forEach(el => localStorage.removeItem(TXT_PREFIX + el.dataset.editKey));
+      await mediaClear();
+      location.reload();
+    });
+    bar.querySelector('.edit-mgr').addEventListener('click', openManager);
+    bar.querySelector('.edit-gh').addEventListener('click', openGhPanel);
+    bar.querySelector('.edit-bake').addEventListener('click', openBakePanel);
+    buildManager();
+  }
+
+  function toast(msg) {
+    if (!toastEl) { toastEl = document.createElement('div'); toastEl.id = 'ed-toast'; document.body.appendChild(toastEl); }
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => toastEl.classList.remove('show'), 1700);
+  }
+
+  const wasNoCursor = () => window.matchMedia('(hover:none)').matches === false;
+  function setEdit(on) {
+    editing = on;
+    btn.classList.toggle('on', on);
+    bar.classList.toggle('on', on);
+    document.body.classList.toggle('editing', on);
+    btn.querySelector('.edit-label').textContent = on ? '편집 종료' : '편집 모드';
+    if (on && wasNoCursor()) document.body.classList.remove('no-cursor');
+    else if (!on && wasNoCursor()) document.body.classList.add('no-cursor');
+    keyed.forEach(el => {
+      el.contentEditable = on ? 'true' : 'false';
+      if (on) el.spellcheck = false;
+    });
+    sharedEls.forEach(el => {
+      el.contentEditable = on ? 'true' : 'false';
+      if (on) el.spellcheck = false;
+    });
+    if (on) {
+      document.addEventListener('click', onEditClick, true);
+      document.addEventListener('keydown', onEditKeydown, true);
+      document.addEventListener('focusin', onEditFocusIn);
+      document.addEventListener('focusout', onEditFocusOut);
+      attachMediaHandles();
+    } else {
+      document.removeEventListener('click', onEditClick, true);
+      document.removeEventListener('keydown', onEditKeydown, true);
+      document.removeEventListener('focusin', onEditFocusIn);
+      document.removeEventListener('focusout', onEditFocusOut);
+      hideTextToolbar();
+      saveText();
+      saveShared();
+      applyMirrors();
+      toast('저장되었습니다');
+      autoBackupIfEnabled();
+    }
+  }
+
+  function onEditClick(e) {
+    const ce = e.target.closest('[contenteditable="true"]');
+    if (ce) {
+      const a = e.target.closest('a');
+      if (a) e.preventDefault();
+      e.stopPropagation();
+      return;
+    }    const rev = e.target.closest('.media-revert');
+    if (rev) {
+      e.preventDefault();
+      e.stopPropagation();
+      revertSlot(rev.dataset.revertKey);
+      return;
+    }
+    if (e.target.closest('.size-handle, .pan-handle')) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    const media = e.target.closest('[data-media]');
+    if (media) {
+      e.preventDefault();
+      e.stopPropagation();
+      openPicker(media);
+      return;
+    }
+    // 편집 중 카드/다음작품 링크 영역 클릭 → 페이지 이동 차단
+    if (e.target.closest('.port-card, .work-next')) {
+      e.preventDefault();
+    }
+  }
+
+  // 편집 중 링크·버튼 활성화 키(Enter/Space)로 인한 예기치 이동·창 열림 방지
+  function onEditKeydown(e) {
+    if (!editing) return;
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const ae = document.activeElement;
+    if (!ae) return;
+    // 편집 중인 텍스트 입력은 그대로 둘 (줄바꿈·공백 입력 가능)
+    if (ae.getAttribute && ae.getAttribute('contenteditable') === 'true') return;
+    // 링크·메뉴버튼에 포칊스가 있으면 활성화 차단
+    if (ae.closest && ae.closest('a[href], .nav-toggle')) {
+      e.preventDefault();
+    }
+  }
+
+  // 줄바꿈: contenteditable 안에서 Enter → <br>
+  document.addEventListener('keydown', e => {
+    if (editing && e.key === 'Enter' && document.activeElement &&
+        document.activeElement.getAttribute('contenteditable') === 'true') {
+      e.preventDefault();
+      document.execCommand('insertLineBreak');
+    }
+  });
+
+  // 백스페이스 뒤로가기 방지: 편집 가능한 요소 밖에서의 Backspace는 무시
+  function isEditableTarget(el) {
+    if (!el) return false;
+    const tag = el.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return !el.disabled && !el.readOnly;
+    return el.isContentEditable;
+  }
+  document.addEventListener('keydown', e => {
+    if ((e.key === 'Backspace' || e.key === 'Delete') && !isEditableTarget(e.target)) {
+      e.preventDefault();
+    }
+  }, true);
+
+  /* ── 퍼블릭 저장소 자동 동기화 ──────────────────────────────
+     사이트가 열릴 때마다 GitHub 퍼블릭 백업 저장소의 최신 콘텐츠를 가져와,
+     이 브라우저에 아직 없는 값만 채워 넣는다 → "저장하면 모두에게 반영"을 구현.
+     이 브라우저에서 편집 중인 값(이미 로컬에 있는 값)은 덮어쓰지 않는다. */
+  const PUBLIC_SOURCE = { owner: 'arthod-studio', repo: 'arthod-website-backup', branch: 'main' };
+  async function syncFromPublicSource() {
+    if (!PUBLIC_SOURCE.owner || !PUBLIC_SOURCE.repo) return;
+    try {
+      const base = `https://raw.githubusercontent.com/${PUBLIC_SOURCE.owner}/${PUBLIC_SOURCE.repo}/${PUBLIC_SOURCE.branch}/`;
+      const r = await fetch(base + 'backup/content.json', { cache: 'no-store' });
+      if (!r.ok) return;
+      const data = await r.json();
+      if (data.text) {
+        Object.entries(data.text).forEach(([k, v]) => {
+          if (localStorage.getItem(k) === null) localStorage.setItem(k, v);
+        });
+      }
+      if (data.mediaIndex) {
+        for (const [key, info] of Object.entries(data.mediaIndex)) {
+          const existing = await mediaGet(key);
+          if (existing) continue;
+          if (info.kind === 'embed') {
+            await mediaSet(key, { kind: 'embed', embedUrl: info.embedUrl });
+          } else if (info.file) {
+            try {
+              const mr = await fetch(base + info.file, { cache: 'no-store' });
+              if (mr.ok) { const blob = await mr.blob(); await mediaSet(key, { kind: info.kind, blob }); }
+            } catch (e) { /* 개별 파일 실패는 무시 */ }
+          }
+        }
+      }
+    } catch (e) { /* 오프라인/네트워크 오류 시 조용히 무시 */ }
+  }
+
+  /* ── 7. 초기화 ── */
+  async function init() {
+    db(); // warm-start IndexedDB
+    await syncFromPublicSource(); // 방문자마다 최신 게시본을 먼저 반영
+    tagShared();
+    assignKeys();
+    restoreText();
+    restoreShared();
+    restoreStyles();
+    applyMirrors();
+    tagMedia();
+    restoreLayouts();
+    attachMediaHandles();
+    buildUI();
+    applyAllMedia().then(refreshCount);
+    // 콜드 스타트 / works.html 기본 이미지 루프와의 경합 방지: 여러 번 재적용 (idempotent)
+    setTimeout(() => applyAllMedia(), 250);
+    setTimeout(() => applyAllMedia(), 800);
+    window.addEventListener('load', () => applyAllMedia().then(refreshCount));
+    // work.html 등 동적으로 슬라이드를 재구성하는 페이지가 미디어 시스템을 재연결할 수 있도록 노출
+    window.ArthodEditor = {
+      reapplyMedia: () => {
+        tagMedia();
+        attachMediaHandles();
+        applyAllMedia();
+        restoreLayouts();
+      },
+    };
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();

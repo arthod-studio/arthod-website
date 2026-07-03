@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Arthod(아쏘드) Services — 인터랙티브 설치, 프로젝션 매핑, 제너러티브 아트, 사운드 비주얼, 브랜드 경험, 공공 미술."/>
+  <title>Services — ARTHOD</title>
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css"/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    .page-wrap { padding-top: var(--nav-h); }
+
+    .page-hero {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: clamp(60px,10vh,120px) var(--px) clamp(40px,6vh,72px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 32px;
+    }
+
+    .page-title {
+      font-family: var(--font-d);
+      font-size: clamp(52px,10vw,130px);
+      font-weight: 900;
+      letter-spacing: -.05em;
+      line-height: 1;
+      color: var(--ink);
+    }
+
+    .page-title-en {
+      font-size: clamp(14px,1.6vw,18px);
+      font-weight: 400;
+      font-style: italic;
+      color: var(--ink-3);
+      display: block;
+      margin-top: 20px;
+      line-height: 1.4;
+      letter-spacing: 0;
+    }
+
+    .page-hero-right {
+      text-align: right;
+      padding-bottom: 8px;
+    }
+
+    .page-hero-right p {
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--ink-3);
+      line-height: 1.7;
+      max-width: 280px;
+      text-align: right;
+    }
+
+    /* ── Service list (large editorial) ── */
+    .svc-list {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 0 var(--px);
+    }
+
+    .svc-entry {
+      display: grid;
+      grid-template-columns: clamp(100px,12vw,180px) 1fr;
+      align-items: start;
+      gap: clamp(32px,5vw,80px);
+      padding: clamp(40px,6vh,72px) 0;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* 이미지: 좌 → 우 슬라이드 */
+    .svc-img {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      clip-path: inset(0 100% 0 0);
+      transition: clip-path .65s cubic-bezier(.76,0,.24,1);
+      z-index: 0;
+    }
+    .svc-img::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+    }
+    .svc-entry:hover .svc-img { clip-path: inset(0 0% 0 0); }
+    .svc-entry:hover .svc-entry-num { color: #fff; }
+    .svc-entry:hover .svc-entry-name { color: #fff; }
+    .svc-entry:hover .svc-entry-name em { color: rgba(255,255,255,.9); }
+    .svc-entry:hover .svc-entry-desc { color: #fff; }
+    .svc-entry:hover .svc-tag { border-color: rgba(255,255,255,.3); color: rgba(255,255,255,.85); background: rgba(255,255,255,.1); }
+
+    .svc-entry-num,
+    .svc-entry-body { position: relative; z-index: 1; }
+
+    .svc-entry-name { transition: color .5s ease; }
+    .svc-entry-name em { transition: color .5s ease; }
+    .svc-entry-desc { transition: color .5s ease; }
+    .svc-tag { transition: color .5s ease, border-color .5s ease, background .5s ease; }
+
+    .svc-entry-num {
+      font-family: var(--font-d);
+      font-size: clamp(48px,7vw,96px);
+      font-weight: 900;
+      letter-spacing: -.04em;
+      color: var(--ink);
+      line-height: 0.8;
+      margin-top: -0.05em;
+      transition: color .5s ease;
+      text-align: right;
+    }
+
+    .svc-entry-body {}
+
+    .svc-entry-name {
+      font-family: var(--font-d);
+      font-size: clamp(28px,4vw,56px);
+      font-weight: 700;
+      letter-spacing: -.04em;
+      line-height: 0.8;
+      color: var(--ink);
+      margin-top: 0;
+      margin-bottom: 16px;
+    }
+
+    .svc-entry-name em {
+      font-style: normal;
+      font-weight: 400;
+      color: var(--ink-3);
+      display: block;
+      font-size: .5em;
+      letter-spacing: 0;
+      margin-top: 14px;
+    }
+
+    .svc-entry-desc {
+      font-size: clamp(15px,1.4vw,18px);
+      font-weight: 400;
+      line-height: 1.85;
+      color: var(--ink-2);
+      max-width: 620px;
+      margin-bottom: 20px;
+    }
+
+    .svc-entry-tags { display: flex; flex-wrap: wrap; gap: 7px; }
+
+    .svc-tag {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--ink-2);
+      padding: 7px 16px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: var(--bg);
+    }
+
+
+    /* ── Process section ── */
+    .process-section {
+      background: var(--ink);
+      padding: clamp(60px,8vh,100px) var(--px);
+      margin-top: 0;
+    }
+
+    .process-inner {
+      max-width: var(--max);
+      margin: 0 auto;
+    }
+
+    .process-title {
+      font-family: var(--font-d);
+      font-size: clamp(28px,4vw,52px);
+      font-weight: 700;
+      letter-spacing: -.03em;
+      color: #fff;
+      margin-bottom: clamp(40px,5vh,64px);
+    }
+    .process-title em { font-style: italic; font-weight: 400; color: rgba(255,255,255,.4); }
+
+    .process-steps {
+      display: grid;
+      grid-template-columns: repeat(4,1fr);
+      gap: 2px;
+    }
+
+    .process-step {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.06);
+      padding: clamp(40px,5vw,72px) clamp(32px,4vw,56px);
+      transition: background .35s, border-color .35s;
+      cursor: default;
+    }
+    .process-step:hover {
+      background: rgba(255,255,255,.12);
+      border-color: rgba(255,255,255,.18);
+    }
+
+    .step-n {
+      font-family: var(--font-d);
+      font-size: clamp(48px,6vw,80px);
+      font-weight: 900;
+      letter-spacing: -.04em;
+      color: rgba(255,255,255,.25);
+      margin-bottom: 32px;
+      display: block;
+      line-height: 1;
+      transition: color .35s;
+    }
+    .process-step:hover .step-n { color: rgba(255,255,255,.9); }
+
+    .step-name {
+      font-family: var(--font-d);
+      font-size: clamp(22px,2.4vw,32px);
+      font-weight: 700;
+      letter-spacing: -.03em;
+      color: rgba(255,255,255,.75);
+      margin-bottom: 16px;
+      transition: color .35s;
+    }
+    .process-step:hover .step-name { color: #fff; }
+
+    .step-desc {
+      font-size: clamp(14px,1.2vw,16px);
+      font-weight: 400;
+      line-height: 1.85;
+      color: rgba(255,255,255,.35);
+      transition: color .35s;
+    }
+    .process-step:hover .step-desc { color: rgba(255,255,255,.8); }
+
+    /* ── CTA band ── */
+    .cta-band {
+      padding: clamp(60px,8vh,100px) var(--px);
+      text-align: center;
+      border-top: 1px solid var(--border);
+    }
+
+    .cta-band h2 {
+      font-family: var(--font-d);
+      font-size: clamp(28px,5vw,60px);
+      font-weight: 700;
+      letter-spacing: -.04em;
+      line-height: 1.05;
+      color: var(--ink);
+      margin-bottom: 28px;
+    }
+
+    .cta-band-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+    /* Responsive */
+    @media(max-width:900px){
+      .svc-entry { grid-template-columns: 60px 1fr; gap: 24px; }
+      .process-steps { grid-template-columns: 1fr 1fr; }
+      .page-hero { flex-direction: column; align-items: flex-start; }
+      .page-hero-right { text-align: left; }
+      .page-hero-right p { text-align: left; }
+    }
+    @media(max-width:600px){
+      .svc-entry { grid-template-columns: 48px 1fr; }
+      .process-steps { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="cursor"><div id="cursor-dot"></div><div id="cursor-ring"></div></div>
+
+  <header class="site-nav scrolled" id="site-nav">
+    <div class="nav-wrap">
+      <a href="index.html" class="nav-logo"><img src="logo.png" alt="Arthod"></a>
+      <nav class="nav-links">
+        <a href="about.html">About</a>
+        <a href="works.html">Works</a>
+        <a href="services.html" style="font-weight:600">Services</a>
+        <a href="contact.html">Contact</a>
+      </nav>
+      <button class="nav-toggle" id="nav-toggle" aria-label="메뉴"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+
+  <div class="mobile-overlay" id="mobile-overlay">
+    <nav class="mobile-nav">
+      <a href="about.html"    class="mobile-link">About</a>
+      <a href="works.html"    class="mobile-link">Works</a>
+      <a href="services.html" class="mobile-link">Services</a>
+      <a href="contact.html"  class="mobile-link">Contact</a>
+    </nav>
+    <div class="mob-foot">
+      <span>hello@arthod.kr</span>
+      <div class="mob-soc"><a href="#">IG</a><a href="#">VM</a><a href="#">BE</a></div>
+    </div>
+  </div>
+
+  <main class="page-wrap">
+
+    <div class="page-hero">
+      <div>
+        <h1 class="page-title r">
+          Services
+          <span class="page-title-en">예술과 기술이 교차하는 지점에서,<br>새로운 감각적 경험을 설계합니다.</span>
+        </h1>
+      </div>
+      <div class="page-hero-right r d1">
+        <p>기획부터 제작, 설치, 운영까지<br/>미디어아트의 전 과정을<br/>원스톱으로 진행합니다.</p>
+      </div>
+    </div>
+
+    <!-- Service entries -->
+    <div class="svc-list">
+
+      <div class="svc-entry r">
+        <div class="svc-img" style="background-image:url('https://picsum.photos/seed/svc01/1600/600')"></div>
+        <span class="svc-entry-num">01</span>
+        <div class="svc-entry-body">
+          <h2 class="svc-entry-name">인터랙티브 설치<em>Interactive Installation</em></h2>
+          <p class="svc-entry-desc">센서, 카메라, 모션 캡처 등 다양한 입력 장치를 활용해 관람객과 실시간으로 반응하는 공간 설치 작품을 기획하고 제작합니다. 관람객의 존재 자체가 작품의 일부가 됩니다.</p>
+          <div class="svc-entry-tags">
+            <span class="svc-tag">OpenCV</span>
+            <span class="svc-tag">Depth Sensor</span>
+            <span class="svc-tag">TouchDesigner</span>
+            <span class="svc-tag">Arduino</span>
+            <span class="svc-tag">LED</span>
+          </div>
+        </div>
+              </div>
+
+      <div class="svc-entry r d1">
+        <div class="svc-img" style="background-image:url('https://picsum.photos/seed/svc02/1600/600')"></div>
+        <span class="svc-entry-num">02</span>
+        <div class="svc-entry-body">
+          <h2 class="svc-entry-name">프로젝션 매핑<em>Projection Mapping</em></h2>
+          <p class="svc-entry-desc">건물 외벽, 조형물, 무대 세트 등 불규칙한 3D 표면에 정확히 맞춰진 영상을 투영하는 몰입형 시각 경험을 구현합니다. 공간 자체가 스크린이 됩니다.</p>
+          <div class="svc-entry-tags">
+            <span class="svc-tag">LiDAR</span>
+            <span class="svc-tag">Resolume</span>
+            <span class="svc-tag">Madmapper</span>
+            <span class="svc-tag">Unreal Engine</span>
+            <span class="svc-tag">3D Scan</span>
+          </div>
+        </div>
+              </div>
+
+      <div class="svc-entry r d2">
+        <div class="svc-img" style="background-image:url('https://picsum.photos/seed/svc03/1600/600')"></div>
+        <span class="svc-entry-num">03</span>
+        <div class="svc-entry-body">
+          <h2 class="svc-entry-name">제너러티브 아트<em>Generative Art</em></h2>
+          <p class="svc-entry-desc">알고리즘, 데이터, 노이즈 함수로 구동되는 실시간 비주얼 시스템을 개발합니다. 매 순간 다른 모습을 보여주는 살아있는 영상 작품을 만듭니다.</p>
+          <div class="svc-entry-tags">
+            <span class="svc-tag">GLSL</span>
+            <span class="svc-tag">p5.js</span>
+            <span class="svc-tag">WebGL</span>
+            <span class="svc-tag">Max/MSP</span>
+            <span class="svc-tag">Processing</span>
+          </div>
+        </div>
+              </div>
+
+      <div class="svc-entry r">
+        <div class="svc-img" style="background-image:url('https://picsum.photos/seed/svc04/1600/600')"></div>
+        <span class="svc-entry-num">04</span>
+        <div class="svc-entry-body">
+          <h2 class="svc-entry-name">사운드 비주얼<em>Sound Visual</em></h2>
+          <p class="svc-entry-desc">음향과 시각의 경계를 넘나드는 AV 퍼포먼스와 오디오-리액티브 설치를 기획합니다. 소리가 형태를 만들고, 형태가 소리를 만듭니다.</p>
+          <div class="svc-entry-tags">
+            <span class="svc-tag">Max/MSP</span>
+            <span class="svc-tag">Ableton</span>
+            <span class="svc-tag">OSC</span>
+            <span class="svc-tag">MIDI</span>
+            <span class="svc-tag">Spatial Audio</span>
+          </div>
+        </div>
+              </div>
+
+      <div class="svc-entry r d1">
+        <div class="svc-img" style="background-image:url('https://picsum.photos/seed/svc05/1600/600')"></div>
+        <span class="svc-entry-num">05</span>
+        <div class="svc-entry-body">
+          <h2 class="svc-entry-name">브랜드 경험 설계<em>Brand Experience</em></h2>
+          <p class="svc-entry-desc">브랜드 아이덴티티를 미디어아트로 해석한 팝업 스토어, 전시 부스, 쇼룸, 오프닝 세레모니를 기획하고 제작합니다. 브랜드의 가치를 감각으로 전달합니다.</p>
+          <div class="svc-entry-tags">
+            <span class="svc-tag">Concept</span>
+            <span class="svc-tag">Production</span>
+            <span class="svc-tag">Installation</span>
+            <span class="svc-tag">Brand Storytelling</span>
+          </div>
+        </div>
+              </div>
+
+      <div class="svc-entry r d2">
+        <div class="svc-img" style="background-image:url('https://picsum.photos/seed/svc06/1600/600')"></div>
+        <span class="svc-entry-num">06</span>
+        <div class="svc-entry-body">
+          <h2 class="svc-entry-name">공공 미술<em>Public Art</em></h2>
+          <p class="svc-entry-desc">도시 공간과 공공 건축에 영구 또는 임시 설치되는 미디어 파사드 및 퍼블릭 아트워크를 제작합니다. 도시 자체가 갤러리가 됩니다.</p>
+          <div class="svc-entry-tags">
+            <span class="svc-tag">Media Facade</span>
+            <span class="svc-tag">Outdoor LED</span>
+            <span class="svc-tag">Permanent</span>
+            <span class="svc-tag">Temporary</span>
+          </div>
+        </div>
+              </div>
+
+      <div class="svc-entry r">
+        <div class="svc-img" style="background-image:url('https://picsum.photos/seed/svc07/1600/600')"></div>
+        <span class="svc-entry-num">07</span>
+        <div class="svc-entry-body">
+          <h2 class="svc-entry-name">모션그래픽<em>Motion Graphic</em></h2>
+          <p class="svc-entry-desc">브랜드 캠페인, 전시 콘텐츠, 무대 영상 등을 위한 고품질 모션그래픽을 제작합니다. 정교한 타이포그래피 애니메이션부터 3D 오브젝트 비주얼까지 다양한 스타일로 구현합니다.</p>
+          <div class="svc-entry-tags">
+            <span class="svc-tag">After Effects</span>
+            <span class="svc-tag">Cinema 4D</span>
+            <span class="svc-tag">Houdini</span>
+            <span class="svc-tag">Blender</span>
+            <span class="svc-tag">Lottie</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Process -->
+    <div class="process-section">
+      <div class="process-inner">
+        <h2 class="process-title r">작업 방식<br/><em>Our Method</em></h2>
+        <div class="process-steps">
+          <div class="process-step r">
+            <span class="step-n">01</span>
+            <h3 class="step-name">Research</h3>
+            <p class="step-desc">공간, 맥락, 목적에 대한 깊은 이해를 바탕으로 개념을 탐구합니다. Art와 Method의 교차점을 찾습니다.</p>
+          </div>
+          <div class="process-step r d1">
+            <span class="step-n">02</span>
+            <h3 class="step-name">Concept</h3>
+            <p class="step-desc">감성적 경험을 구체화하는 콘셉트와 시각 언어를 수립합니다. 기술은 이 단계에서 선택됩니다.</p>
+          </div>
+          <div class="process-step r d2">
+            <span class="step-n">03</span>
+            <h3 class="step-name">Develop</h3>
+            <p class="step-desc">프로토타입부터 완성까지 체계적인 개발 과정을 거칩니다. 정밀하고 재현 가능한 제작을 추구합니다.</p>
+          </div>
+          <div class="process-step r d3">
+            <span class="step-n">04</span>
+            <h3 class="step-name">Install & Run</h3>
+            <p class="step-desc">현장 설치, 시험, 운영까지 전 과정을 직접 진행합니다. 완벽한 경험이 관람객에게 전달될 때까지.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-band">
+      <h2 class="r">프로젝트를<br/>시작할 준비가 됐나요?</h2>
+      <div class="cta-band-btns r d1">
+        <a href="contact.html" class="btn btn-dark">Contact</a>
+        <a href="works.html"   class="btn btn-outline">Works 보기</a>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="footer">
+    <div class="footer-in">
+      <div>
+        <p class="f-logo">ARTHOD</p>
+        <p class="f-tag">Art + Method<br/>예술과 기술을 결합하여 효과적으로<br/>표현하는 방법을 연구하고 창작하는<br/>미디어아트 스튜디오. 서울.</p>
+      </div>
+      <div class="f-col">
+        <h4>Pages</h4>
+        <ul>
+          <li><a href="about.html">About</a></li>
+          <li><a href="works.html">Works</a></li>
+          <li><a href="services.html">Services</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </div>
+      <div class="f-col">
+        <h4>Connect</h4>
+        <ul>
+          <li><a href="#">Instagram</a></li>
+          <li><a href="#">Vimeo</a></li>
+          <li><a href="#">Behance</a></li>
+          <li><a href="#">LinkedIn</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bot">
+      <p class="f-copy">© 2024 Arthod (아쏘드). All rights reserved.</p>
+      <div class="f-soc"><a href="#">Instagram</a><a href="#">Vimeo</a><a href="#">Behance</a></div>
+    </div>
+  </footer>
+
+  <script src="main.js"></script>
+</body>
+</html>

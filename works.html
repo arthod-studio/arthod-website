@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Arthod(아쏘드) — 전체 포트폴리오"/>
+  <title>Works — ARTHOD</title>
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css"/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    body { background: #080808; color: #fff; }
+    .nav-logo img { filter: none !important; }
+    .nav-links a { color: rgba(255,255,255,.55); background: linear-gradient(#fff,#fff) no-repeat left center / 0% 100%; }
+    .nav-links a:hover { background-size: 100% 100%; color: #080808 !important; }
+    .site-nav.scrolled { background: rgba(8,8,8,.88); backdrop-filter: blur(16px); }
+    .site-nav.scrolled .nav-links a { color: rgba(255,255,255,.55); }
+    .site-nav.scrolled .nav-links a:hover,
+    .site-nav.scrolled .nav-links a[style] { color: #fff; }
+
+    .works-page { padding-top: var(--nav-h); }
+
+    /* ── Header ── */
+    .wp-header {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: clamp(40px,6vh,80px) var(--px) clamp(24px,3vh,40px);
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+    }
+    .wp-title {
+      font-size: clamp(56px, 11vw, 160px);
+      font-weight: 900;
+      letter-spacing: -.06em;
+      line-height: .85;
+      color: #fff;
+    }
+    .wp-right { padding-bottom: 8px; text-align: right; flex-shrink: 0; }
+    .wp-count { display: block; font-size: 10px; letter-spacing: .18em; color: rgba(255,255,255,.25); text-transform: uppercase; margin-bottom: 8px; }
+    .wp-right p { font-size: 13px; color: rgba(255,255,255,.35); line-height: 1.7; }
+
+    /* ── Filter ── */
+    .works-filter {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 16px var(--px) 24px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .filter-btn {
+      font-size: 10px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.3);
+      padding: 6px 16px;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 40px;
+      background: none;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .filter-btn:hover { color: #fff; border-color: rgba(255,255,255,.3); }
+    .filter-btn.active { background: #fff; color: #080808; border-color: #fff; }
+
+    /* ── Grid ── */
+    .port-grid {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(48px, 7vh, 88px);
+      padding: clamp(32px,4vh,56px) var(--px) clamp(80px,12vh,140px);
+      max-width: var(--max);
+      margin: 0 auto;
+    }
+
+    .port-card {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      position: relative;
+    }
+    .port-card.hidden { display: none; }
+
+    /* Text header — always visible, above image */
+    .card-head {
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 20px;
+      margin-bottom: 0;
+      border-radius: 12px;
+    }
+
+    /* White bar: slides left → right on hover */
+    .card-head::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: #fff;
+      border-radius: 12px;
+      transform: scaleX(0);
+      transform-origin: left center;
+      transition: transform .5s cubic-bezier(.76, 0, .24, 1);
+      z-index: 0;
+    }
+    .port-card:hover .card-head::before { transform: scaleX(1); }
+
+    /* Text above the bar — inverts via mix-blend-mode */
+    .card-head-left,
+    .card-head-right {
+      position: relative;
+      z-index: 1;
+      mix-blend-mode: difference;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .card-head-left { flex: 1; }
+
+    .card-title {
+      font-size: clamp(20px, 2.8vw, 38px);
+      font-weight: 800;
+      letter-spacing: -.04em;
+      line-height: 1;
+      color: #fff;
+    }
+    .card-en {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0;
+      color: rgba(255,255,255,.45);
+      margin-left: 12px;
+      display: inline-block;
+      vertical-align: baseline;
+    }
+    .card-head-right { flex-shrink: 0; flex-direction: row; align-items: baseline; gap: 8px; }
+    .card-reorder {
+      display: none;
+      position: absolute; top: 10px; right: 10px; z-index: 64;
+      flex-direction: column; gap: 3px;
+    }
+    body.editing .card-reorder { display: flex; }
+    .card-reorder button {
+      width: 26px; height: 22px; border-radius: 5px; border: none;
+      background: rgba(0,90,220,.92); color: #fff; font-size: 10px; cursor: pointer;
+      box-shadow: 0 3px 10px rgba(0,0,0,.25);
+    }
+    .card-reorder button:hover { background: rgba(0,70,190,.95); }
+    .card-project {
+      font-size: 11px;
+      letter-spacing: .04em;
+      color: rgba(255,255,255,.42);
+      white-space: nowrap;
+    }
+    .card-type {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.55);
+    }
+    .card-yr {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      color: rgba(255,255,255,.55);
+    }
+    /* Image area */
+    .card-inner {
+      position: relative;
+      aspect-ratio: 21/9;
+      overflow: hidden;
+      border-radius: 20px;
+    }
+
+    .card-bg, .card-bg-ov {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+    }
+    .card-bg { transition: none; }
+    .card-bg-ov {
+      opacity: 0;
+      transition: opacity 2s ease;
+    }
+
+    /* ── Footer ── */
+    .footer { background: #040404; }
+
+    /* ── Scroll reveal override for cards ── */
+    .port-card { opacity: 0; transform: translateY(40px); transition: opacity .8s var(--ease-o), transform .8s var(--ease-o); }
+    .port-card.v { opacity: 1; transform: none; }
+    .port-card .card-head { opacity: 0; transform: translateY(16px); transition: opacity .6s var(--ease-o), transform .6s var(--ease-o); }
+    .port-card.v .card-head { opacity: 1; transform: none; }
+    .port-card .card-inner { opacity: 0; transform: translateY(20px); transition: opacity .7s .12s var(--ease-o), transform .7s .12s var(--ease-o); }
+    .port-card.v .card-inner { opacity: 1; transform: none; }
+
+    .wp-subtitle {
+      font-size: clamp(14px, 1.5vw, 18px);
+      font-weight: 300;
+      color: rgba(255,255,255,.45);
+      line-height: 1.6;
+      margin-top: 20px;
+      letter-spacing: 0;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .card-inner { aspect-ratio: 16/7; }
+      .card-type { display: none; }
+      .wp-header { flex-direction: column; align-items: flex-start; }
+    }
+    @media (max-width: 480px) {
+      .card-inner { aspect-ratio: 3/2; border-radius: 8px; }
+      .card-head { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="cursor"><div id="cursor-dot"></div><div id="cursor-ring"></div></div>
+
+  <!-- ══ NAV ══════════════════════════════════════════════════ -->
+  <header class="site-nav scrolled" id="site-nav">
+    <div class="nav-wrap">
+      <a href="index.html" class="nav-logo"><img src="logo.png" alt="Arthod"></a>
+      <nav class="nav-links">
+        <a href="about.html">About</a>
+        <a href="works.html" style="color:#fff;font-weight:600">Works</a>
+        <a href="services.html">Services</a>
+        <a href="contact.html">Contact</a>
+      </nav>
+      <button class="nav-toggle" id="nav-toggle" aria-label="메뉴"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+
+  <div class="mobile-overlay" id="mobile-overlay">
+    <nav class="mobile-nav">
+      <a href="about.html" class="mobile-link">About</a>
+      <a href="works.html" class="mobile-link">Works</a>
+      <a href="services.html" class="mobile-link">Services</a>
+      <a href="contact.html" class="mobile-link">Contact</a>
+    </nav>
+    <div class="mob-foot">
+      <span>hello@arthod.kr</span>
+      <div class="mob-soc"><a href="#">IG</a><a href="#">VM</a><a href="#">BE</a></div>
+    </div>
+  </div>
+
+  <main class="works-page">
+
+    <div class="wp-header r">
+      <div>
+        <h1 class="wp-title">Works</h1>
+        <p class="wp-subtitle">빛과 소리, 공간으로 완성한<br>감각의 기록들.</p>
+      </div>
+      <div class="wp-right r d1">
+        <span class="wp-count">12 Projects · 2019–2024</span>
+        <p>미디어아트 설치 · 제너러티브 비주얼<br/>퍼포먼스 등 다양한 형태로 전개됩니다.</p>
+      </div>
+    </div>
+
+
+    <!-- ── Grid ── -->
+    <div class="port-grid" id="port-grid">
+
+      <!-- 01 -->
+      <a class="port-card r" href="work.html?id=01" data-cats="interactive">
+        <div class="card-head">
+          <div class="card-head-left"><span class="card-title"><span class="card-ko">빛의 파동</span><span class="card-en">Wave of Light</span></span></div>
+          <div class="card-head-right"><span class="card-yr">2024</span><span class="card-type">Interactive · LED</span></div>
+        </div>
+        <div class="card-inner"><div class="card-bg" style="background-size:cover;background-position:center"></div><div class="card-bg-ov"></div></div>
+      </a>
+
+      <!-- 02 -->
+      <a class="port-card r" href="work.html?id=02" data-cats="projection">
+        <div class="card-head">
+          <div class="card-head-left"><span class="card-title"><span class="card-ko">공간 매핑</span><span class="card-en">Spatial Mapping</span></span></div>
+          <div class="card-head-right"><span class="card-yr">2024</span><span class="card-type">Projection · LiDAR</span></div>
+        </div>
+        <div class="card-inner"><div class="card-bg" style="background-size:cover;background-position:center"></div><div class="card-bg-ov"></div></div>
+      </a>
+
+      <!-- 03 -->
+      <a class="port-card r" href="work.html?id=03" data-cats="av">
+        <div class="card-head">
+          <div class="card-head-left"><span class="card-title"><span class="card-ko">소리의 형태</span><span class="card-en">Shape of Sound</span></span></div>
+          <div class="card-head-right"><span class="card-yr">2023</span><span class="card-type">AV Performance</span></div>
+        </div>
+        <div class="card-inner"><div class="card-bg" style="background-size:cover;background-position:center"></div><div class="card-bg-ov"></div></div>
+      </a>
+
+      <!-- 04 -->
+      <a class="port-card r" href="work.html?id=04" data-cats="interactive">
+        <div class="card-head">
+          <div class="card-head-left"><span class="card-title"><span class="card-ko">잔상</span><span class="card-en">Afterimage</span></span></div>
+          <div class="card-head-right"><span class="card-yr">2023</span><span class="card-type">Video · Urban Data</span></div>
+        </div>
+        <div class="card-inner"><div class="card-bg" style="background-size:cover;background-position:center"></div><div class="card-bg-ov"></div></div>
+      </a>
+
+      <!-- 05 -->
+      <a class="port-card r" href="work.html?id=05" data-cats="generative">
+        <div class="card-head">
+          <div class="card-head-left"><span class="card-title"><span class="card-ko">디지털 정원</span><span class="card-en">Digital Garden</span></span></div>
+          <div class="card-head-right"><span class="card-yr">2022</span><span class="card-type">Generative Art</span></div>
+        </div>
+        <div class="card-inner"><div class="card-bg" style="background-size:cover;background-position:center"></div><div class="card-bg-ov"></div></div>
+      </a>
+
+      <!-- 06 -->
+      <a class="port-card r" href="work.html?id=06" data-cats="generative">
+        <div class="card-head">
+          <div class="card-head-left"><span class="card-title"><span class="card-ko">흐름</span><span class="card-en">Flow</span></span></div>
+          <div class="card-head-right"><span class="card-yr">2022</span><span class="card-type">Fluid Simulation</span></div>
+        </div>
+        <div class="card-inner"><div class="card-bg" style="background-size:cover;background-position:center"></div><div class="card-bg-ov"></div></div>
+      </a>
+
+      <!-- 07 -->
+      <a class="port-card r" href="work.html?id=07" data-cats="brand">
+        <div class="card-head">
+          <div class="card-head-left"><span class="card-title"><span class="card-ko">반향</span><span class="card-en">Echo</span></span></div>
+          <div class="card-head-right"><span class="card-yr">2022</span><span class="card-type">Brand · Interactive</span></div>
+        </div>
+        <div class="card-inner"><div class="card-bg" style="background-size:cover;background-position:center"></div><div class="card-bg-ov"></div></div>
+      </a>
+
+      <!-- 08 -->
+      <a class="port-card r" href="work.html?id=08" data-cats="projection">
+        <div class="card-head">
+          <div class="card-head-left"><span class="card-title"><span class="card-ko">도시의 피부</span><span class="card-en">City Skin</span></span></div>
+          <div class="card-head-right"><span class="card-yr">2021</span><span class="card-type">Media Facade</span></div>
+        </div>
+        <div class="card-inner"><div class="card-bg" style="background-size:cover;background-position:center"></div><div class="card-bg-ov"></div></div>
+      </a>
+
+      <!-- 09 -->
+      <a class="port-card r" href="work.html?id=09" data-cats="av">
+        <div class="card-head">
+          <div class="card-head-left"><span class="card-title"><span class="card-ko">청각의 색</span><span class="card-en">Color of Sound</span></span></div>
+          <div class="card-head-right"><span class="card-yr">2021</span><span class="card-type">Audio Reactive</span></div>
+        </div>
+        <div class="card-inner"><div class="card-bg" style="background-size:cover;background-position:center"></div><div class="card-bg-ov"></div></div>
+      </a>
+
+      <!-- 10 -->
+      <a class="port-card r" href="work.html?id=10" data-cats="brand">
+        <div class="card-head">
+          <div class="card-head-left"><span class="card-title"><span class="card-ko">기억의 층</span><span class="card-en">Layers of Memory</span></span></div>
+          <div class="card-head-right"><span class="card-yr">2020</span><span class="card-type">Exhibition · Brand</span></div>
+        </div>
+        <div class="card-inner"><div class="card-bg" style="background-size:cover;background-position:center"></div><div class="card-bg-ov"></div></div>
+      </a>
+
+      <!-- 11 -->
+      <a class="port-card r" href="work.html?id=11" data-cats="generative interactive">
+        <div class="card-head">
+          <div class="card-head-left"><span class="card-title"><span class="card-ko">경계</span><span class="card-en">Boundary</span></span></div>
+          <div class="card-head-right"><span class="card-yr">2020</span><span class="card-type">Generative · Sensor</span></div>
+        </div>
+        <div class="card-inner"><div class="card-bg" style="background-size:cover;background-position:center"></div><div class="card-bg-ov"></div></div>
+      </a>
+
+      <!-- 12 -->
+      <a class="port-card r" href="work.html?id=12" data-cats="projection brand">
+        <div class="card-head">
+          <div class="card-head-left"><span class="card-title"><span class="card-ko">시작점</span><span class="card-en">Origin Point</span></span></div>
+          <div class="card-head-right"><span class="card-yr">2019</span><span class="card-type">Projection · Event</span></div>
+        </div>
+        <div class="card-inner"><div class="card-bg" style="background-size:cover;background-position:center"></div><div class="card-bg-ov"></div></div>
+      </a>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-in" style="grid-template-columns:2fr 1fr 1fr">
+      <div>
+        <p class="f-logo">ARTHOD</p>
+        <p class="f-tag">Art + Method<br/>예술과 기술을 결합하여 효과적으로<br/>표현하는 방법을 연구하고 창작하는<br/>미디어아트 스튜디오. 서울.</p>
+      </div>
+      <div class="f-col"><h4>Studio</h4><ul><li><a href="about.html">About</a></li><li><a href="services.html">Services</a></li><li><a href="contact.html">Contact</a></li></ul></div>
+      <div class="f-col"><h4>Connect</h4><ul><li><a href="#">Instagram</a></li><li><a href="#">Vimeo</a></li><li><a href="#">Behance</a></li></ul></div>
+    </div>
+    <div class="footer-bot">
+      <p class="f-copy">© 2024 Arthod (아쏘드). All rights reserved.</p>
+      <div class="f-soc"><a href="#">Instagram</a><a href="#">Vimeo</a><a href="#">Behance</a></div>
+    </div>
+  </footer>
+
+  <script src="main.js"></script>
+  <script>
+    // ── 카드 순서 편집 (편집 모드 전용, 위/아래 버튼) ──────────────
+    (function () {
+      const CARD_ORDER_KEY = 'arthod-cardorder:works';
+      const grid = document.getElementById('port-grid');
+      function currentHrefOrder() {
+        return [...grid.querySelectorAll('.port-card')].map(c => c.getAttribute('href'));
+      }
+      function applyCardOrder() {
+        let saved;
+        try { saved = JSON.parse(localStorage.getItem(CARD_ORDER_KEY)); } catch (e) {}
+        const cards = [...grid.querySelectorAll('.port-card')];
+        const byHref = Object.fromEntries(cards.map(c => [c.getAttribute('href'), c]));
+        if (Array.isArray(saved) && saved.every(h => byHref[h])) {
+          const rest = cards.map(c => c.getAttribute('href')).filter(h => !saved.includes(h));
+          [...saved, ...rest].forEach(href => grid.appendChild(byHref[href]));
+        }
+      }
+      applyCardOrder();
+
+      function attachReorderHandles() {
+        grid.querySelectorAll('.port-card').forEach(card => {
+          if (card.querySelector(':scope > .card-reorder')) return;
+          const box = document.createElement('div');
+          box.className = 'card-reorder';
+          box.innerHTML = '<button type="button" class="cr-up">▲</button><button type="button" class="cr-down">▼</button>';
+          card.appendChild(box);
+          box.querySelector('.cr-up').addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); moveCard(card, -1); });
+          box.querySelector('.cr-down').addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); moveCard(card, 1); });
+        });
+      }
+      function moveCard(card, dir) {
+        const cards = [...grid.querySelectorAll('.port-card')];
+        const i = cards.indexOf(card);
+        const j = i + dir;
+        if (j < 0 || j >= cards.length) return;
+        if (dir < 0) grid.insertBefore(card, cards[j]);
+        else grid.insertBefore(cards[j], card);
+        localStorage.setItem(CARD_ORDER_KEY, JSON.stringify(currentHrefOrder()));
+      }
+      const mo = new MutationObserver(() => {
+        if (document.body.classList.contains('editing')) attachReorderHandles();
+      });
+      mo.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+      if (document.body.classList.contains('editing')) attachReorderHandles();
+    })();
+
+    // Filter
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const f = btn.dataset.filter;
+        document.querySelectorAll('.port-card').forEach(card => {
+          card.classList.toggle('hidden', f !== 'all' && !card.dataset.cats.includes(f));
+        });
+      });
+    });
+
+    // Particles for wp4
+    const wp4 = document.getElementById('wp4');
+    if (wp4) {
+      for (let i = 0; i < 28; i++) {
+        const p = document.createElement('div');
+        const sz = Math.random() * 2.5 + .5;
+        Object.assign(p.style, {
+          position:'absolute', borderRadius:'50%', background:'#2997ff',
+          width:sz+'px', height:sz+'px',
+          left:Math.random()*100+'%', bottom:'-5%',
+          opacity:Math.random()*.7+.1,
+          animationName:'pfloat',
+          animationDuration:(Math.random()*14+7)+'s',
+          animationDelay:(Math.random()*14)+'s',
+          animationTimingFunction:'linear',
+          animationIterationCount:'infinite',
+        });
+        wp4.appendChild(p);
+      }
+    }
+
+    // Hover image cycling (seed-based picsum — always works)
+    const CARD_IMGS = {
+      'work.html?id=01': ['https://picsum.photos/seed/w01a/1600/900','https://picsum.photos/seed/w01b/1600/900','https://picsum.photos/seed/w01c/1600/900'],
+      'work.html?id=02': ['https://picsum.photos/seed/w02a/1600/900','https://picsum.photos/seed/w02b/1600/900','https://picsum.photos/seed/w02c/1600/900'],
+      'work.html?id=03': ['https://picsum.photos/seed/w03a/1600/900','https://picsum.photos/seed/w03b/1600/900','https://picsum.photos/seed/w03c/1600/900'],
+      'work.html?id=04': ['https://picsum.photos/seed/w04a/1600/900','https://picsum.photos/seed/w04b/1600/900','https://picsum.photos/seed/w04c/1600/900'],
+      'work.html?id=05': ['https://picsum.photos/seed/w05a/1600/900','https://picsum.photos/seed/w05b/1600/900','https://picsum.photos/seed/w05c/1600/900'],
+      'work.html?id=06': ['https://picsum.photos/seed/w06a/1600/900','https://picsum.photos/seed/w06b/1600/900','https://picsum.photos/seed/w06c/1600/900'],
+      'work.html?id=07': ['https://picsum.photos/seed/w07a/1600/900','https://picsum.photos/seed/w07b/1600/900','https://picsum.photos/seed/w07c/1600/900'],
+      'work.html?id=08': ['https://picsum.photos/seed/w08a/1600/900','https://picsum.photos/seed/w08b/1600/900','https://picsum.photos/seed/w08c/1600/900'],
+      'work.html?id=09': ['https://picsum.photos/seed/w09a/1600/900','https://picsum.photos/seed/w09b/1600/900','https://picsum.photos/seed/w09c/1600/900'],
+      'work.html?id=10': ['https://picsum.photos/seed/w10a/1600/900','https://picsum.photos/seed/w10b/1600/900','https://picsum.photos/seed/w10c/1600/900'],
+      'work.html?id=11': ['https://picsum.photos/seed/w11a/1600/900','https://picsum.photos/seed/w11b/1600/900','https://picsum.photos/seed/w11c/1600/900'],
+      'work.html?id=12': ['https://picsum.photos/seed/w12a/1600/900','https://picsum.photos/seed/w12b/1600/900','https://picsum.photos/seed/w12c/1600/900'],
+    };
+
+    // Set initial bg image for all cards on load
+    // 페이지 로드 즉시 모든 카드 이미지 미리 로드 + 디코딩 (첨 디졸브만 빠르게 보이던 문제 해결:
+    // 호버 시점에 디코딩하면 첫 이미지는 디코딩 중 트랜지션이 시작되어 몷뭐이지는 현상이 있음)
+    const decodedImgs = new Set();
+    function preloadAll(imgs) {
+      imgs.forEach(src => {
+        const im = new Image();
+        im.src = src;
+        (im.decode ? im.decode() : Promise.resolve()).catch(() => {}).finally(() => decodedImgs.add(src));
+      });
+    }
+    document.querySelectorAll('.port-card').forEach(card => {
+      if (card.hasAttribute('data-custom-img')) return;
+      const imgs = CARD_IMGS[card.getAttribute('href')];
+      if (imgs) {
+        card.querySelector('.card-bg').style.backgroundImage = `url('${imgs[0]}')`;
+        preloadAll(imgs);
+      }
+    });
+
+    document.querySelectorAll('.port-card').forEach(card => {
+      const imgs = CARD_IMGS[card.getAttribute('href')];
+      if (!imgs) return;
+      const bg = card.querySelector('.card-bg');
+      const ov = card.querySelector('.card-bg-ov');
+      let idx = 0, cycleTimer = null, delayTimer = null, commitTimer = null;
+
+      // 이미지는 페이지 로드 시점에 이미 미리 로드되었으므로 여기서는 생략
+
+      // 대상 이미지가 디코딩 완료될 때까지 기다렸다가 페이드 시작 (첫 번째 전환도 나머지와 동일하게 매끄럽게)
+      function whenReady(src, cb) {
+        if (decodedImgs.has(src)) { cb(); return; }
+        const im = new Image();
+        im.src = src;
+        (im.decode ? im.decode() : Promise.resolve()).catch(() => {}).finally(() => { decodedImgs.add(src); cb(); });
+      }
+
+      // 오버레이 즉시 초기화 (트랜지션 없이 opacity 0)
+      const resetOv = () => {
+        ov.style.transition = 'none';
+        ov.style.opacity = '0';
+        void ov.offsetWidth;               // reflow 강제 → 다음 페이드가 처음부터
+        ov.style.transition = 'opacity 2s ease';
+      };
+
+      const stop = () => {
+        clearTimeout(delayTimer); clearInterval(cycleTimer); clearTimeout(commitTimer);
+        resetOv();
+      };
+
+      card.addEventListener('mouseenter', () => {
+        if (card.hasAttribute('data-custom-img')) return;
+        idx = 0;
+        bg.style.backgroundImage = `url('${imgs[0]}')`;
+        resetOv();
+
+        // 스크롤 오발 방지: 짧게 대기 후 시작
+        delayTimer = setTimeout(() => {
+          const step = () => {
+            idx = (idx + 1) % imgs.length;
+            const targetSrc = imgs[idx];
+            whenReady(targetSrc, () => {
+              ov.style.backgroundImage = `url('${targetSrc}')`;
+              // 브라우저가 opacity:0 상태를 확실히 한 프레임 그린 뒤 1로 바꿔야
+              // 모든 사이클(첫 디졸브 포함)이 항상 2초로 동일하게 보임
+              requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                  ov.style.opacity = '1';
+                });
+              });
+            });
+            commitTimer = setTimeout(() => {
+              // 페이드 완료 → 베이스에 확정하고 오버레이 숨김(같은 이미지라 깜빡임 없음)
+              bg.style.backgroundImage = `url('${targetSrc}')`;
+              resetOv();
+            }, 2000);
+          };
+          step();                            // 첫 디졸브 바로 시작
+          cycleTimer = setInterval(step, 3000); // 2초 디졸브 + 1초 유지
+        }, 300);
+      });
+
+      card.addEventListener('mouseleave', () => {
+        clearTimeout(delayTimer); clearInterval(cycleTimer); clearTimeout(commitTimer);
+        if (card.hasAttribute('data-custom-img')) { resetOv(); return; }
+        // 처음 이미지로 부드럽게 디졸브 (튀 방지)
+        ov.style.backgroundImage = `url('${imgs[0]}')`;
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            ov.style.opacity = '1';
+          });
+        });
+        commitTimer = setTimeout(() => {
+          bg.style.backgroundImage = `url('${imgs[0]}')`;
+          resetOv();
+          idx = 0;
+        }, 2000);
+      });
+    });
+  </script>
+</body>
+</html>
