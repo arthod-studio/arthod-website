@@ -543,13 +543,36 @@ if (fv) {
     if (m) return { kind: 'vimeo', id: m[1] };
     return null;
   }
+  function setYouTubePoster(poster, id) {
+    const candidates = [
+      `https://img.youtube.com/vi/${id}/maxresdefault.jpg`,
+      `https://img.youtube.com/vi/${id}/sddefault.jpg`,
+      `https://img.youtube.com/vi/${id}/hqdefault.jpg`
+    ];
+    const tryImage = index => {
+      const url = candidates[index];
+      const img = new Image();
+      img.onload = () => {
+        if (img.naturalWidth > 320 || index === candidates.length - 1) {
+          poster.style.backgroundImage = `url("${url}")`;
+        } else {
+          tryImage(index + 1);
+        }
+      };
+      img.onerror = () => {
+        if (index < candidates.length - 1) tryImage(index + 1);
+      };
+      img.src = url;
+    };
+    tryImage(0);
+  }
   function buildClickToPlay(wrap, embedUrl) {
     const info = embedIdInfo(embedUrl);
     const poster = document.createElement('div');
     poster.className = 'media-poster';
     poster.style.cssText = 'position:absolute;inset:0;z-index:5;cursor:pointer;background:#000 center/cover no-repeat;display:flex;align-items:center;justify-content:center';
     if (info && info.kind === 'youtube') {
-      poster.style.backgroundImage = `url("https://img.youtube.com/vi/${info.id}/hqdefault.jpg")`;
+      setYouTubePoster(poster, info.id);
     }
     poster.innerHTML = '<div class="media-play-btn">▶</div>';
     const startPlayback = () => {
