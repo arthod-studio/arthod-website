@@ -1544,15 +1544,12 @@ if (fv) {
     toast._t = setTimeout(() => toastEl.classList.remove('show'), 1700);
   }
 
-  const wasNoCursor = () => window.matchMedia('(hover:none)').matches === false;
   function setEdit(on) {
     editing = on;
     btn.classList.toggle('on', on);
     bar.classList.toggle('on', on);
     document.body.classList.toggle('editing', on);
     btn.querySelector('.edit-label').textContent = on ? '편집 종료' : '편집 모드';
-    if (on && wasNoCursor()) document.body.classList.remove('no-cursor');
-    else if (!on && wasNoCursor()) document.body.classList.add('no-cursor');
     keyed.forEach(el => {
       el.contentEditable = on ? 'true' : 'false';
       if (on) el.spellcheck = false;

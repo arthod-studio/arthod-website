@@ -40,50 +40,15 @@ body{
   -webkit-font-smoothing:antialiased;
   overflow-x:hidden;
 }
-body.no-cursor,body.no-cursor *{cursor:auto!important}
 a{color:inherit;text-decoration:none}
 img,video{display:block;max-width:100%}
 ul{list-style:none}
 button{font:inherit;background:none;border:none;padding:0}
 
-/* ── Cursor ─────────────────────────────────────────────────
-   mix-blend-mode: difference → always visible on any bg:
-   white cursor on white bg → renders black
-   white cursor on dark bg  → renders white
-   Never obstructs text regardless of section color.
-   ─────────────────────────────────────────────────────────── */
+/* ── Native Cursor ─────────────────────────────────────────── */
 #cursor{
-  position:fixed;
-  top:0;left:0;
-  pointer-events:none;
-  z-index:9999;
-  mix-blend-mode:difference;
   display:none!important;
 }
-
-#cursor-dot{
-  position:absolute;
-  width:8px;height:8px;
-  background:#fff;
-  border-radius:50%;
-  transform:translate(-50%,-50%);
-  opacity:0;
-  transition:opacity .2s, width .3s var(--ease), height .3s var(--ease);
-}
-
-#cursor-ring{
-  position:absolute;
-  width:40px;height:40px;
-  border:1.5px solid rgba(255,255,255,.7);
-  border-radius:50%;
-  transform:translate(-50%,-50%);
-  opacity:0;
-  transition:opacity .2s, width .4s var(--ease), height .4s var(--ease);
-}
-
-/* hover: ring grows, dot stays small — never blocks text */
-body.ch-hover #cursor-ring{width:64px;height:64px;border-color:rgba(255,255,255,.5)}
-body.ch-click #cursor-dot{width:12px;height:12px}
 
 /* ── Nav ───────────────────────────────────────────────────── */
 .site-nav{
@@ -957,8 +922,6 @@ body.editing [contenteditable="true"]:focus{
 }
 
 @media(max-width:768px){
-  body.no-cursor,body.no-cursor *{cursor:auto!important}
-  #cursor{display:none}
   .nav-links{display:none}
   .nav-toggle{display:flex}
 
