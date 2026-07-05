@@ -826,29 +826,29 @@ if (fv) {
     h.title = '드래그해서 사진 위치(크롭) 조절';
     h.textContent = '✥';
     el.appendChild(h);
-    let startX = 0, startY = 0, curX = 50, curY = 50;
+    let startX = 0, startY = 0, curX = 0, curY = 0;
     const onMove = (e) => {
       const x = e.touches ? e.touches[0].clientX : e.clientX;
       const y = e.touches ? e.touches[0].clientY : e.clientY;
       const rect = el.getBoundingClientRect();
       const dxPct = ((x - startX) / rect.width) * 100;
       const dyPct = ((y - startY) / rect.height) * 100;
-      const nx = Math.min(100, Math.max(0, curX + dxPct));
-      const ny = Math.min(100, Math.max(0, curY + dyPct));
-      const pos = nx.toFixed(0) + '% ' + ny.toFixed(0) + '%';
-      applyMediaPosition(el, pos);
-      h.dataset.pending = pos;
+      const nx = Math.min(80, Math.max(-80, curX + dxPct));
+      const ny = Math.min(80, Math.max(-80, curY + dyPct));
+      applyMediaOffset(el, nx, ny);
+      h.dataset.pendingX = String(+nx.toFixed(2));
+      h.dataset.pendingY = String(+ny.toFixed(2));
     };
     const onUp = () => {
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
       document.removeEventListener('touchmove', onMove);
       document.removeEventListener('touchend', onUp);
-      if (h.dataset.pending && el.dataset.mediaKey) {
-        const [px, py] = h.dataset.pending.split(' ');
-        curX = parseFloat(px); curY = parseFloat(py);
-        setLayoutRec(el.dataset.mediaKey, { pos: h.dataset.pending });
-        toast('사진 위치가 저장되었습니다');
+      if (h.dataset.pendingX && h.dataset.pendingY && el.dataset.mediaKey) {
+        curX = parseFloat(h.dataset.pendingX);
+        curY = parseFloat(h.dataset.pendingY);
+        setLayoutRec(el.dataset.mediaKey, { shiftX: curX, shiftY: curY });
+        toast('사진 X/Y 위치가 저장되었습니다');
       }
     };
     const onDown = (e) => {
@@ -856,7 +856,8 @@ if (fv) {
       startX = e.touches ? e.touches[0].clientX : e.clientX;
       startY = e.touches ? e.touches[0].clientY : e.clientY;
       const rec = getLayoutRec(el.dataset.mediaKey || '');
-      if (rec.pos) { const [px, py] = rec.pos.split(' '); curX = parseFloat(px); curY = parseFloat(py); }
+      curX = parseFloat(rec.shiftX) || 0;
+      curY = parseFloat(rec.shiftY) || 0;
       document.addEventListener('mousemove', onMove);
       document.addEventListener('mouseup', onUp);
       document.addEventListener('touchmove', onMove, { passive: false });
@@ -1209,7 +1210,7 @@ if (fv) {
     if (rec.ar) { el.style.aspectRatio = String(rec.ar); el.style.height = 'auto'; }
     else if (rec.h) el.style.setProperty('--user-h', rec.h + 'px'), el.style.height = rec.h + 'px'; // \uad6c\ubc84\uc804 \ud638\ud658(\uc608\uc804 \uc800\uc7a5\uac12)
     if (rec.pos) applyMediaPosition(el, rec.pos);
-    if (rec.zoom) applyMediaZoom(el, rec.zoom);
+    applyMediaTransform(el, rec);
   }
   function mediaVisualTarget(el) {
     return el.querySelector(':scope > video.rich-media-el, :scope > .rich-media-el video, :scope > img, img, .card-bg, .svc-img, .whs-slide') || el;
@@ -1220,14 +1221,25 @@ if (fv) {
     else target.style.backgroundPosition = pos;
   }
   function applyMediaZoom(el, zoom) {
-    const z = Math.max(1, Math.min(3, parseFloat(zoom) || 1));
+    const rec = Object.assign(getLayoutRec(el.dataset.mediaKey || ''), { zoom });
+    applyMediaTransform(el, rec);
+  }
+  function applyMediaOffset(el, shiftX, shiftY) {
+    const rec = Object.assign(getLayoutRec(el.dataset.mediaKey || ''), { shiftX, shiftY });
+    applyMediaTransform(el, rec);
+  }
+  function applyMediaTransform(el, rec) {
+    const z = Math.max(1, Math.min(3, parseFloat(rec.zoom) || 1));
+    const x = Math.max(-80, Math.min(80, parseFloat(rec.shiftX) || 0));
+    const y = Math.max(-80, Math.min(80, parseFloat(rec.shiftY) || 0));
     const target = mediaVisualTarget(el);
     if (target.tagName === 'IMG' || target.tagName === 'VIDEO') {
       target.style.transformOrigin = 'center center';
-      target.style.transform = z === 1 ? '' : `scale(${z})`;
-      target.style.willChange = z === 1 ? '' : 'transform';
+      target.style.transform = (z === 1 && x === 0 && y === 0) ? '' : `translate(${x}%, ${y}%) scale(${z})`;
+      target.style.willChange = (z === 1 && x === 0 && y === 0) ? '' : 'transform';
     } else {
       target.style.backgroundSize = z === 1 ? 'cover' : `${Math.round(z * 100)}% auto`;
+      if (x || y) target.style.backgroundPosition = `${50 + x}% ${50 + y}%`;
     }
   }
   function restoreLayouts() {
