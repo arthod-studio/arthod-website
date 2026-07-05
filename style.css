@@ -49,6 +49,9 @@ button{font:inherit;background:none;border:none;padding:0}
 #cursor{
   display:none!important;
 }
+body:not(.editing),body:not(.editing) *{
+  cursor:none!important;
+}
 
 /* ── Nav ───────────────────────────────────────────────────── */
 .site-nav{
