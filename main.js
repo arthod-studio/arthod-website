@@ -8,9 +8,40 @@ window.addEventListener('wheel', e => {
   if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) e.preventDefault();
 }, { passive: false });
 
-/* ── Use the native system cursor ─────────────────────────── */
-document.getElementById('cursor')?.remove();
-document.body.classList.remove('no-cursor', 'ch-hover', 'ch-click');
+/* ── Custom cursor: dot + outline ring ────────────────────── */
+(function initCustomCursor() {
+  if (window.matchMedia('(hover: none)').matches) return;
+  let cursor = document.getElementById('cursor');
+  if (!cursor) {
+    cursor = document.createElement('div');
+    cursor.id = 'cursor';
+    cursor.innerHTML = '<div id="cursor-dot"></div><div id="cursor-ring"></div>';
+    document.body.appendChild(cursor);
+  }
+  const dot = cursor.querySelector('#cursor-dot');
+  const ring = cursor.querySelector('#cursor-ring');
+  let rx = 0, ry = 0, tx = 0, ty = 0;
+  function move(e) {
+    tx = e.clientX;
+    ty = e.clientY;
+    dot.style.transform = `translate(${tx}px, ${ty}px) translate(-50%,-50%)`;
+    cursor.classList.add('on');
+  }
+  function tick() {
+    rx += (tx - rx) * 0.18;
+    ry += (ty - ry) * 0.18;
+    ring.style.transform = `translate(${rx}px, ${ry}px) translate(-50%,-50%)`;
+    requestAnimationFrame(tick);
+  }
+  window.addEventListener('mousemove', move, { passive: true });
+  window.addEventListener('mousedown', () => document.body.classList.add('ch-click'));
+  window.addEventListener('mouseup', () => document.body.classList.remove('ch-click'));
+  document.addEventListener('mouseover', e => {
+    document.body.classList.toggle('ch-hover', !!e.target.closest('a,button,input,textarea,select,[data-media],[contenteditable="true"],.edit-btn'));
+  });
+  document.addEventListener('mouseleave', () => cursor.classList.remove('on'));
+  tick();
+})();
 
 /* ── Nav: transparent on hero, solid after ───────────────────*/
 const nav  = document.getElementById('site-nav');
@@ -1438,7 +1469,6 @@ if (fv) {
 
     const style = document.createElement('style');
     style.textContent = `
-      body.editing #cursor{display:none}
       body.editing [data-media]{outline:2px dashed rgba(0,110,230,.55);outline-offset:-2px;cursor:pointer!important;position:relative}
       .size-handle{display:none}
       .pan-handle{display:none}
