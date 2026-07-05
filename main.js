@@ -935,7 +935,12 @@ if (fv) {
      필요한 것: Fine-grained Personal Access Token (Contents: Read/Write),
      저장소(owner/repo), 브랜치. 토큰은 이 브라우저에만 저장됩니다. */
   const GH_CFG = 'arthod-gh:cfg';
-  function ghCfg() { try { return JSON.parse(localStorage.getItem(GH_CFG)) || {}; } catch (e) { return {}; } }
+  const GH_DEFAULT_CFG = { owner: 'arthod-studio', repo: 'arthod-website-backup', branch: 'main' };
+  function ghCfg() {
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(GH_CFG)) || {}; } catch (e) {}
+    return Object.assign({}, GH_DEFAULT_CFG, saved);
+  }
   function ghSaveCfg(c) { localStorage.setItem(GH_CFG, JSON.stringify(c)); }
   function b64utf8(str) { return btoa(unescape(encodeURIComponent(str))); }
   function blobToB64(blob) {
@@ -1034,7 +1039,7 @@ if (fv) {
       '<div class="mm-head"><span>☁ GitHub 백업</span><button class="gh-close" type="button">✕</button></div>'
       + '<div class="gh-body">'
       + '<label class="gh-l">저장소 <span>owner/repo</span></label>'
-      + `<input class="gh-repo" type="text" placeholder="my-name/arthod-site" value="${((c.owner&&c.repo)?c.owner+'/'+c.repo:'')}"/>`
+      + `<input class="gh-repo" type="text" placeholder="${GH_DEFAULT_CFG.owner}/${GH_DEFAULT_CFG.repo}" value="${((c.owner&&c.repo)?c.owner+'/'+c.repo:'')}"/>`
       + '<label class="gh-l">브랜치</label>'
       + `<input class="gh-branch" type="text" placeholder="main" value="${c.branch||'main'}"/>`
       + '<label class="gh-l">Access Token <span>Contents: Read/Write</span></label>'
