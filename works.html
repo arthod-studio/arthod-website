@@ -499,8 +499,8 @@
       }
     }
 
-    // Hover image cycling (seed-based picsum — always works)
-    const CARD_IMGS = {
+    // Hover image cycling
+    const FALLBACK_CARD_IMGS = {
       'work.html?id=01': ['https://picsum.photos/seed/w01a/1600/900','https://picsum.photos/seed/w01b/1600/900','https://picsum.photos/seed/w01c/1600/900'],
       'work.html?id=02': ['https://picsum.photos/seed/w02a/1600/900','https://picsum.photos/seed/w02b/1600/900','https://picsum.photos/seed/w02c/1600/900'],
       'work.html?id=03': ['https://picsum.photos/seed/w03a/1600/900','https://picsum.photos/seed/w03b/1600/900','https://picsum.photos/seed/w03c/1600/900'],
@@ -514,6 +514,81 @@
       'work.html?id=11': ['https://picsum.photos/seed/w11a/1600/900','https://picsum.photos/seed/w11b/1600/900','https://picsum.photos/seed/w11c/1600/900'],
       'work.html?id=12': ['https://picsum.photos/seed/w12a/1600/900','https://picsum.photos/seed/w12b/1600/900','https://picsum.photos/seed/w12c/1600/900'],
     };
+    const CARD_IMGS = { ...FALLBACK_CARD_IMGS };
+    const cardImgObjectUrls = [];
+    const PUBLIC_BACKUP_BASE = 'https://raw.githubusercontent.com/arthod-studio/arthod-website-backup/main/';
+    let publicMediaIndexPromise = null;
+
+    function getWorkIdFromHref(href) {
+      const m = (href || '').match(/id=(\w+)/);
+      return m ? m[1] : '';
+    }
+    function openMediaDb() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open('arthod-media', 1);
+        req.onupgradeneeded = () => req.result.createObjectStore('m');
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+    async function readMediaRecord(db, key) {
+      return await new Promise(resolve => {
+        const req = db.transaction('m').objectStore('m').get(key);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => resolve(null);
+      });
+    }
+    async function publicMediaIndex() {
+      if (!publicMediaIndexPromise) {
+        publicMediaIndexPromise = fetch(PUBLIC_BACKUP_BASE + 'backup/content.json', { cache: 'no-store' })
+          .then(r => r.ok ? r.json() : null)
+          .then(data => (data && data.mediaIndex) || {})
+          .catch(() => ({}));
+      }
+      return publicMediaIndexPromise;
+    }
+    function gallerySlotsFor(id) {
+      try {
+        const saved = JSON.parse(localStorage.getItem('arthod-galleryitems:' + id));
+        if (Array.isArray(saved) && saved.length) return saved;
+      } catch (e) {}
+      return ['g1', 'g2', 'g3', 'g4', 'g5', 'g6'];
+    }
+    async function detailHoverImages(id) {
+      let db = null;
+      try { db = await openMediaDb(); } catch (e) {}
+      const publicIndex = await publicMediaIndex();
+      const slots = gallerySlotsFor(id);
+      const urls = [];
+      for (const slot of slots) {
+        const key = `wd:${id}:${slot}`;
+        const rec = db ? await readMediaRecord(db, key) : null;
+        if (rec && rec.kind === 'image' && rec.blob) {
+          const url = URL.createObjectURL(rec.blob);
+          cardImgObjectUrls.push(url);
+          urls.push(url);
+          continue;
+        }
+        const pub = publicIndex[key];
+        if (pub && pub.kind === 'image' && pub.file) urls.push(PUBLIC_BACKUP_BASE + pub.file);
+      }
+      if (!urls.length) {
+        const key = `wd:${id}:c0`;
+        const rec = db ? await readMediaRecord(db, key) : null;
+        if (rec && rec.kind === 'image' && rec.blob) {
+          const url = URL.createObjectURL(rec.blob);
+          cardImgObjectUrls.push(url);
+          urls.push(url);
+        } else {
+          const pub = publicIndex[key];
+          if (pub && pub.kind === 'image' && pub.file) urls.push(PUBLIC_BACKUP_BASE + pub.file);
+        }
+      }
+      return urls;
+    }
+    function getCardImgs(card) {
+      return CARD_IMGS[card.getAttribute('href')] || [];
+    }
 
     // Set initial bg image for all cards on load
     // 페이지 로드 즉시 모든 카드 이미지 미리 로드 + 디코딩 (첨 디졸브만 빠르게 보이던 문제 해결:
@@ -528,7 +603,7 @@
     }
     document.querySelectorAll('.port-card').forEach(card => {
       if (card.hasAttribute('data-custom-img')) return;
-      const imgs = CARD_IMGS[card.getAttribute('href')];
+      const imgs = getCardImgs(card);
       if (imgs) {
         card.querySelector('.card-bg').style.backgroundImage = `url('${imgs[0]}')`;
         preloadAll(imgs);
@@ -536,8 +611,6 @@
     });
 
     document.querySelectorAll('.port-card').forEach(card => {
-      const imgs = CARD_IMGS[card.getAttribute('href')];
-      if (!imgs) return;
       const bg = card.querySelector('.card-bg');
       const ov = card.querySelector('.card-bg-ov');
       let idx = 0, cycleTimer = null, delayTimer = null, commitTimer = null;
@@ -566,7 +639,8 @@
       };
 
       card.addEventListener('mouseenter', () => {
-        if (card.hasAttribute('data-custom-img')) return;
+        const imgs = getCardImgs(card);
+        if (!imgs.length || (card.hasAttribute('data-custom-img') && !card.dataset.detailHover)) return;
         idx = 0;
         bg.style.backgroundImage = `url('${imgs[0]}')`;
         resetOv();
@@ -598,8 +672,9 @@
       });
 
       card.addEventListener('mouseleave', () => {
+        const imgs = getCardImgs(card);
         clearTimeout(delayTimer); clearInterval(cycleTimer); clearTimeout(commitTimer);
-        if (card.hasAttribute('data-custom-img')) { resetOv(); return; }
+        if (!imgs.length || (card.hasAttribute('data-custom-img') && !card.dataset.detailHover)) { resetOv(); return; }
         // 처음 이미지로 부드럽게 디졸브 (튀 방지)
         ov.style.backgroundImage = `url('${imgs[0]}')`;
         requestAnimationFrame(() => {
@@ -614,6 +689,25 @@
         }, 2000);
       });
     });
+
+    async function applyDetailHoverImages() {
+      const cards = [...document.querySelectorAll('.port-card')];
+      await Promise.all(cards.map(async card => {
+        const id = getWorkIdFromHref(card.getAttribute('href'));
+        if (!id) return;
+        const imgs = await detailHoverImages(id);
+        if (!imgs.length) return;
+        CARD_IMGS[card.getAttribute('href')] = imgs;
+        card.dataset.detailHover = '1';
+        const bg = card.querySelector('.card-bg');
+        if (bg) bg.style.backgroundImage = `url('${imgs[0]}')`;
+        preloadAll(imgs);
+      }));
+    }
+    applyDetailHoverImages();
+    setTimeout(applyDetailHoverImages, 900);
+    setTimeout(applyDetailHoverImages, 2200);
+    window.addEventListener('beforeunload', () => cardImgObjectUrls.forEach(url => URL.revokeObjectURL(url)));
   </script>
 </body>
 </html>
