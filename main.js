@@ -1376,12 +1376,12 @@ if (fv) {
       }
       body.editing [data-media] > .size-handle::after{content:'⋮⋮';color:#fff;font-size:9px;letter-spacing:-1px;transform:rotate(90deg)}
       body.editing [data-media] > .pan-handle{
-        display:flex;position:absolute;top:10px;left:10px;z-index:63;width:26px;height:26px;border-radius:50%;
+        display:flex;position:absolute;top:14px;left:14px;z-index:63;width:30px;height:30px;border-radius:50%;
         background:rgba(0,90,220,.92);color:#fff;align-items:center;justify-content:center;font-size:13px;
         cursor:move;box-shadow:0 3px 10px rgba(0,0,0,.25);
       }
       body.editing [data-media] > .zoom-handle{
-        display:flex;position:absolute;top:44px;left:10px;z-index:63;width:26px;height:26px;border-radius:50%;
+        display:flex;position:absolute;top:54px;left:14px;z-index:63;width:30px;height:30px;border-radius:50%;
         background:rgba(17,17,17,.86);color:#fff;align-items:center;justify-content:center;font-size:14px;font-weight:800;
         cursor:ns-resize;box-shadow:0 3px 10px rgba(0,0,0,.25);
       }
@@ -1410,16 +1410,16 @@ if (fv) {
       .text-toolbar button.tt-color.on{outline:2px solid #fff;outline-offset:1px}
       body.editing [data-media]:hover{outline-color:rgba(0,110,230,.95);outline-style:solid}
       body.editing [data-media]::after{
-        content:'사진 변경 ↑';position:absolute;top:10px;left:10px;z-index:60;
+        content:'교체 ↑';position:absolute;top:14px;right:14px;z-index:60;
         font:600 11px/1 var(--font-mono,ui-monospace,monospace);letter-spacing:.04em;color:#fff;
         background:rgba(0,90,220,.92);padding:7px 11px;border-radius:5px;pointer-events:none;
         box-shadow:0 4px 14px rgba(0,0,0,.25);
       }
-      body.editing [data-media="hero"]::after{content:'사진·영상 변경 ↑'}
-      body.editing [data-media][data-has-custom]::after{content:'사진 교체 ↑'}
+      body.editing [data-media="hero"]::after{content:'사진·영상 교체 ↑'}
+      body.editing [data-media][data-has-custom]::after{content:'교체 ↑'}
       body.editing [data-media="hero"][data-has-custom]::after{content:'사진·영상 교체 ↑'}
       body.editing [contenteditable="true"]:empty::before{content:'텍스트 입력';color:var(--ink-4,#aaa)}
-      .media-revert{position:absolute;top:10px;right:10px;z-index:62;display:none;align-items:center;gap:6px;
+      .media-revert{position:absolute;right:14px;bottom:14px;z-index:62;display:none;align-items:center;gap:6px;
         font:600 11px/1 var(--font-mono,ui-monospace,monospace);color:#fff;background:rgba(200,30,20,.92);
         padding:7px 11px;border-radius:5px;cursor:pointer;border:none;box-shadow:0 4px 14px rgba(0,0,0,.25)}
       body.editing [data-media][data-has-custom] > .media-revert{display:inline-flex}
