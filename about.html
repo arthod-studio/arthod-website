@@ -277,21 +277,34 @@
     /* ── Recent horizontal works ── */
     .ab-recent {
       position: relative;
-      min-height: 220svh;
+      min-height: calc(100svh + var(--recent-travel, 1400px));
       background: #050505;
       color: #fff;
       border-bottom: 1px solid rgba(255,255,255,.12);
     }
     .ab-recent-sticky {
-      position: sticky;
+      position: absolute;
       top: 0;
-      min-height: 100svh;
+      left: 0;
+      right: 0;
+      height: 100svh;
+      min-height: 0;
+      box-sizing: border-box;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       gap: clamp(24px,4vh,48px);
       padding: calc(var(--nav-h) + clamp(22px,4vh,52px)) var(--px) clamp(28px,5vh,64px);
+    }
+    .ab-recent.is-pinned .ab-recent-sticky {
+      position: fixed;
+      z-index: 2;
+    }
+    .ab-recent.is-after .ab-recent-sticky {
+      position: absolute;
+      top: auto;
+      bottom: 0;
     }
     .ab-recent-head {
       display: flex;
@@ -339,7 +352,7 @@
     }
     .ab-recent-rail {
       margin: 0 calc(var(--px) * -1);
-      overflow: visible;
+      overflow: hidden;
     }
     .ab-recent-track {
       display: flex;
@@ -358,9 +371,6 @@
       overflow: hidden;
       background: #151515;
       border: 1px solid rgba(255,255,255,.13);
-    }
-    .ab-recent-card:nth-child(even) .ab-recent-media {
-      aspect-ratio: 4 / 5;
     }
     .ab-recent-media img,
     .ab-recent-media video,
@@ -892,7 +902,7 @@
         <div class="ab-recent-head">
           <div>
             <span class="ab-recent-kicker" data-ek="recentKicker">Recent Outputs</span>
-            <h2 class="ab-recent-title" data-ek="recentTitle">Selected<br/>Works</h2>
+            <h2 class="ab-recent-title" data-ek="featuredWorksTitle">FEATURED<br/>WORKS</h2>
           </div>
           <div>
             <span class="ab-recent-count" data-ek="recentCountLabel">Scroll sideways, then continue</span>
@@ -1085,10 +1095,14 @@
     }
     function updateRecentRail() {
       if (!recentSection || !recentTrack) return;
-      const rect = recentSection.getBoundingClientRect();
-      const maxX = Math.max(0, recentTrack.scrollWidth - window.innerWidth + (window.innerWidth * 0.08));
-      const travel = Math.max(1, rect.height - window.innerHeight);
-      const progress = Math.max(0, Math.min(1, -rect.top / travel));
+      const maxX = Math.max(0, recentTrack.scrollWidth - window.innerWidth);
+      const travel = Math.max(1, maxX);
+      recentSection.style.setProperty('--recent-travel', `${travel}px`);
+      const start = recentSection.offsetTop;
+      const raw = (window.scrollY - start) / travel;
+      const progress = Math.max(0, Math.min(1, raw));
+      recentSection.classList.toggle('is-pinned', raw >= 0 && raw <= 1);
+      recentSection.classList.toggle('is-after', raw > 1);
       recentTrack.style.transform = `translate3d(${-maxX * progress}px,0,0)`;
     }
     recentButtons.forEach(btn => {
