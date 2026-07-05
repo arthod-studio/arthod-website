@@ -1775,44 +1775,59 @@ if (fv) {
 
   /* ── 퍼블릭 저장소 자동 동기화 ──────────────────────────────
      사이트가 열릴 때마다 GitHub 퍼블릭 백업 저장소의 최신 콘텐츠를 가져와,
-     이 브라우저에 아직 없는 값만 채워 넣는다 → "저장하면 모두에게 반영"을 구현.
-     이 브라우저에서 편집 중인 값(이미 로컬에 있는 값)은 덮어쓰지 않는다. */
+     새 게시본이면 로컬의 오래된 값까지 갱신한다 → "저장하면 모두에게 반영"을 구현.
+     같은 게시본 안에서 사용자가 편집 중인 로컬 값은 덮어쓰지 않는다. */
   const PUBLIC_SOURCE = { owner: 'arthod-studio', repo: 'arthod-website-backup', branch: 'main' };
+  const PUBLIC_SYNC_KEY = 'arthod-public-sync:savedAt';
   async function syncFromPublicSource() {
-    if (!PUBLIC_SOURCE.owner || !PUBLIC_SOURCE.repo) return;
+    if (!PUBLIC_SOURCE.owner || !PUBLIC_SOURCE.repo) return false;
+    let changed = false;
     try {
       const base = `https://raw.githubusercontent.com/${PUBLIC_SOURCE.owner}/${PUBLIC_SOURCE.repo}/${PUBLIC_SOURCE.branch}/`;
       const r = await fetch(base + 'backup/content.json', { cache: 'no-store' });
-      if (!r.ok) return;
+      if (!r.ok) return false;
       const data = await r.json();
+      const lastSyncedAt = localStorage.getItem(PUBLIC_SYNC_KEY);
+      const hasNewPublicVersion = !!data.savedAt && data.savedAt !== lastSyncedAt;
       if (data.text) {
         Object.entries(data.text).forEach(([k, v]) => {
-          if (localStorage.getItem(k) === null) localStorage.setItem(k, v);
+          if (hasNewPublicVersion || localStorage.getItem(k) === null) {
+            localStorage.setItem(k, v);
+            changed = true;
+          }
         });
       }
       if (data.mediaIndex) {
         for (const [key, info] of Object.entries(data.mediaIndex)) {
           const existing = await mediaGet(key);
-          if (existing) continue;
+          if (existing && !hasNewPublicVersion) continue;
           if (info.kind === 'embed') {
             await mediaSet(key, { kind: 'embed', embedUrl: info.embedUrl });
+            changed = true;
           } else if (info.kind === 'ref') {
             await mediaSet(key, { kind: 'ref', refKey: info.refKey });
+            changed = true;
           } else if (info.file) {
             try {
               const mr = await fetch(base + info.file, { cache: 'no-store' });
-              if (mr.ok) { const blob = await mr.blob(); await mediaSet(key, { kind: info.kind, blob }); }
+              if (mr.ok) {
+                const blob = await mr.blob();
+                await mediaSet(key, { kind: info.kind, blob });
+                changed = true;
+              }
             } catch (e) { /* 개별 파일 실패는 무시 */ }
           }
         }
       }
+      if (data.savedAt) localStorage.setItem(PUBLIC_SYNC_KEY, data.savedAt);
     } catch (e) { /* 오프라인/네트워크 오류 시 조용히 무시 */ }
+    return changed;
   }
 
   /* ── 7. 초기화 ── */
   async function init() {
     db(); // warm-start IndexedDB
-    await syncFromPublicSource(); // 방문자마다 최신 게시본을 먼저 반영
+    const publicSyncChanged = await syncFromPublicSource(); // 방문자마다 최신 게시본을 먼저 반영
     tagShared();
     assignKeys();
     restoreText();
@@ -1837,6 +1852,9 @@ if (fv) {
         restoreLayouts();
       },
     };
+    if (publicSyncChanged) {
+      window.dispatchEvent(new CustomEvent('arthod:public-sync'));
+    }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();

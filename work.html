@@ -474,7 +474,7 @@
   <!-- ══ CONTENT (filled by JS) ══════════════════════════════ -->
   <main class="work-page" id="work-page"></main>
 
-  <script src="main.js?v=gallery-reveal-fast-1"></script>
+  <script src="main.js?v=public-sync-1"></script>
   <script>
   // ── Project data ──────────────────────────────────────────
   const PROJECTS = [
@@ -860,6 +860,12 @@
   }
   let gallerySlots = loadGallerySlots();
   function saveGallerySlots() { localStorage.setItem(GALLERY_ITEMS_KEY, JSON.stringify(gallerySlots)); }
+  function applySavedGalleryLayout() {
+    const savedLayout = localStorage.getItem(GALLERY_LAYOUT_KEY);
+    if (savedLayout && GALLERY_LAYOUTS.some(l => l.id === savedLayout)) {
+      galleryEl.setAttribute('data-layout', savedLayout);
+    }
+  }
   function renderGallery() {
     const root = document.getElementById('wc-gallery-root');
     root.innerHTML = gallerySlots.map(slot =>
@@ -883,7 +889,6 @@
     setupGalleryReveal();
     if (window.ArthodEditor) window.ArthodEditor.reapplyMedia();
   }
-  renderGallery();
   document.querySelector('.wc-gallery-add').addEventListener('click', () => {
     let n = 1;
     const used = new Set(gallerySlots);
@@ -902,10 +907,15 @@
     { id: 'feature-mix', label: '대표 사진 강조형' },
   ];
   const galleryEl = document.querySelector('.wc-gallery');
-  const savedLayout = localStorage.getItem(GALLERY_LAYOUT_KEY);
-  if (savedLayout && GALLERY_LAYOUTS.some(l => l.id === savedLayout)) {
-    galleryEl.setAttribute('data-layout', savedLayout);
+  applySavedGalleryLayout();
+  renderGallery();
+  function refreshGalleryFromStorage() {
+    gallerySlots = loadGallerySlots();
+    applySavedGalleryLayout();
+    renderGallery();
   }
+  window.ArthodWorkDetail = { refreshGallery: refreshGalleryFromStorage };
+  window.addEventListener('arthod:public-sync', refreshGalleryFromStorage);
   let layoutPanel;
   function buildLayoutPanel() {
     layoutPanel = document.createElement('div');
