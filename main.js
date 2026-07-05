@@ -729,12 +729,14 @@ if (fv) {
       v.playsInline = true;
       v.setAttribute('muted', '');
       v.setAttribute('playsinline', '');
-      v.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1';
+      const fit = el.closest('#wc-gallery-root') ? 'contain' : 'cover';
+      v.style.cssText = `position:absolute;inset:0;width:100%;height:100%;object-fit:${fit};z-index:1;background:#f3f3f3`;
       el.insertBefore(v, el.firstChild);
       v.play().catch(() => {});
     } else if (img) {
       img.style.display = 'block';
       img.src = URL.createObjectURL(rec.blob);
+      if (el.closest('#wc-gallery-root')) img.style.objectFit = 'contain';
     }
     markCustom(el);
   }

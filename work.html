@@ -249,7 +249,12 @@
 
     /* ── 갤러리 레이아웃 범트 (편집 모드에서 선택) ── */
     .wc-gallery { display: grid; gap: 6px; }
-    .wc-gallery .wc-img { border-radius: 0; }
+    .wc-gallery .wc-img { border-radius: 0; background: #f3f3f3; }
+    .wc-gallery .wc-img img,
+    .wc-gallery .wc-img video.rich-media-el {
+      object-fit: contain !important;
+      background: #f3f3f3;
+    }
     /* grid-3x2: 정사각형 3x2 (기본) */
     .wc-gallery[data-layout="grid-3x2"] { grid-template-columns: repeat(3, 1fr); }
     .wc-gallery[data-layout="grid-3x2"] .wc-img { aspect-ratio: 4/3; }
@@ -475,7 +480,7 @@
   <!-- ══ CONTENT (filled by JS) ══════════════════════════════ -->
   <main class="work-page" id="work-page"></main>
 
-  <script src="main.js?v=crop-controls-2"></script>
+  <script src="main.js?v=crop-controls-3"></script>
   <script>
   // ── Project data ──────────────────────────────────────────
   const PROJECTS = [
