@@ -178,7 +178,7 @@
     /* Image area */
     .card-inner {
       position: relative;
-      aspect-ratio: 21/9;
+      aspect-ratio: 16/9;
       overflow: hidden;
       border-radius: 20px;
     }
@@ -217,12 +217,12 @@
 
     /* ── Responsive ── */
     @media (max-width: 768px) {
-      .card-inner { aspect-ratio: 16/7; }
+      .card-inner { aspect-ratio: 16/9; }
       .card-type { display: none; }
       .wp-header { flex-direction: column; align-items: flex-start; }
     }
     @media (max-width: 480px) {
-      .card-inner { aspect-ratio: 3/2; border-radius: 8px; }
+      .card-inner { aspect-ratio: 16/9; border-radius: 8px; }
       .card-head {
         flex-direction: column;
         align-items: flex-start;
