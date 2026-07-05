@@ -24,12 +24,12 @@
 
     /* ── Hero ── */
     .ab-hero {
-      background: #000;
+      background: #030303;
       min-height: 100svh;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: calc(var(--nav-h) + clamp(28px,5vh,64px)) var(--px) clamp(40px,6vh,76px);
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: clamp(20px,4vh,46px);
+      padding: calc(var(--nav-h) + clamp(16px,2.5vh,28px)) var(--px) clamp(28px,4vh,52px);
       position: relative;
       overflow: hidden;
       isolation: isolate;
@@ -39,66 +39,82 @@
       position: absolute;
       inset: 0;
       background:
-        linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
-      background-size: clamp(42px,6vw,86px) clamp(42px,6vw,86px);
-      mask-image: linear-gradient(to bottom, transparent 0%, #000 18%, #000 74%, transparent 100%);
-      opacity: .55;
+        radial-gradient(circle at 82% 14%, rgba(255,255,255,.14), transparent 22%),
+        radial-gradient(circle at 22% 72%, rgba(255,255,255,.08), transparent 28%),
+        linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+      background-size: auto, auto, clamp(44px,6vw,92px) clamp(44px,6vw,92px), clamp(44px,6vw,92px) clamp(44px,6vw,92px);
+      mask-image: linear-gradient(to bottom, transparent 0%, #000 12%, #000 88%, transparent 100%);
+      opacity: .9;
       z-index: -2;
     }
     .ab-hero::after {
       content: '';
       position: absolute;
-      left: 50%;
-      top: 16%;
-      width: 1px;
-      height: 68%;
-      background: linear-gradient(to bottom, transparent, rgba(255,255,255,.35), transparent);
-      transform: translateX(-50%);
+      inset: auto var(--px) clamp(22px,4vh,54px);
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.36), transparent);
       z-index: -1;
     }
     .ab-hero-frame {
-      position: absolute;
-      inset: calc(var(--nav-h) + 16px) clamp(14px,2vw,28px) clamp(14px,2vw,28px);
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 18px;
-      pointer-events: none;
-      z-index: -1;
+      display: none;
     }
-    .ab-hero-frame::before,
-    .ab-hero-frame::after {
-      content: '';
-      position: absolute;
-      width: clamp(90px,16vw,240px);
-      height: 1px;
-      background: rgba(255,255,255,.22);
+    .ab-hero-marquee {
+      display: grid;
+      gap: 8px;
+      margin: 0 calc(var(--px) * -1);
+      padding-bottom: clamp(18px,3vh,34px);
+      border-bottom: 1px solid rgba(255,255,255,.12);
+      color: rgba(255,255,255,.42);
+      font-family: var(--font-mono);
+      font-size: clamp(11px,1.1vw,14px);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
     }
-    .ab-hero-frame::before { left: clamp(18px,3vw,48px); top: clamp(18px,3vw,48px); }
-    .ab-hero-frame::after { right: clamp(18px,3vw,48px); bottom: clamp(18px,3vw,48px); }
+    .ab-hero-marquee span {
+      display: inline-block;
+      min-width: max-content;
+      padding-right: 24px;
+      animation: abMarquee 28s linear infinite;
+    }
+    .ab-hero-marquee span:nth-child(2) {
+      animation-duration: 34s;
+      animation-direction: reverse;
+      color: rgba(255,255,255,.28);
+    }
+    @keyframes abMarquee {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
     .ab-hero-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      justify-content: stretch;
+      align-items: end;
       position: relative;
       z-index: 1;
-      gap: 24px;
+      gap: 28px;
     }
     .ab-hero-label {
       font-family: var(--font-mono);
       font-size: 11px;
       letter-spacing: .16em;
       text-transform: uppercase;
-      color: rgba(255,255,255,.4);
+      color: rgba(255,255,255,.48);
     }
     .ab-hero-year {
       font-family: var(--font-mono);
       font-size: 11px;
       letter-spacing: .12em;
-      color: rgba(255,255,255,.3);
+      color: rgba(255,255,255,.42);
+      text-align: right;
     }
     .ab-hero-center {
-      text-align: center;
-      padding: clamp(34px,6vh,76px) 0;
+      align-self: center;
+      text-align: left;
+      padding: 0;
       position: relative;
       z-index: 1;
     }
@@ -107,25 +123,24 @@
       font-size: 10px;
       letter-spacing: .22em;
       text-transform: uppercase;
-      color: rgba(255,255,255,.36);
-      display: inline-flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: clamp(18px,3vh,34px);
+      color: rgba(255,255,255,.5);
+      display: flex;
+      align-items: flex-end;
+      gap: clamp(16px,3vw,40px);
+      margin-bottom: clamp(18px,3vh,32px);
     }
-    .ab-hero-kicker::before,
     .ab-hero-kicker::after {
       content: '';
-      width: clamp(28px,5vw,78px);
+      width: clamp(72px,18vw,320px);
       height: 1px;
-      background: rgba(255,255,255,.2);
+      background: rgba(255,255,255,.24);
     }
     .ab-hero-title {
       font-family: var(--font-d);
-      font-size: clamp(62px,14vw,214px);
+      font-size: clamp(78px,16.6vw,246px);
       font-weight: 900;
-      letter-spacing: -.065em;
-      line-height: .82;
+      letter-spacing: -.08em;
+      line-height: .72;
       color: #fff;
       display: block;
       text-transform: uppercase;
@@ -137,89 +152,80 @@
     .ab-hero-title .thin {
       font-weight: 350;
       letter-spacing: -.02em;
-      color: rgba(255,255,255,.74);
+      color: rgba(255,255,255,.7);
       font-style: italic;
     }
     .ab-hero-sub {
-      display: flex;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
       align-items: center;
-      justify-content: center;
-      gap: clamp(24px,4vw,64px);
-      margin-top: clamp(20px,3vh,40px);
-      border-top: 1px solid rgba(255,255,255,.1);
-      border-bottom: 1px solid rgba(255,255,255,.1);
-      padding: clamp(20px,3vh,36px) 0;
+      gap: clamp(14px,2vw,32px);
+      margin-top: clamp(24px,4vh,52px);
+      border-top: 1px solid rgba(255,255,255,.14);
+      border-bottom: 1px solid rgba(255,255,255,.14);
+      padding: clamp(14px,2.4vh,26px) 0;
       position: relative;
-    }
-    .ab-hero-sub::before,
-    .ab-hero-sub::after {
-      content: '';
-      width: clamp(24px,5vw,88px);
-      height: 1px;
-      background: rgba(255,255,255,.24);
     }
     .ab-hs-word {
       font-family: var(--font-d);
-      font-size: clamp(36px,6vw,88px);
-      font-weight: 300;
-      letter-spacing: .02em;
-      color: rgba(255,255,255,.85);
+      font-size: clamp(32px,6.5vw,104px);
+      font-weight: 350;
+      letter-spacing: -.03em;
+      color: rgba(255,255,255,.9);
     }
+    .ab-hs-word:last-child { text-align: right; }
     .ab-hs-plus {
       font-family: var(--font-d);
       font-size: clamp(28px,4vw,60px);
       font-weight: 100;
-      color: rgba(255,255,255,.3);
+      color: rgba(255,255,255,.36);
     }
     .ab-hero-bottom {
-      display: flex;
-      justify-content: space-between;
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(280px, .85fr);
       align-items: flex-end;
-      gap: 40px;
+      gap: clamp(28px,5vw,88px);
       border-top: 1px solid rgba(255,255,255,.1);
       padding-top: clamp(24px,3vh,40px);
       position: relative;
       z-index: 1;
     }
     .ab-hero-desc {
-      font-size: clamp(15px,1.4vw,18px);
-      line-height: 1.75;
-      color: rgba(255,255,255,.55);
-      max-width: 560px;
+      font-size: clamp(22px,3.25vw,52px);
+      font-weight: 750;
+      letter-spacing: -.055em;
+      line-height: 1.08;
+      color: rgba(255,255,255,.92);
+      max-width: 1040px;
     }
     .ab-hero-info {
-      text-align: right;
-      flex-shrink: 0;
       display: grid;
-      grid-template-columns: repeat(3, auto);
-      gap: 10px;
-      align-items: end;
+      grid-template-columns: 1fr;
+      gap: 12px;
     }
     .ab-hero-info p {
       font-family: var(--font-mono);
       font-size: 11px;
       letter-spacing: .1em;
-      color: rgba(255,255,255,.42);
+      color: rgba(255,255,255,.58);
       line-height: 1.2;
-      border: 1px solid rgba(255,255,255,.13);
-      border-radius: 999px;
-      padding: 9px 12px;
-      white-space: nowrap;
+      border-top: 1px solid rgba(255,255,255,.14);
+      padding-top: 12px;
+      text-align: right;
     }
 
     /* ── Statement ── */
     .ab-statement {
-      padding: clamp(100px,15vh,190px) var(--px);
+      padding: clamp(82px,13vh,170px) var(--px);
       border-bottom: 1px solid var(--border);
-      text-align: center;
       position: relative;
       overflow: hidden;
       background:
-        linear-gradient(90deg, rgba(15,14,12,.035), transparent 28%, transparent 72%, rgba(15,14,12,.035)),
+        linear-gradient(90deg, rgba(15,14,12,.045), transparent 28%, transparent 72%, rgba(15,14,12,.045)),
         var(--bg);
     }
     .ab-statement::before {
-      content: 'ART + METHOD';
+      content: 'ABOUT US  ( ARTHOD )';
       position: absolute;
       top: clamp(28px,5vh,56px);
       left: var(--px);
@@ -239,42 +245,46 @@
     }
     .ab-statement-q {
       font-family: var(--font-d);
-      font-size: clamp(32px,5vw,76px);
-      font-weight: 800;
+      font-size: clamp(42px,7.8vw,132px);
+      font-weight: 900;
       text-align: left;
-      letter-spacing: -.04em;
-      line-height: 1.06;
+      letter-spacing: -.065em;
+      line-height: .92;
       color: var(--ink);
-      max-width: 1080px;
-      margin: 0 auto clamp(44px,7vh,82px);
+      max-width: 1280px;
+      margin: 0 auto clamp(40px,6vh,72px);
       position: relative;
+      text-transform: uppercase;
     }
     .ab-statement-q em {
-      font-style: italic;
-      font-weight: 400;
-      color: var(--ink-3);
+      display: block;
+      font-style: normal;
+      font-weight: 900;
+      color: var(--ink);
+      padding-left: clamp(22px,5vw,96px);
     }
     .ab-statement-body {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 1px;
-      max-width: 1080px;
+      gap: clamp(24px,4vw,64px);
+      max-width: 1280px;
       margin: 0 auto;
       text-align: left;
-      background: var(--border);
-      border: 1px solid var(--border);
+      background: transparent;
+      border-top: 1px solid var(--border);
+      padding-top: clamp(28px,4vh,52px);
     }
     .ab-statement-body p {
       font-size: clamp(15px,1.3vw,17px);
       line-height: 1.9;
       color: var(--ink-2);
-      background: rgba(255,255,255,.92);
-      padding: clamp(28px,4vw,48px);
+      background: transparent;
+      padding: 0;
       position: relative;
-      min-height: 240px;
+      min-height: 0;
       display: flex;
       flex-direction: column;
-      justify-content: flex-end;
+      justify-content: flex-start;
     }
     .ab-statement-body p::before {
       display: block;
@@ -282,13 +292,13 @@
       font-size: 11px;
       letter-spacing: .16em;
       color: var(--ink-4);
-      margin-bottom: clamp(36px,6vw,76px);
+      margin-bottom: clamp(18px,3vw,34px);
     }
     .ab-statement-body p:first-child::before {
-      content: '01 / THINK';
+      content: 'WE CREATE';
     }
     .ab-statement-body p:last-child::before {
-      content: '02 / BUILD';
+      content: 'WE OPERATE';
     }
 
     /* ── Stats ── */
@@ -611,15 +621,17 @@
       .ab-hero {
         min-height: 100svh;
         padding-top: calc(var(--nav-h) + 32px);
+        gap: clamp(22px,4vh,42px);
       }
       .ab-hero::after {
-        left: auto;
-        right: var(--px);
         opacity: .55;
       }
       .ab-hero-top {
-        flex-direction: column;
+        grid-template-columns: 1fr;
         gap: 8px;
+      }
+      .ab-hero-year {
+        text-align: left;
       }
       .ab-hero-center {
         text-align: left;
@@ -635,26 +647,35 @@
         letter-spacing: -.055em;
       }
       .ab-hero-sub {
-        justify-content: flex-start;
+        grid-template-columns: 1fr auto 1fr;
         gap: clamp(14px,5vw,28px);
         overflow-x: hidden;
       }
-      .ab-hero-sub::before,
-      .ab-hero-sub::after {
-        display: none;
+      .ab-hero-bottom {
+        grid-template-columns: 1fr;
+        align-items:flex-start;
       }
-      .ab-hero-bottom { flex-direction:column; align-items:flex-start; }
-      .ab-hero-info { text-align:left; }
+      .ab-hero-info { width: 100%; }
+      .ab-hero-info p { text-align:left; }
       .ab-statement-q {
         text-align: left;
+        overflow-wrap: anywhere;
       }
     }
     @media(max-width:600px){
       .ab-stats-grid { grid-template-columns:1fr 1fr; }
       .ab-tl-item { grid-template-columns:70px 1fr; gap:20px; }
-      .ab-hero-frame {
-        inset: calc(var(--nav-h) + 10px) 8px 8px;
-        border-radius: 12px;
+      .ab-hero-marquee {
+        font-size: 10px;
+      }
+      .ab-hero-title {
+        font-size: clamp(58px,21vw,92px);
+      }
+      .ab-hero-desc {
+        font-size: clamp(22px,9vw,38px);
+      }
+      .ab-statement-q {
+        font-size: clamp(38px,14vw,70px);
       }
       .ab-hero-info {
         grid-template-columns: 1fr;
@@ -703,13 +724,17 @@
     <!-- Hero -->
     <div class="ab-hero">
       <div class="ab-hero-frame"></div>
+      <div class="ab-hero-marquee" aria-hidden="true">
+        <span>- MEDIA ART - IMMERSIVE ART - INTERACTIVE INSTALLATION - AI ART - PROJECTION MAPPING - LIGHT EXPERIENCE - SPATIAL DESIGN - BRAND EXPERIENCE - MEDIA ART - IMMERSIVE ART - INTERACTIVE INSTALLATION - AI ART - PROJECTION MAPPING - LIGHT EXPERIENCE - SPATIAL DESIGN - BRAND EXPERIENCE</span>
+        <span>- ART + METHOD - SENSOR - DATA - LIGHT - SPACE - MOTION - SOUND - CODE - MATERIAL - ART + METHOD - SENSOR - DATA - LIGHT - SPACE - MOTION - SOUND - CODE - MATERIAL</span>
+      </div>
       <div class="ab-hero-top r">
-        <span class="ab-hero-label">About — Arthod</span>
-        <span class="ab-hero-year">Seoul · Est. 2018</span>
+        <span class="ab-hero-label" data-ek="heroPrompt">We are<br/>Specialized in _</span>
+        <span class="ab-hero-year" data-ek="heroMeta">Media Art Studio<br/>Seoul · Est. 2018</span>
       </div>
 
       <div class="ab-hero-center r d1">
-        <span class="ab-hero-kicker">Media Art Studio</span>
+        <span class="ab-hero-kicker">ARTHOD</span>
         <span class="ab-hero-title"><span>ART</span><span class="thin">HOD</span></span>
         <div class="ab-hero-sub">
           <span class="ab-hs-word">Art</span>
@@ -719,37 +744,32 @@
       </div>
 
       <div class="ab-hero-bottom r d2">
-        <p class="ab-hero-desc">
-          미디어아트 스튜디오 Arthod는 Art와 Method의 합성어입니다.<br/>
-          예술과 기술이 교차하는 지점에서 새로운 감각적 경험을 설계합니다.
+        <p class="ab-hero-desc" data-ek="heroLead">
+          Arthod blends art, technology, and spatial method to create immersive media experiences that stay with people.
         </p>
         <div class="ab-hero-info">
-          <p>미디어아트 스튜디오</p>
-          <p>서울 기반</p>
-          <p>2018년 설립</p>
+          <p data-ek="heroInfo1">미디어아트 스튜디오 Arthod는 Art와 Method의 합성어입니다.</p>
+          <p data-ek="heroInfo2">예술과 기술이 교차하는 지점에서 새로운 감각적 경험을 설계합니다.</p>
+          <p data-ek="heroInfo3">기획부터 제작, 설치, 운영까지 하나의 방법론으로 연결합니다.</p>
         </div>
       </div>
     </div>
 
     <!-- Statement -->
     <div class="ab-statement">
-      <p class="ab-statement-q r">
-        빛, 공간, 데이터를 재료 삼아<br/>
-        관람객이 직접 반응하고 경험하는<br/>
-        <em>설치 예술을 만듭니다.</em>
+      <p class="ab-statement-q r" data-ek="statementKeywords">
+        'Immersive Media Contents',<br/>
+        'Interactive Installation',<br/>
+        <em>and 'AI Generated Experience'</em>
       </p>
       <div class="ab-statement-body">
-        <p class="r d1">
-          우리는 단순히 아름다운 것을 만드는 데 그치지 않습니다.
-          왜 아름다운지, 어떻게 그 감각이 만들어지는지를 탐구합니다.
-          방법론(Method)은 우리의 창작을 구조화하고,
-          예술(Art)은 그 구조에 숨결을 불어넣습니다.
+        <p class="r d1" data-ek="statementCreate">
+          빛, 공간, 데이터, 움직임을 재료 삼아 관람객이 직접 반응하고 경험하는 설치 예술을 만듭니다.
+          Arthod의 작업은 감각적인 장면에 머무르지 않고, 그 장면이 작동하는 구조와 방법까지 함께 설계합니다.
         </p>
-        <p class="r d2">
-          갤러리, 도시 공간, 브랜드 캠페인 —
-          어떤 맥락에서도 Arthod의 언어는 일관됩니다.
-          기획부터 제작, 설치, 운영까지
-          미디어아트의 전 과정을 함께합니다.
+        <p class="r d2" data-ek="statementOperate">
+          갤러리, 도시 공간, 브랜드 캠페인, 공공 프로젝트까지 맥락에 맞는 기술과 예술 언어를 조합합니다.
+          기획, 그래픽, 인터랙션, 하드웨어, 현장 설치와 운영까지 하나의 완성된 경험으로 연결합니다.
         </p>
       </div>
     </div>
