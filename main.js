@@ -643,6 +643,8 @@ if (fv) {
       if (el.dataset.media === 'hero') applyHero(rec);
       else if (el.dataset.mediaRich === '1') applyRichMedia(el, rec);
       else applyImage(el, URL.createObjectURL(rec.blob));
+      const layout = getLayoutRec(el.dataset.mediaKey || '');
+      if (Object.keys(layout).length) applyLayoutRec(el, layout);
     }
   }
 
@@ -754,6 +756,8 @@ if (fv) {
       if (isHero) applyHero({ blob: f, kind });
       else if (el.dataset.mediaRich === '1') applyRichMedia(el, { blob: f, kind });
       else applyImage(el, URL.createObjectURL(f));
+      const layout = getLayoutRec(el.dataset.mediaKey || '');
+      if (Object.keys(layout).length) applyLayoutRec(el, layout);
       toast(kind === 'video' ? '영상이 교체되었습니다' : '사진이 교체되었습니다');
       refreshCount();
     });
@@ -823,7 +827,6 @@ if (fv) {
     h.textContent = '✥';
     el.appendChild(h);
     let startX = 0, startY = 0, curX = 50, curY = 50;
-    const target = () => el.querySelector('.card-bg, .svc-img, .whs-slide, img') || el;
     const onMove = (e) => {
       const x = e.touches ? e.touches[0].clientX : e.clientX;
       const y = e.touches ? e.touches[0].clientY : e.clientY;
@@ -832,9 +835,8 @@ if (fv) {
       const dyPct = ((y - startY) / rect.height) * 100;
       const nx = Math.min(100, Math.max(0, curX + dxPct));
       const ny = Math.min(100, Math.max(0, curY + dyPct));
-      const t = target();
       const pos = nx.toFixed(0) + '% ' + ny.toFixed(0) + '%';
-      if (t.tagName === 'IMG') t.style.objectPosition = pos; else t.style.backgroundPosition = pos;
+      applyMediaPosition(el, pos);
       h.dataset.pending = pos;
     };
     const onUp = () => {
@@ -863,8 +865,45 @@ if (fv) {
     h.addEventListener('mousedown', onDown);
     h.addEventListener('touchstart', onDown, { passive: false });
   }
+  function attachZoomHandle(el) {
+    if (el.dataset.media === 'hero' || el.querySelector(':scope > .zoom-handle')) return;
+    const h = document.createElement('div');
+    h.className = 'zoom-handle';
+    h.title = '위/아래로 드래그해서 이미지 확대/축소';
+    h.textContent = '+';
+    el.appendChild(h);
+    let startY = 0, startZoom = 1;
+    const onMove = (e) => {
+      const y = e.touches ? e.touches[0].clientY : e.clientY;
+      const next = Math.max(1, Math.min(3, startZoom + ((startY - y) / 120)));
+      const zoom = +next.toFixed(2);
+      applyMediaZoom(el, zoom);
+      h.dataset.pending = String(zoom);
+    };
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onUp);
+      if (h.dataset.pending && el.dataset.mediaKey) {
+        setLayoutRec(el.dataset.mediaKey, { zoom: parseFloat(h.dataset.pending) });
+        toast('크롭 확대값이 저장되었습니다');
+      }
+    };
+    const onDown = (e) => {
+      e.preventDefault(); e.stopPropagation();
+      startY = e.touches ? e.touches[0].clientY : e.clientY;
+      startZoom = parseFloat(getLayoutRec(el.dataset.mediaKey || '').zoom) || 1;
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+      document.addEventListener('touchmove', onMove, { passive: false });
+      document.addEventListener('touchend', onUp);
+    };
+    h.addEventListener('mousedown', onDown);
+    h.addEventListener('touchstart', onDown, { passive: false });
+  }
   function attachMediaHandles() {
-    document.querySelectorAll('[data-media]').forEach(el => { attachSizeHandle(el); attachPanHandle(el); });
+    document.querySelectorAll('[data-media]').forEach(el => { attachSizeHandle(el); attachPanHandle(el); attachZoomHandle(el); });
   }
   async function revertSlot(key) {
     await mediaDelete(key);
@@ -1169,10 +1208,26 @@ if (fv) {
     if (!rec) return;
     if (rec.ar) { el.style.aspectRatio = String(rec.ar); el.style.height = 'auto'; }
     else if (rec.h) el.style.setProperty('--user-h', rec.h + 'px'), el.style.height = rec.h + 'px'; // \uad6c\ubc84\uc804 \ud638\ud658(\uc608\uc804 \uc800\uc7a5\uac12)
-    if (rec.pos) {
-      const target = el.querySelector('.card-bg, .svc-img, .whs-slide, img') || el;
-      if (target.tagName === 'IMG') target.style.objectPosition = rec.pos;
-      else target.style.backgroundPosition = rec.pos;
+    if (rec.pos) applyMediaPosition(el, rec.pos);
+    if (rec.zoom) applyMediaZoom(el, rec.zoom);
+  }
+  function mediaVisualTarget(el) {
+    return el.querySelector(':scope > video.rich-media-el, :scope > .rich-media-el video, :scope > img, img, .card-bg, .svc-img, .whs-slide') || el;
+  }
+  function applyMediaPosition(el, pos) {
+    const target = mediaVisualTarget(el);
+    if (target.tagName === 'IMG' || target.tagName === 'VIDEO') target.style.objectPosition = pos;
+    else target.style.backgroundPosition = pos;
+  }
+  function applyMediaZoom(el, zoom) {
+    const z = Math.max(1, Math.min(3, parseFloat(zoom) || 1));
+    const target = mediaVisualTarget(el);
+    if (target.tagName === 'IMG' || target.tagName === 'VIDEO') {
+      target.style.transformOrigin = 'center center';
+      target.style.transform = z === 1 ? '' : `scale(${z})`;
+      target.style.willChange = z === 1 ? '' : 'transform';
+    } else {
+      target.style.backgroundSize = z === 1 ? 'cover' : `${Math.round(z * 100)}% auto`;
     }
   }
   function restoreLayouts() {
@@ -1327,6 +1382,7 @@ if (fv) {
       body.editing [data-media]{outline:2px dashed rgba(0,110,230,.55);outline-offset:-2px;cursor:pointer!important;position:relative}
       .size-handle{display:none}
       .pan-handle{display:none}
+      .zoom-handle{display:none}
       body.editing [data-media] > .size-handle{
         display:flex;position:absolute;left:50%;bottom:6px;transform:translateX(-50%);z-index:63;
         width:34px;height:14px;border-radius:7px;background:rgba(0,90,220,.92);cursor:ns-resize;
@@ -1338,7 +1394,12 @@ if (fv) {
         background:rgba(0,90,220,.92);color:#fff;align-items:center;justify-content:center;font-size:13px;
         cursor:move;box-shadow:0 3px 10px rgba(0,0,0,.25);
       }
-      body.editing [data-media="hero"] > .size-handle,body.editing [data-media="hero"] > .pan-handle{display:none}
+      body.editing [data-media] > .zoom-handle{
+        display:flex;position:absolute;top:44px;left:10px;z-index:63;width:26px;height:26px;border-radius:50%;
+        background:rgba(17,17,17,.86);color:#fff;align-items:center;justify-content:center;font-size:14px;font-weight:800;
+        cursor:ns-resize;box-shadow:0 3px 10px rgba(0,0,0,.25);
+      }
+      body.editing [data-media="hero"] > .size-handle,body.editing [data-media="hero"] > .pan-handle,body.editing [data-media="hero"] > .zoom-handle{display:none}
       .text-toolbar{
         position:absolute;display:none;align-items:center;gap:4px;z-index:1100;
         background:#1b1a18;border-radius:9px;padding:6px 7px;box-shadow:0 10px 28px rgba(0,0,0,.35);
@@ -1548,7 +1609,7 @@ if (fv) {
       revertSlot(rev.dataset.revertKey);
       return;
     }
-    if (e.target.closest('.size-handle, .pan-handle')) {
+    if (e.target.closest('.size-handle, .pan-handle, .zoom-handle')) {
       e.preventDefault();
       e.stopPropagation();
       return;
