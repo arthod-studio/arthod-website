@@ -865,7 +865,7 @@
     const root = document.getElementById('wc-gallery-root');
     root.innerHTML = gallerySlots.map(slot =>
       `<div class="wc-gitem" data-slot="${slot}">`
-      + `<div class="wc-img" data-media="image" data-media-key="wd:${p.id}:${slot}"><img src="${defaultImgFor(slot)}" alt=""></div>`
+      + `<div class="wc-img" data-media="image" data-media-key="wd:${p.id}:${slot}" data-media-rich="1"><img src="${defaultImgFor(slot)}" alt=""></div>`
       + `<button class="wc-gitem-remove" type="button" title="사진 삭제">✕</button>`
       + `</div>`
     ).join('');
