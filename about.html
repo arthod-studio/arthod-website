@@ -91,7 +91,7 @@
     }
     .ab-hero-center {
       align-self: center;
-      text-align: left;
+      text-align: center;
       padding: 0;
       position: relative;
       z-index: 1;
@@ -104,75 +104,104 @@
       color: rgba(255,255,255,.5);
       display: flex;
       align-items: flex-end;
-      gap: clamp(16px,3vw,40px);
-      margin-bottom: clamp(18px,3vh,32px);
+      justify-content: center;
+      gap: clamp(14px,2vw,28px);
+      margin-bottom: clamp(18px,3vh,34px);
     }
     .ab-hero-kicker::after {
       content: '';
-      width: clamp(72px,18vw,320px);
+      width: clamp(52px,10vw,180px);
       height: 1px;
-      background: rgba(255,255,255,.24);
+      background: rgba(255,255,255,.22);
     }
     .ab-hero-title {
       font-family: var(--font-d);
-      font-size: clamp(78px,16.6vw,246px);
-      font-weight: 900;
-      letter-spacing: -.08em;
-      line-height: .72;
+      font-size: clamp(58px,12vw,168px);
+      font-weight: 350;
+      letter-spacing: -.045em;
+      line-height: 1;
       color: #fff;
-      display: block;
-      text-transform: uppercase;
-      text-shadow: 0 0 44px rgba(255,255,255,.12);
-    }
-    .ab-hero-title span {
-      display: inline-block;
-      transition: transform .9s cubic-bezier(.76,0,.24,1), opacity .9s ease, color .9s ease;
-    }
-    .ab-hero-title .thin {
-      font-weight: 350;
-      letter-spacing: -.02em;
-      color: rgba(255,255,255,.7);
-      font-style: italic;
-    }
-    .ab-hero-sub {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-      align-items: center;
-      gap: clamp(14px,2vw,32px);
-      margin-top: clamp(24px,4vh,52px);
-      border-top: 1px solid rgba(255,255,255,.14);
-      border-bottom: 1px solid rgba(255,255,255,.14);
-      padding: clamp(14px,2.4vh,26px) 0;
+      place-items: center;
+      min-height: clamp(96px,18vw,230px);
       position: relative;
-      opacity: .32;
-      transform: translateY(18px);
-      transition: opacity .9s ease, transform .9s cubic-bezier(.76,0,.24,1), border-color .9s ease;
+      text-shadow: 0 0 38px rgba(255,255,255,.13);
     }
-    .ab-hs-word {
-      font-family: var(--font-d);
-      font-size: clamp(32px,6.5vw,104px);
-      font-weight: 350;
-      letter-spacing: -.03em;
-      color: rgba(255,255,255,.9);
+    .ab-mark-brand,
+    .ab-mark-formula {
+      grid-area: 1 / 1;
+      transition: opacity .95s ease, transform .95s cubic-bezier(.76,0,.24,1), filter .95s ease;
     }
-    .ab-hs-word:last-child { text-align: right; }
-    .ab-hs-plus {
-      font-family: var(--font-d);
-      font-size: clamp(28px,4vw,60px);
-      font-weight: 100;
-      color: rgba(255,255,255,.36);
+    .ab-mark-brand {
+      font-weight: 320;
+      letter-spacing: -.04em;
+      opacity: 1;
+      transform: translateY(0) scale(1);
     }
-    .ab-hero.title-split .ab-hero-title span:first-child {
+    .ab-mark-formula {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: clamp(13px,2.2vw,36px);
+      white-space: nowrap;
+      opacity: 0;
+      transform: translateY(10px) scale(.985);
+      filter: blur(8px);
+    }
+    .ab-mf-word {
+      display: grid;
+      gap: clamp(4px,.9vw,10px);
+      min-width: 0;
+      transform: translateX(0);
+      transition: transform .95s cubic-bezier(.76,0,.24,1);
+    }
+    .ab-mf-word b {
+      font: inherit;
+      font-weight: 360;
+      line-height: .82;
+    }
+    .ab-mf-word em {
+      font-style: normal;
+      font-family: var(--font-mono);
+      font-size: clamp(11px,.95vw,15px);
+      letter-spacing: .02em;
+      color: rgba(255,255,255,.82);
+      opacity: 0;
       transform: translateY(-4px);
+      transition: opacity .7s ease .2s, transform .7s ease .2s;
     }
-    .ab-hero.title-split .ab-hero-title .thin {
-      opacity: .08;
-      transform: translateX(clamp(18px,4vw,64px));
+    .ab-mf-art {
+      text-align: left;
+      transform: translateX(clamp(22px,4vw,72px));
     }
-    .ab-hero.title-split .ab-hero-sub {
+    .ab-mf-method {
+      text-align: left;
+      transform: translateX(calc(clamp(22px,4vw,72px) * -1));
+    }
+    .ab-mf-plus {
+      font-weight: 100;
+      color: rgba(255,255,255,.46);
+      line-height: .82;
+      transform: translateY(.02em);
+      opacity: .55;
+    }
+    .ab-hero.title-split .ab-mark-brand {
+      opacity: 0;
+      transform: translateY(-8px) scale(.985);
+      filter: blur(8px);
+    }
+    .ab-hero.title-split .ab-mark-formula {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      filter: blur(0);
+    }
+    .ab-hero.title-split .ab-mf-art,
+    .ab-hero.title-split .ab-mf-method {
+      transform: translateX(0);
+    }
+    .ab-hero.title-split .ab-mf-word em {
       opacity: 1;
       transform: none;
-      border-color: rgba(255,255,255,.26);
     }
     .ab-hero-bottom {
       display: grid;
@@ -748,22 +777,17 @@
         text-align: left;
       }
       .ab-hero-center {
-        text-align: left;
+        text-align: center;
       }
       .ab-hero-kicker {
-        justify-content: flex-start;
+        justify-content: center;
       }
       .ab-hero-kicker::after {
         display: none;
       }
       .ab-hero-title {
-        line-height: .9;
-        letter-spacing: -.055em;
-      }
-      .ab-hero-sub {
-        grid-template-columns: 1fr auto 1fr;
-        gap: clamp(14px,5vw,28px);
-        overflow-x: hidden;
+        min-height: clamp(86px,22vw,150px);
+        font-size: clamp(52px,13.5vw,104px);
       }
       .ab-hero-bottom {
         grid-template-columns: 1fr;
@@ -787,7 +811,15 @@
       .ab-stats-grid { grid-template-columns:1fr 1fr; }
       .ab-tl-item { grid-template-columns:70px 1fr; gap:20px; }
       .ab-hero-title {
-        font-size: clamp(58px,21vw,92px);
+        font-size: clamp(38px,13.2vw,56px);
+        letter-spacing: -.04em;
+        min-height: 96px;
+      }
+      .ab-mark-formula {
+        gap: clamp(8px,2.3vw,12px);
+      }
+      .ab-mf-word em {
+        font-size: 10px;
       }
       .ab-hero-desc {
         font-size: clamp(22px,9vw,38px);
@@ -863,12 +895,14 @@
       <div class="ab-hero-main">
         <div class="ab-hero-center r d1">
           <span class="ab-hero-kicker">ARTHOD</span>
-          <span class="ab-hero-title" data-edit-key="about-hero-title-locked"><span>ART</span><span class="thin">HOD</span></span>
-          <div class="ab-hero-sub">
-            <span class="ab-hs-word">Art</span>
-            <span class="ab-hs-plus">+</span>
-            <span class="ab-hs-word">Method</span>
-          </div>
+          <span class="ab-hero-title" data-edit-key="about-hero-title-locked">
+            <span class="ab-mark-brand">Arthod</span>
+            <span class="ab-mark-formula" aria-hidden="true">
+              <span class="ab-mf-word ab-mf-art"><b>Art</b><em>예술</em></span>
+              <span class="ab-mf-plus">+</span>
+              <span class="ab-mf-word ab-mf-method"><b>Method</b><em>방법</em></span>
+            </span>
+          </span>
         </div>
       </div>
 
