@@ -449,6 +449,7 @@ if (fv) {
       let s = slot;
       if (slot[0] === 's') s = '슬라이드 ' + (parseInt(slot.slice(1), 10) + 1);
       else if (slot === 'c0') s = '대표 이미지';
+      else if (slot === 'next') s = '다음 프로젝트 이미지';
       else if (slot[0] === 'g') s = '갤러리 ' + slot.slice(1);
       return '작품 ' + id + ' — ' + s;
     }
@@ -484,7 +485,7 @@ if (fv) {
     const img = container.querySelector('img');
     if (img) { img.src = url; }
     else {
-      const bg = container.querySelector('.card-bg, .svc-img, .whs-slide');
+      const bg = container.querySelector('.card-bg, .svc-img, .whs-slide, .wn-bg');
       if (bg) bg.style.backgroundImage = `url("${url}")`;
       else container.style.backgroundImage = `url("${url}")`;
     }
@@ -673,7 +674,7 @@ if (fv) {
       + '<div class="hc-saved"><div class="hc-saved-title">이미 업로드한 미디어</div><div class="hc-saved-list"><div class="hc-empty">불러오는 중…</div></div></div>'
       + linkHtml
       + '</div>';
-    box.querySelector('.hc-title').textContent = (isHero ? '히어로 배경' : '사진·영상') + ' 설정';
+    box.querySelector('.hc-title').textContent = (isHero ? '히어로 배경' : (allowVideo ? '사진·영상' : '사진')) + ' 설정';
     document.body.appendChild(box);
     const close = () => box.remove();
     box.addEventListener('click', ev => { if (ev.target === box) close(); });
@@ -1260,7 +1261,7 @@ if (fv) {
     applyMediaTransform(el, rec);
   }
   function mediaVisualTarget(el) {
-    return el.querySelector(':scope > video.rich-media-el, :scope > .rich-media-el video, :scope > img, img, .card-bg, .svc-img, .whs-slide') || el;
+    return el.querySelector(':scope > video.rich-media-el, :scope > .rich-media-el video, :scope > img, img, .card-bg, .svc-img, .whs-slide, .wn-bg') || el;
   }
   function applyMediaPosition(el, pos) {
     const target = mediaVisualTarget(el);
@@ -1684,10 +1685,19 @@ if (fv) {
       e.stopPropagation();
       return;
     }
+    const nextMedia = e.target.closest('.work-next[data-media]');
+    if (nextMedia) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+      openPicker(nextMedia);
+      return;
+    }
     const media = e.target.closest('[data-media]');
     if (media) {
       e.preventDefault();
       e.stopPropagation();
+      if (e.stopImmediatePropagation) e.stopImmediatePropagation();
       openPicker(media);
       return;
     }
