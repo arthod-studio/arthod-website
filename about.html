@@ -27,7 +27,7 @@
       background: #030303;
       min-height: 100svh;
       display: grid;
-      grid-template-rows: auto auto 1fr auto;
+      grid-template-rows: auto 1fr auto;
       gap: clamp(20px,4vh,46px);
       padding: calc(var(--nav-h) + clamp(16px,2.5vh,28px)) var(--px) clamp(28px,4vh,52px);
       position: relative;
@@ -59,34 +59,12 @@
     .ab-hero-frame {
       display: none;
     }
-    .ab-hero-marquee {
+    .ab-hero-main {
       display: grid;
-      gap: 8px;
-      margin: 0 calc(var(--px) * -1);
-      padding-bottom: clamp(18px,3vh,34px);
-      border-bottom: 1px solid rgba(255,255,255,.12);
-      color: rgba(255,255,255,.42);
-      font-family: var(--font-mono);
-      font-size: clamp(11px,1.1vw,14px);
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      white-space: nowrap;
-      overflow: hidden;
-    }
-    .ab-hero-marquee span {
-      display: inline-block;
-      min-width: max-content;
-      padding-right: 24px;
-      animation: abMarquee 28s linear infinite;
-    }
-    .ab-hero-marquee span:nth-child(2) {
-      animation-duration: 34s;
-      animation-direction: reverse;
-      color: rgba(255,255,255,.28);
-    }
-    @keyframes abMarquee {
-      from { transform: translateX(0); }
-      to { transform: translateX(-50%); }
+      grid-template-columns: 1fr;
+      align-items: center;
+      position: relative;
+      z-index: 1;
     }
     .ab-hero-top {
       display: grid;
@@ -148,6 +126,7 @@
     }
     .ab-hero-title span {
       display: inline-block;
+      transition: transform .9s cubic-bezier(.76,0,.24,1), opacity .9s ease, color .9s ease;
     }
     .ab-hero-title .thin {
       font-weight: 350;
@@ -165,6 +144,9 @@
       border-bottom: 1px solid rgba(255,255,255,.14);
       padding: clamp(14px,2.4vh,26px) 0;
       position: relative;
+      opacity: .32;
+      transform: translateY(18px);
+      transition: opacity .9s ease, transform .9s cubic-bezier(.76,0,.24,1), border-color .9s ease;
     }
     .ab-hs-word {
       font-family: var(--font-d);
@@ -179,6 +161,18 @@
       font-size: clamp(28px,4vw,60px);
       font-weight: 100;
       color: rgba(255,255,255,.36);
+    }
+    .ab-hero.title-split .ab-hero-title span:first-child {
+      transform: translateY(-4px);
+    }
+    .ab-hero.title-split .ab-hero-title .thin {
+      opacity: .08;
+      transform: translateX(clamp(18px,4vw,64px));
+    }
+    .ab-hero.title-split .ab-hero-sub {
+      opacity: 1;
+      transform: none;
+      border-color: rgba(255,255,255,.26);
     }
     .ab-hero-bottom {
       display: grid;
@@ -299,6 +293,126 @@
     }
     .ab-statement-body p:last-child::before {
       content: 'WE OPERATE';
+    }
+
+    /* ── Recent horizontal works ── */
+    .ab-recent {
+      position: relative;
+      min-height: 220svh;
+      background: #050505;
+      color: #fff;
+      border-bottom: 1px solid rgba(255,255,255,.12);
+    }
+    .ab-recent-sticky {
+      position: sticky;
+      top: 0;
+      min-height: 100svh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: clamp(24px,4vh,48px);
+      padding: calc(var(--nav-h) + clamp(22px,4vh,52px)) var(--px) clamp(28px,5vh,64px);
+    }
+    .ab-recent-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 24px;
+      border-bottom: 1px solid rgba(255,255,255,.12);
+      padding-bottom: clamp(18px,3vh,32px);
+    }
+    .ab-recent-kicker,
+    .ab-recent-count {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.42);
+    }
+    .ab-recent-title {
+      font-family: var(--font-d);
+      font-size: clamp(44px,8vw,132px);
+      font-weight: 900;
+      letter-spacing: -.06em;
+      line-height: .88;
+      margin-top: 12px;
+    }
+    .ab-recent-tools {
+      display: none;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    body.editing .ab-recent-tools { display: flex; }
+    .ab-recent-tools button {
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.08);
+      color: #fff;
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .ab-recent-tools button.active {
+      background: #fff;
+      color: #050505;
+    }
+    .ab-recent-rail {
+      margin: 0 calc(var(--px) * -1);
+      overflow: visible;
+    }
+    .ab-recent-track {
+      display: flex;
+      gap: clamp(12px,2vw,28px);
+      padding: 0 var(--px);
+      will-change: transform;
+      transform: translate3d(0,0,0);
+    }
+    .ab-recent-card {
+      flex: 0 0 clamp(320px,42vw,720px);
+      min-width: 0;
+    }
+    .ab-recent-media {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      background: #151515;
+      border: 1px solid rgba(255,255,255,.13);
+    }
+    .ab-recent-card:nth-child(even) .ab-recent-media {
+      aspect-ratio: 4 / 5;
+    }
+    .ab-recent-media img,
+    .ab-recent-media video,
+    .ab-recent-media iframe {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .ab-recent-media .rich-media-el {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .ab-recent-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      padding-top: 14px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.5);
+    }
+    .ab-recent-desc {
+      max-width: 520px;
+      font-size: clamp(14px,1.4vw,17px);
+      line-height: 1.7;
+      color: rgba(255,255,255,.56);
     }
 
     /* ── Stats ── */
@@ -657,6 +771,13 @@
       }
       .ab-hero-info { width: 100%; }
       .ab-hero-info p { text-align:left; }
+      .ab-recent-head {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .ab-recent-card {
+        flex-basis: 78vw;
+      }
       .ab-statement-q {
         text-align: left;
         overflow-wrap: anywhere;
@@ -665,14 +786,24 @@
     @media(max-width:600px){
       .ab-stats-grid { grid-template-columns:1fr 1fr; }
       .ab-tl-item { grid-template-columns:70px 1fr; gap:20px; }
-      .ab-hero-marquee {
-        font-size: 10px;
-      }
       .ab-hero-title {
         font-size: clamp(58px,21vw,92px);
       }
       .ab-hero-desc {
         font-size: clamp(22px,9vw,38px);
+      }
+      .ab-recent {
+        min-height: 190svh;
+      }
+      .ab-recent-sticky {
+        padding-top: calc(var(--nav-h) + 24px);
+      }
+      .ab-recent-card {
+        flex-basis: 84vw;
+      }
+      .ab-recent-meta {
+        flex-direction: column;
+        gap: 6px;
       }
       .ab-statement-q {
         font-size: clamp(38px,14vw,70px);
@@ -724,22 +855,20 @@
     <!-- Hero -->
     <div class="ab-hero">
       <div class="ab-hero-frame"></div>
-      <div class="ab-hero-marquee" aria-hidden="true">
-        <span>- MEDIA ART - IMMERSIVE ART - INTERACTIVE INSTALLATION - AI ART - PROJECTION MAPPING - LIGHT EXPERIENCE - SPATIAL DESIGN - BRAND EXPERIENCE - MEDIA ART - IMMERSIVE ART - INTERACTIVE INSTALLATION - AI ART - PROJECTION MAPPING - LIGHT EXPERIENCE - SPATIAL DESIGN - BRAND EXPERIENCE</span>
-        <span>- ART + METHOD - SENSOR - DATA - LIGHT - SPACE - MOTION - SOUND - CODE - MATERIAL - ART + METHOD - SENSOR - DATA - LIGHT - SPACE - MOTION - SOUND - CODE - MATERIAL</span>
-      </div>
       <div class="ab-hero-top r">
         <span class="ab-hero-label" data-ek="heroPrompt">We are<br/>Specialized in _</span>
         <span class="ab-hero-year" data-ek="heroMeta">Media Art Studio<br/>Seoul · Est. 2018</span>
       </div>
 
-      <div class="ab-hero-center r d1">
-        <span class="ab-hero-kicker">ARTHOD</span>
-        <span class="ab-hero-title"><span>ART</span><span class="thin">HOD</span></span>
-        <div class="ab-hero-sub">
-          <span class="ab-hs-word">Art</span>
-          <span class="ab-hs-plus">+</span>
-          <span class="ab-hs-word">Method</span>
+      <div class="ab-hero-main">
+        <div class="ab-hero-center r d1">
+          <span class="ab-hero-kicker">ARTHOD</span>
+          <span class="ab-hero-title" data-edit-key="about-hero-title-locked"><span>ART</span><span class="thin">HOD</span></span>
+          <div class="ab-hero-sub">
+            <span class="ab-hs-word">Art</span>
+            <span class="ab-hs-plus">+</span>
+            <span class="ab-hs-word">Method</span>
+          </div>
         </div>
       </div>
 
@@ -773,6 +902,61 @@
         </p>
       </div>
     </div>
+
+    <!-- Recent works horizontal scroll -->
+    <section class="ab-recent" id="ab-recent">
+      <div class="ab-recent-sticky">
+        <div class="ab-recent-head">
+          <div>
+            <span class="ab-recent-kicker" data-ek="recentKicker">Recent Outputs</span>
+            <h2 class="ab-recent-title" data-ek="recentTitle">Selected<br/>Works</h2>
+          </div>
+          <div>
+            <span class="ab-recent-count" data-ek="recentCountLabel">Scroll sideways, then continue</span>
+            <div class="ab-recent-tools" aria-label="Recent work count">
+              <button type="button" data-count="3">3</button>
+              <button type="button" data-count="4">4</button>
+              <button type="button" data-count="5">5</button>
+            </div>
+          </div>
+        </div>
+        <div class="ab-recent-rail">
+          <div class="ab-recent-track">
+            <article class="ab-recent-card">
+              <div class="ab-recent-media" data-media="image" data-media-key="about:recent:1" data-media-rich="1">
+                <img src="https://raw.githubusercontent.com/arthod-studio/arthod-website-backup/main/backup/media/01/wd_01_s8.png" alt="Stream Scape preview">
+              </div>
+              <div class="ab-recent-meta"><span data-ek="recentMeta1A">01 / Stream Scape</span><span data-ek="recentMeta1B">Interactive Media Art</span></div>
+            </article>
+            <article class="ab-recent-card">
+              <div class="ab-recent-media" data-media="image" data-media-key="about:recent:2" data-media-rich="1">
+                <img src="https://raw.githubusercontent.com/arthod-studio/arthod-website-backup/main/backup/media/01/wd_01_g2.jpg" alt="Interactive installation preview">
+              </div>
+              <div class="ab-recent-meta"><span data-ek="recentMeta2A">02 / Hyper Drive</span><span data-ek="recentMeta2B">Multimedia Installation</span></div>
+            </article>
+            <article class="ab-recent-card">
+              <div class="ab-recent-media" data-media="image" data-media-key="about:recent:3" data-media-rich="1">
+                <img src="https://raw.githubusercontent.com/arthod-studio/arthod-website-backup/main/backup/media/03/wd_03_g1.jpg" alt="Infinity Book preview">
+              </div>
+              <div class="ab-recent-meta"><span data-ek="recentMeta3A">03 / Infinity Book</span><span data-ek="recentMeta3B">Public Installation</span></div>
+            </article>
+            <article class="ab-recent-card">
+              <div class="ab-recent-media" data-media="image" data-media-key="about:recent:4" data-media-rich="1">
+                <img src="https://raw.githubusercontent.com/arthod-studio/arthod-website-backup/main/backup/media/03/wd_03_g2.jpg" alt="Media artwork preview">
+              </div>
+              <div class="ab-recent-meta"><span data-ek="recentMeta4A">04 / Luminous Melody</span><span data-ek="recentMeta4B">Light Experience</span></div>
+            </article>
+            <article class="ab-recent-card">
+              <div class="ab-recent-media" data-media="image" data-media-key="about:recent:5" data-media-rich="1">
+                <img src="https://raw.githubusercontent.com/arthod-studio/arthod-website-backup/main/backup/media/01/wd_01_g5.jpg" alt="Media art preview">
+              </div>
+              <div class="ab-recent-meta"><span data-ek="recentMeta5A">05 / Media Output</span><span data-ek="recentMeta5B">Image / Video</span></div>
+            </article>
+          </div>
+        </div>
+        <p class="ab-recent-desc" data-ek="recentDesc">스크롤을 내리면 최근 작업물이 가로로 넘어갑니다. 편집 모드에서는 각 이미지를 사진이나 영상 링크로 교체할 수 있고, 표시 개수도 3개부터 5개까지 조정할 수 있습니다.</p>
+      </div>
+    </section>
 
     <!-- Philosophy -->
     <div class="ab-phil">
@@ -895,6 +1079,58 @@
   </footer>
 
   <script>
+    /* ── Hero: ARTHOD → Art + Method on scroll ── */
+    const aboutHero = document.querySelector('.ab-hero');
+    function updateHeroTitleSplit() {
+      if (!aboutHero) return;
+      const rect = aboutHero.getBoundingClientRect();
+      const trigger = Math.min(window.innerHeight * .28, 260);
+      aboutHero.classList.toggle('title-split', rect.top < -trigger);
+    }
+    updateHeroTitleSplit();
+    window.addEventListener('scroll', updateHeroTitleSplit, { passive: true });
+    window.addEventListener('resize', updateHeroTitleSplit);
+
+    /* ── Recent works: vertical scroll drives horizontal rail ── */
+    const recentSection = document.querySelector('.ab-recent');
+    const recentTrack = document.querySelector('.ab-recent-track');
+    const recentCards = [...document.querySelectorAll('.ab-recent-card')];
+    const recentButtons = [...document.querySelectorAll('.ab-recent-tools button')];
+    const recentCountKey = 'arthod-about-recent-count';
+    function getRecentCount() {
+      const n = parseInt(localStorage.getItem(recentCountKey) || '5', 10);
+      return Math.max(3, Math.min(5, Number.isFinite(n) ? n : 5));
+    }
+    function applyRecentCount() {
+      const count = getRecentCount();
+      recentCards.forEach((card, i) => { card.hidden = i >= count; });
+      recentButtons.forEach(btn => btn.classList.toggle('active', parseInt(btn.dataset.count, 10) === count));
+      updateRecentRail();
+    }
+    function updateRecentRail() {
+      if (!recentSection || !recentTrack) return;
+      const rect = recentSection.getBoundingClientRect();
+      const maxX = Math.max(0, recentTrack.scrollWidth - window.innerWidth + (window.innerWidth * 0.08));
+      const travel = Math.max(1, rect.height - window.innerHeight);
+      const progress = Math.max(0, Math.min(1, -rect.top / travel));
+      recentTrack.style.transform = `translate3d(${-maxX * progress}px,0,0)`;
+    }
+    recentButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        localStorage.setItem(recentCountKey, btn.dataset.count);
+        applyRecentCount();
+      });
+    });
+    applyRecentCount();
+    recentTrack?.querySelectorAll('img, video, iframe').forEach(el => {
+      el.addEventListener('load', updateRecentRail);
+      el.addEventListener('loadedmetadata', updateRecentRail);
+    });
+    requestAnimationFrame(updateRecentRail);
+    setTimeout(updateRecentRail, 300);
+    window.addEventListener('scroll', updateRecentRail, { passive: true });
+    window.addEventListener('resize', applyRecentCount);
+
     /* ── Mouse follow glow ── */
     document.querySelectorAll('.ab-phil-col').forEach(col => {
       col.addEventListener('mousemove', e => {

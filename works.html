@@ -192,7 +192,7 @@
     .card-bg { transition: none; }
     .card-bg-ov {
       opacity: 0;
-      transition: opacity 2s ease;
+      transition: opacity .9s ease;
     }
 
     /* ── Footer ── */
@@ -517,6 +517,9 @@
     const CARD_IMGS = { ...FALLBACK_CARD_IMGS };
     const cardImgObjectUrls = [];
     const PUBLIC_BACKUP_BASE = 'https://raw.githubusercontent.com/arthod-studio/arthod-website-backup/main/';
+    const DISSOLVE_MS = 900;
+    const HOLD_MS = 650;
+    const HOVER_START_DELAY = 120;
     let publicContentPromise = null;
 
     function getWorkIdFromHref(href) {
@@ -654,7 +657,7 @@
         ov.style.transition = 'none';
         ov.style.opacity = '0';
         void ov.offsetWidth;               // reflow 강제 → 다음 페이드가 처음부터
-        ov.style.transition = 'opacity 2s ease';
+        ov.style.transition = `opacity ${DISSOLVE_MS}ms ease`;
       };
 
       const stop = () => {
@@ -674,10 +677,11 @@
           const step = () => {
             idx = (idx + 1) % imgs.length;
             const targetSrc = imgs[idx];
+            clearTimeout(commitTimer);
             whenReady(targetSrc, () => {
               ov.style.backgroundImage = `url('${targetSrc}')`;
               // 브라우저가 opacity:0 상태를 확실히 한 프레임 그린 뒤 1로 바꿔야
-              // 모든 사이클(첫 디졸브 포함)이 항상 2초로 동일하게 보임
+              // 모든 사이클(첫 디졸브 포함)이 항상 같은 속도로 보임
               requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
                   ov.style.opacity = '1';
@@ -688,11 +692,11 @@
               // 페이드 완료 → 베이스에 확정하고 오버레이 숨김(같은 이미지라 깜빡임 없음)
               bg.style.backgroundImage = `url('${targetSrc}')`;
               resetOv();
-            }, 2000);
+            }, DISSOLVE_MS);
           };
           step();                            // 첫 디졸브 바로 시작
-          cycleTimer = setInterval(step, 3000); // 2초 디졸브 + 1초 유지
-        }, 300);
+          cycleTimer = setInterval(step, DISSOLVE_MS + HOLD_MS);
+        }, HOVER_START_DELAY);
       });
 
       card.addEventListener('mouseleave', () => {
@@ -710,7 +714,7 @@
           bg.style.backgroundImage = `url('${imgs[0]}')`;
           resetOv();
           idx = 0;
-        }, 2000);
+        }, DISSOLVE_MS);
       });
     });
 
@@ -724,7 +728,7 @@
         CARD_IMGS[card.getAttribute('href')] = imgs;
         card.dataset.detailHover = '1';
         const bg = card.querySelector('.card-bg');
-        if (bg) bg.style.backgroundImage = `url('${imgs[0]}')`;
+        if (bg && !card.matches(':hover')) bg.style.backgroundImage = `url('${imgs[0]}')`;
         preloadAll(imgs);
       }));
     }

@@ -251,7 +251,8 @@ if (fv) {
   const TEXT_SELECTORS = [
     // About
     '.ab-hero-label', '.ab-hero-year', '.ab-hero-title', '.ab-hs-word', '.ab-hero-desc', '.ab-hero-info p',
-    '.ab-statement-q', '.ab-statement-body p', '.ab-phil-tag', '.ab-phil-list li',
+    '.ab-statement-q', '.ab-statement-body p', '.ab-recent-kicker', '.ab-recent-title', '.ab-recent-count',
+    '.ab-recent-meta span', '.ab-recent-desc', '.ab-phil-tag', '.ab-phil-list li',
     '.ab-tl-title', '.ab-tl-sub', '.ab-tl-year', '.ab-tl-name', '.ab-tl-desc', '.ab-cta h2',
     // Works
     '.wp-title', '.wp-subtitle', '.wp-count', '.wp-right p',
@@ -1107,7 +1108,8 @@ if (fv) {
     const text = {};
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
-      if (k.indexOf('arthod-edit:') === 0 || k.indexOf('arthod-proj:') === 0 || k.indexOf('arthod-style:') === 0
+      if (k === 'arthod-about-recent-count'
+        || k.indexOf('arthod-edit:') === 0 || k.indexOf('arthod-proj:') === 0 || k.indexOf('arthod-style:') === 0
         || k.indexOf('arthod-layout:') === 0 || k.indexOf('arthod-gallerylayout:') === 0 || k.indexOf('arthod-galleryitems:') === 0
         || k.indexOf('arthod-sliderorder:') === 0 || k.indexOf('arthod-cardorder:') === 0) {
         text[k] = localStorage.getItem(k);
@@ -1230,7 +1232,7 @@ if (fv) {
       const text = {};
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
-        if (k.indexOf('arthod-edit:') === 0 || k.indexOf('arthod-proj:') === 0 || k.indexOf('arthod-style:') === 0 || k.indexOf('arthod-layout:') === 0 || k.indexOf('arthod-gallerylayout:') === 0 || k.indexOf('arthod-galleryitems:') === 0 || k.indexOf('arthod-sliderorder:') === 0 || k.indexOf('arthod-cardorder:') === 0) {
+        if (k === 'arthod-about-recent-count' || k.indexOf('arthod-edit:') === 0 || k.indexOf('arthod-proj:') === 0 || k.indexOf('arthod-style:') === 0 || k.indexOf('arthod-layout:') === 0 || k.indexOf('arthod-gallerylayout:') === 0 || k.indexOf('arthod-galleryitems:') === 0 || k.indexOf('arthod-sliderorder:') === 0 || k.indexOf('arthod-cardorder:') === 0) {
           text[k] = localStorage.getItem(k);
         }
       }
