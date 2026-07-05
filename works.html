@@ -517,7 +517,7 @@
     const CARD_IMGS = { ...FALLBACK_CARD_IMGS };
     const cardImgObjectUrls = [];
     const PUBLIC_BACKUP_BASE = 'https://raw.githubusercontent.com/arthod-studio/arthod-website-backup/main/';
-    let publicMediaIndexPromise = null;
+    let publicContentPromise = null;
 
     function getWorkIdFromHref(href) {
       const m = (href || '').match(/id=(\w+)/);
@@ -538,18 +538,41 @@
         req.onerror = () => resolve(null);
       });
     }
-    async function publicMediaIndex() {
-      if (!publicMediaIndexPromise) {
-        publicMediaIndexPromise = fetch(PUBLIC_BACKUP_BASE + 'backup/content.json', { cache: 'no-store' })
+    async function resolveLocalMediaRecord(db, key, seen) {
+      if (!db || !key) return null;
+      const guard = seen || new Set();
+      if (guard.has(key)) return null;
+      guard.add(key);
+      const rec = await readMediaRecord(db, key);
+      if (rec && rec.kind === 'ref') return resolveLocalMediaRecord(db, rec.refKey, guard);
+      return rec;
+    }
+    async function publicContent() {
+      if (!publicContentPromise) {
+        publicContentPromise = fetch(PUBLIC_BACKUP_BASE + 'backup/content.json', { cache: 'no-store' })
           .then(r => r.ok ? r.json() : null)
-          .then(data => (data && data.mediaIndex) || {})
+          .then(data => data || {})
           .catch(() => ({}));
       }
-      return publicMediaIndexPromise;
+      return publicContentPromise;
     }
-    function gallerySlotsFor(id) {
+    function publicImageUrl(key, publicIndex, seen) {
+      const guard = seen || new Set();
+      if (!key || guard.has(key)) return '';
+      guard.add(key);
+      const info = publicIndex[key];
+      if (!info) return '';
+      if (info.kind === 'ref') return publicImageUrl(info.refKey, publicIndex, guard);
+      if (info.kind === 'image' && info.file) return PUBLIC_BACKUP_BASE + info.file;
+      return '';
+    }
+    function gallerySlotsFor(id, publicText) {
       try {
         const saved = JSON.parse(localStorage.getItem('arthod-galleryitems:' + id));
+        if (Array.isArray(saved) && saved.length) return saved;
+      } catch (e) {}
+      try {
+        const saved = JSON.parse((publicText || {})['arthod-galleryitems:' + id]);
         if (Array.isArray(saved) && saved.length) return saved;
       } catch (e) {}
       return ['g1', 'g2', 'g3', 'g4', 'g5', 'g6'];
@@ -557,31 +580,32 @@
     async function detailHoverImages(id) {
       let db = null;
       try { db = await openMediaDb(); } catch (e) {}
-      const publicIndex = await publicMediaIndex();
-      const slots = gallerySlotsFor(id);
+      const publicData = await publicContent();
+      const publicIndex = publicData.mediaIndex || {};
+      const slots = gallerySlotsFor(id, publicData.text);
       const urls = [];
       for (const slot of slots) {
         const key = `wd:${id}:${slot}`;
-        const rec = db ? await readMediaRecord(db, key) : null;
+        const rec = await resolveLocalMediaRecord(db, key);
         if (rec && rec.kind === 'image' && rec.blob) {
           const url = URL.createObjectURL(rec.blob);
           cardImgObjectUrls.push(url);
           urls.push(url);
           continue;
         }
-        const pub = publicIndex[key];
-        if (pub && pub.kind === 'image' && pub.file) urls.push(PUBLIC_BACKUP_BASE + pub.file);
+        const pubUrl = publicImageUrl(key, publicIndex);
+        if (pubUrl) urls.push(pubUrl);
       }
       if (!urls.length) {
         const key = `wd:${id}:c0`;
-        const rec = db ? await readMediaRecord(db, key) : null;
+        const rec = await resolveLocalMediaRecord(db, key);
         if (rec && rec.kind === 'image' && rec.blob) {
           const url = URL.createObjectURL(rec.blob);
           cardImgObjectUrls.push(url);
           urls.push(url);
         } else {
-          const pub = publicIndex[key];
-          if (pub && pub.kind === 'image' && pub.file) urls.push(PUBLIC_BACKUP_BASE + pub.file);
+          const pubUrl = publicImageUrl(key, publicIndex);
+          if (pubUrl) urls.push(pubUrl);
         }
       }
       return urls;
