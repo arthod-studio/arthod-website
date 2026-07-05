@@ -383,6 +383,16 @@ if (fv) {
       });
     } catch (e) { return null; }
   }
+  async function resolveMediaRec(rec, seen) {
+    if (!rec || rec.kind !== 'ref') return rec;
+    const guard = seen || new Set();
+    if (!rec.refKey || guard.has(rec.refKey)) return null;
+    guard.add(rec.refKey);
+    return resolveMediaRec(await mediaGet(rec.refKey), guard);
+  }
+  async function mediaResolved(k) {
+    return resolveMediaRec(await mediaGet(k));
+  }
   async function mediaSet(k, v) {
     try {
       const d = await db();
@@ -610,7 +620,7 @@ if (fv) {
   async function applyAllMedia() {
     const els = document.querySelectorAll('[data-media]');
     for (const el of els) {
-      const rec = await mediaGet(el.dataset.mediaKey);
+      const rec = await mediaResolved(el.dataset.mediaKey);
       if (!rec) continue;
       if (el.dataset.media === 'hero') applyHero(rec);
       else if (el.dataset.mediaRich === '1') applyRichMedia(el, rec);
@@ -644,19 +654,24 @@ if (fv) {
 
   function openHeroChoice(el) {
     const isHero = el.dataset.media === 'hero';
+    const allowVideo = isHero || el.dataset.mediaRich === '1';
     const prev = document.querySelector('.hero-choice');
     if (prev) prev.remove();
     const box = document.createElement('div');
     box.className = 'hero-choice';
+    const linkHtml = allowVideo
+      ? '<div class="hc-or">또는 영상 링크</div>'
+        + '<input class="hc-url" type="text" placeholder="유튜브 / 비메오 링크 붙여넣기" />'
+        + '<div class="hc-err"></div>'
+        + '<div class="hc-row"><button class="hc-cancel" type="button">취소</button>'
+        + '<button class="hc-apply" type="button">링크 적용</button></div>'
+      : '<div class="hc-row"><button class="hc-cancel" type="button">취소</button></div>';
     box.innerHTML =
       '<div class="hc-inner">'
       + `<div class="hc-title">${isHero ? '히어로 배경 500' : '미디어'} 설정</div>`
-      + '<button class="hc-file" type="button">🖼 파일 업로드 (사진·영상)</button>'
-      + '<div class="hc-or">또는 영상 링크</div>'
-      + '<input class="hc-url" type="text" placeholder="유튜브 / 비메오 링크 붙여넣기" />'
-      + '<div class="hc-err"></div>'
-      + '<div class="hc-row"><button class="hc-cancel" type="button">취소</button>'
-      + '<button class="hc-apply" type="button">링크 적용</button></div>'
+      + `<button class="hc-file" type="button">🖼 파일 업로드 (${allowVideo ? '사진·영상' : '사진'})</button>`
+      + '<div class="hc-saved"><div class="hc-saved-title">이미 업로드한 미디어</div><div class="hc-saved-list"><div class="hc-empty">불러오는 중…</div></div></div>'
+      + linkHtml
       + '</div>';
     box.querySelector('.hc-title').textContent = (isHero ? '히어로 배경' : '사진·영상') + ' 설정';
     document.body.appendChild(box);
@@ -664,21 +679,73 @@ if (fv) {
     box.addEventListener('click', ev => { if (ev.target === box) close(); });
     box.querySelector('.hc-cancel').addEventListener('click', close);
     box.querySelector('.hc-file').addEventListener('click', () => { close(); pickFile(el); });
+    populateSavedMediaChoices(box, el, close);
     const urlInput = box.querySelector('.hc-url');
-    const err = box.querySelector('.hc-err');
-    const apply = async () => {
-      const embedUrl = toEmbedUrl(urlInput.value);
-      if (!embedUrl) { err.textContent = '유튜브 또는 비메오 링크를 인식하지 못했습니다.'; return; }
-      const rec = { kind: 'embed', embedUrl, src: urlInput.value.trim() };
-      await mediaSet(el.dataset.mediaKey, rec);
-      if (isHero) applyHero(rec); else applyRichMedia(el, rec);
-      close();
-      toast('영상 링크가 적용되었습니다');
-      refreshCount();
-    };
-    box.querySelector('.hc-apply').addEventListener('click', apply);
-    urlInput.addEventListener('keydown', e => { if (e.key === 'Enter') apply(); });
-    setTimeout(() => urlInput.focus(), 50);
+    if (urlInput) {
+      const err = box.querySelector('.hc-err');
+      const apply = async () => {
+        const embedUrl = toEmbedUrl(urlInput.value);
+        if (!embedUrl) { err.textContent = '유튜브 또는 비메오 링크를 인식하지 못했습니다.'; return; }
+        const rec = { kind: 'embed', embedUrl, src: urlInput.value.trim() };
+        await mediaSet(el.dataset.mediaKey, rec);
+        if (isHero) applyHero(rec); else applyRichMedia(el, rec);
+        close();
+        toast('영상 링크가 적용되었습니다');
+        refreshCount();
+      };
+      box.querySelector('.hc-apply').addEventListener('click', apply);
+      urlInput.addEventListener('keydown', e => { if (e.key === 'Enter') apply(); });
+    }
+  }
+
+  function mediaCompatibleForSlot(el, rec) {
+    if (!rec || rec.kind === 'ref') return false;
+    if (rec.kind === 'image') return true;
+    return el.dataset.media === 'hero' || el.dataset.mediaRich === '1';
+  }
+  async function populateSavedMediaChoices(box, el, close) {
+    const list = box.querySelector('.hc-saved-list');
+    const targetKey = el.dataset.mediaKey || '';
+    const items = (await mediaAll()).filter(it => it.key !== targetKey && mediaCompatibleForSlot(el, it.rec));
+    if (!items.length) {
+      list.innerHTML = '<div class="hc-empty">선택할 수 있는 업로드 미디어가 없습니다.</div>';
+      return;
+    }
+    list.innerHTML = '';
+    items.forEach(it => {
+      const rec = it.rec;
+      const isEmbed = rec.kind === 'embed';
+      const isVid = rec.kind === 'video';
+      const url = isEmbed ? '' : URL.createObjectURL(rec.blob);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'hc-saved-item';
+      const thumb = isEmbed
+        ? '<span class="hc-saved-thumb hc-saved-link">▶</span>'
+        : (isVid ? `<video class="hc-saved-thumb" src="${url}" muted playsinline></video>`
+                 : `<span class="hc-saved-thumb" style="background-image:url('${url}')"></span>`);
+      btn.innerHTML = thumb
+        + `<span class="hc-saved-meta"><span>${humanLabel(it.key)}</span><em>${isEmbed ? '영상 링크' : (isVid ? '영상' : '사진')}</em></span>`;
+      btn.addEventListener('click', async () => {
+        await applyExistingMedia(el, it.key);
+        close();
+      });
+      list.appendChild(btn);
+    });
+  }
+  async function applyExistingMedia(el, sourceKey) {
+    const targetKey = el.dataset.mediaKey || '';
+    if (!sourceKey || !targetKey || sourceKey === targetKey) return;
+    await mediaSet(targetKey, { kind: 'ref', refKey: sourceKey });
+    const rec = await mediaResolved(targetKey);
+    if (!rec) return;
+    if (el.dataset.media === 'hero') applyHero(rec);
+    else if (el.dataset.mediaRich === '1') applyRichMedia(el, rec);
+    else applyImage(el, URL.createObjectURL(rec.blob));
+    const layout = getLayoutRec(targetKey);
+    if (Object.keys(layout).length) applyLayoutRec(el, layout);
+    toast('업로드된 미디어를 적용했습니다');
+    refreshCount();
   }
 
   // 히어가 아닌 일반 슬롯(예: '작품에 대하여' 위 대표 이미지)에 사진/영상/링크를 적용
@@ -738,8 +805,7 @@ if (fv) {
   }
 
   function openPicker(el) {
-    if (el.dataset.media === 'hero' || el.dataset.mediaRich === '1') openHeroChoice(el);
-    else pickFile(el);
+    openHeroChoice(el);
   }
 
   /* ── 5b. 커스텀 표시 · 되돌리기 · 미디어 관리 ── */
@@ -919,14 +985,19 @@ if (fv) {
     items.forEach(it => {
       const isEmbed = it.rec.kind === 'embed';
       const isVid = it.rec.kind === 'video';
-      const url = isEmbed ? '' : URL.createObjectURL(it.rec.blob);
+      const isRef = it.rec.kind === 'ref';
+      const url = (isEmbed || isRef) ? '' : URL.createObjectURL(it.rec.blob);
       const row = document.createElement('div');
       row.className = 'mm-row';
-      const thumb = isEmbed
+      const thumb = isRef
+        ? `<div class="mm-thumb mm-thumb-link">↗</div>`
+        : isEmbed
         ? `<div class="mm-thumb mm-thumb-link">▶</div>`
         : (isVid ? `<video class="mm-thumb" src="${url}" muted playsinline></video>`
                  : `<div class="mm-thumb" style="background:url('${url}') center/cover"></div>`);
-      const sub = isEmbed
+      const sub = isRef
+        ? `기존 미디어 참조 · ${humanLabel(it.rec.refKey || '')}`
+        : isEmbed
         ? `영상 링크 · ${(it.rec.src || '').replace(/^https?:\/\//, '').slice(0, 28)}`
         : `${isVid ? '영상' : '사진'} · ${(it.rec.blob.size / 1024).toFixed(0)}KB`;
       row.innerHTML =
@@ -1017,10 +1088,13 @@ if (fv) {
     let done = 0;
     for (const it of items) {
       const wid = workIdOf(it.key);
-      perWork[wid] = perWork[wid] || { images: [], videos: [], embeds: [] };
+      perWork[wid] = perWork[wid] || { images: [], videos: [], embeds: [], refs: [] };
       if (it.rec.kind === 'embed') {
         perWork[wid].embeds.push({ key: it.key, url: it.rec.src || it.rec.embedUrl });
         mediaIndex[it.key] = { kind: 'embed', embedUrl: it.rec.embedUrl };
+      } else if (it.rec.kind === 'ref') {
+        perWork[wid].refs.push({ key: it.key, refKey: it.rec.refKey });
+        mediaIndex[it.key] = { kind: 'ref', refKey: it.rec.refKey };
       } else {
         const ext = extFor(it.rec);
         const file = `backup/media/${wid}/${safeName(it.key)}.${ext}`;
@@ -1499,6 +1573,20 @@ if (fv) {
       .hc-file{width:100%;padding:14px;font-size:13px;font-weight:600;color:#fff;background:var(--ink,#111);
         border:none;border-radius:8px;cursor:pointer;transition:opacity .2s}
       .hc-file:hover{opacity:.85}
+      .hc-saved{margin-top:16px;border:1px solid var(--border,#e0ded9);border-radius:10px;overflow:hidden}
+      .hc-saved-title{padding:10px 12px;font-size:11px;font-weight:700;color:var(--ink-3,#777);
+        background:var(--bg-warm,#f7f6f3);letter-spacing:.05em;text-transform:uppercase}
+      .hc-saved-list{max-height:220px;overflow:auto;background:#fff}
+      .hc-saved-item{width:100%;display:flex;align-items:center;gap:10px;padding:9px 11px;border:none;
+        border-top:1px solid var(--border,#e0ded9);cursor:pointer;text-align:left;background:#fff}
+      .hc-saved-item:hover{background:var(--bg-warm,#f7f6f3)}
+      .hc-saved-thumb{width:52px;height:38px;flex-shrink:0;border-radius:5px;background:#ddd center/cover no-repeat;
+        object-fit:cover;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff}
+      .hc-saved-link{background:var(--ink,#111)}
+      .hc-saved-meta{display:flex;flex-direction:column;gap:2px;min-width:0}
+      .hc-saved-meta span{font-size:12px;font-weight:600;color:var(--ink,#111);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .hc-saved-meta em{font-style:normal;font-size:11px;color:var(--ink-3,#777)}
+      .hc-empty{padding:14px 12px;font-size:12px;color:var(--ink-3,#777);text-align:center}
       .hc-or{text-align:center;font-size:11px;color:var(--ink-4,#aaa);margin:16px 0 10px;
         letter-spacing:.06em;text-transform:uppercase}
       .hc-url{width:100%;padding:12px 14px;font-size:13px;color:var(--ink,#111);border:1px solid var(--border,#e0ded9);
@@ -1668,6 +1756,8 @@ if (fv) {
           if (existing) continue;
           if (info.kind === 'embed') {
             await mediaSet(key, { kind: 'embed', embedUrl: info.embedUrl });
+          } else if (info.kind === 'ref') {
+            await mediaSet(key, { kind: 'ref', refKey: info.refKey });
           } else if (info.file) {
             try {
               const mr = await fetch(base + info.file, { cache: 'no-store' });
