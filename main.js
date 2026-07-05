@@ -1778,7 +1778,9 @@ if (fv) {
      새 게시본이면 로컬의 오래된 값까지 갱신한다 → "저장하면 모두에게 반영"을 구현.
      같은 게시본 안에서 사용자가 편집 중인 로컬 값은 덮어쓰지 않는다. */
   const PUBLIC_SOURCE = { owner: 'arthod-studio', repo: 'arthod-website-backup', branch: 'main' };
+  const PUBLIC_SYNC_VERSION = 'public-sync-2';
   const PUBLIC_SYNC_KEY = 'arthod-public-sync:savedAt';
+  const PUBLIC_SYNC_VERSION_KEY = 'arthod-public-sync:version';
   async function syncFromPublicSource() {
     if (!PUBLIC_SOURCE.owner || !PUBLIC_SOURCE.repo) return false;
     let changed = false;
@@ -1788,7 +1790,9 @@ if (fv) {
       if (!r.ok) return false;
       const data = await r.json();
       const lastSyncedAt = localStorage.getItem(PUBLIC_SYNC_KEY);
-      const hasNewPublicVersion = !!data.savedAt && data.savedAt !== lastSyncedAt;
+      const hasNewPublicVersion =
+        localStorage.getItem(PUBLIC_SYNC_VERSION_KEY) !== PUBLIC_SYNC_VERSION ||
+        (!!data.savedAt && data.savedAt !== lastSyncedAt);
       if (data.text) {
         Object.entries(data.text).forEach(([k, v]) => {
           if (hasNewPublicVersion || localStorage.getItem(k) === null) {
@@ -1820,6 +1824,7 @@ if (fv) {
         }
       }
       if (data.savedAt) localStorage.setItem(PUBLIC_SYNC_KEY, data.savedAt);
+      localStorage.setItem(PUBLIC_SYNC_VERSION_KEY, PUBLIC_SYNC_VERSION);
     } catch (e) { /* 오프라인/네트워크 오류 시 조용히 무시 */ }
     return changed;
   }
