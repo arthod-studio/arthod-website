@@ -692,11 +692,44 @@
     '12': ['https://picsum.photos/seed/w12a/1600/900','https://picsum.photos/seed/w12b/1600/900','https://picsum.photos/seed/w12c/1600/900','https://picsum.photos/seed/w12d/800/600','https://picsum.photos/seed/w12e/800/600','https://picsum.photos/seed/w12f/800/600','https://picsum.photos/seed/w12g/800/600','https://picsum.photos/seed/w12h/800/600','https://picsum.photos/seed/w12i/800/600'],
   };
 
+  function projectById(pid) {
+    return PROJECTS.find(project => project.id === pid);
+  }
+  function idFromWorkHref(href) {
+    const m = (href || '').match(/id=(\w+)/);
+    return m ? m[1].padStart(2, '0') : '';
+  }
+  function worksOrderedProjects() {
+    const fallback = PROJECTS.slice();
+    let orderedIds = [];
+    try {
+      const saved = JSON.parse(localStorage.getItem('arthod-cardorder:works'));
+      if (Array.isArray(saved)) orderedIds = saved.map(idFromWorkHref).filter(Boolean);
+    } catch (e) {}
+    const ordered = orderedIds.map(projectById).filter(Boolean);
+    const seen = new Set(ordered.map(project => project.id));
+    fallback.forEach(project => {
+      if (!seen.has(project.id)) ordered.push(project);
+    });
+    let count = ordered.length;
+    try {
+      const raw = parseInt(localStorage.getItem('arthod-workcount:works'), 10);
+      if (Number.isFinite(raw)) count = Math.max(1, Math.min(ordered.length, raw));
+    } catch (e) {}
+    return ordered.slice(0, count);
+  }
+  function nextProjectFor(pid) {
+    const ordered = worksOrderedProjects();
+    const list = ordered.some(project => project.id === pid) ? ordered : PROJECTS;
+    const currentIndex = list.findIndex(project => project.id === pid);
+    return list[(Math.max(0, currentIndex) + 1) % list.length];
+  }
+
   // ── Render ────────────────────────────────────────────────
   const id = (new URLSearchParams(location.search).get('id') || '01').padStart(2, '0');
   const idx    = PROJECTS.findIndex(p => p.id === id);
   const p      = PROJECTS[idx] || PROJECTS[0];
-  const next    = PROJECTS[(idx + 1) % PROJECTS.length];
+  const next    = nextProjectFor(p.id);
   const nextImg = (SLIDER_IMAGES[next.id] || SLIDER_IMAGES['01'])[0];
 
   document.title = `${p.ko} — ARTHOD`;
@@ -790,7 +823,7 @@
     </div>
 
     <!-- Next project -->
-    <a class="work-next wr" href="work.html?id=${next.id}&v=detail-reveal-20260706-2" data-media="image" data-media-key="wd:${p.id}:next">
+    <a class="work-next wr" href="work.html?id=${next.id}&v=detail-next-order-20260706-1" data-media="image" data-media-key="wd:${p.id}:next">
       <div class="wn-bg" style="background-image:url('${nextImg}')"></div>
       <div class="wn-overlay"></div>
       <div class="wn-content">
