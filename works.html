@@ -31,6 +31,9 @@
       overflow: hidden;
       --mx: 52%;
       --my: 18%;
+      --grid-step: 160px;
+      --cell-x: 480px;
+      --cell-y: 160px;
     }
     .works-page::before,
     .works-page::after {
@@ -44,16 +47,16 @@
       background:
         radial-gradient(circle at var(--mx) var(--my), rgba(255,255,255,.09), transparent 24rem),
         radial-gradient(ellipse 70% 48% at 78% 18%, rgba(41,151,255,.045), transparent 72%),
-        linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px),
-        linear-gradient(rgba(255,255,255,.016) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,.016) 1px, transparent 1px),
+        linear-gradient(rgba(255,255,255,.068) 1.5px, transparent 1.5px),
+        linear-gradient(90deg, rgba(255,255,255,.068) 1.5px, transparent 1.5px),
+        linear-gradient(rgba(255,255,255,.026) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.026) 1px, transparent 1px),
         #080808;
       background-size:
         100% 100%,
         100% 100%,
-        160px 160px,
-        160px 160px,
+        var(--grid-step) var(--grid-step),
+        var(--grid-step) var(--grid-step),
         40px 40px,
         40px 40px,
         100% 100%;
@@ -67,12 +70,27 @@
         0 0;
     }
     .works-page::after {
-      opacity: .55;
+      opacity: .64;
       background:
-        radial-gradient(circle at var(--mx) var(--my), rgba(255,255,255,.16) 0 1px, transparent 2px),
+        radial-gradient(circle at var(--mx) var(--my), rgba(255,255,255,.18) 0 1px, transparent 2px),
         radial-gradient(circle at var(--mx) var(--my), rgba(41,151,255,.11), transparent 18rem);
-      background-size: 160px 160px, 100% 100%;
       mask-image: linear-gradient(to bottom, #000 0%, rgba(0,0,0,.78) 38%, transparent 100%);
+    }
+    .works-cell-highlight {
+      position: fixed;
+      left: var(--cell-x);
+      top: var(--cell-y);
+      z-index: 0;
+      width: var(--grid-step);
+      height: var(--grid-step);
+      pointer-events: none;
+      opacity: .72;
+      background: linear-gradient(135deg, rgba(255,255,255,.18), rgba(41,151,255,.06));
+      border: 1.5px solid rgba(255,255,255,.2);
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,.06),
+        0 0 28px rgba(41,151,255,.08);
+      transition: left .12s ease-out, top .12s ease-out, opacity .18s ease-out;
     }
     .wp-header,
     .works-filter,
@@ -396,6 +414,8 @@
   </div>
 
   <main class="works-page">
+    <div class="works-cell-highlight" aria-hidden="true"></div>
+
     <div class="wp-header r">
       <div>
         <h1 class="wp-title">Works</h1>
@@ -563,14 +583,21 @@
       let raf = 0;
       let mx = 52;
       let my = 18;
+      let cellX = 480;
+      let cellY = 160;
+      const step = 160;
       function apply() {
         raf = 0;
         page.style.setProperty('--mx', mx + '%');
         page.style.setProperty('--my', my + '%');
+        page.style.setProperty('--cell-x', cellX + 'px');
+        page.style.setProperty('--cell-y', cellY + 'px');
       }
       window.addEventListener('pointermove', e => {
         mx = Math.max(8, Math.min(92, (e.clientX / window.innerWidth) * 100));
         my = Math.max(6, Math.min(70, (e.clientY / window.innerHeight) * 100));
+        cellX = Math.floor(e.clientX / step) * step;
+        cellY = Math.floor(e.clientY / step) * step;
         if (!raf) raf = requestAnimationFrame(apply);
       }, { passive: true });
     })();
