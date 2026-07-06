@@ -22,7 +22,44 @@
     }
     .site-nav.scrolled .nav-links a:hover { color: #080808 !important; }
 
-    .works-page { padding-top: var(--nav-h); }
+    .works-page {
+      position: relative;
+      isolation: isolate;
+      z-index: 0;
+      min-height: 100vh;
+      padding-top: var(--nav-h);
+      overflow: hidden;
+    }
+    .works-page::before,
+    .works-flow {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .works-page::before {
+      background:
+        linear-gradient(116deg, transparent 0 28%, rgba(41,151,255,.13) 28.05% 28.18%, transparent 28.25% 100%),
+        linear-gradient(68deg, transparent 0 67%, rgba(255,255,255,.07) 67.05% 67.16%, transparent 67.25% 100%),
+        radial-gradient(ellipse 110% 72% at 50% 0%, rgba(255,255,255,.055), transparent 62%),
+        #080808;
+    }
+    .works-flow {
+      width: 100%;
+      height: 100%;
+      opacity: .78;
+      mix-blend-mode: screen;
+    }
+    .wp-header,
+    .works-filter,
+    .port-grid {
+      position: relative;
+      z-index: 1;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .works-flow { display: none; }
+    }
 
     /* ── Header ── */
     .wp-header {
@@ -182,6 +219,66 @@
       overflow: hidden;
       border-radius: 20px;
     }
+    .works-hover-slots {
+      position: absolute;
+      left: 14px;
+      bottom: 14px;
+      z-index: 70;
+      display: none;
+      grid-template-columns: repeat(6, 34px);
+      gap: 6px;
+    }
+    body.editing .works-hover-slots { display: grid; }
+    .works-hover-slot {
+      position: relative;
+      width: 34px;
+      height: 34px;
+      border: 1px solid rgba(255,255,255,.32);
+      border-radius: 6px;
+      background: rgba(0,0,0,.58) center/cover no-repeat;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+      box-shadow: 0 5px 18px rgba(0,0,0,.28);
+    }
+    .works-hover-slot[data-has-custom] {
+      color: transparent;
+      border-color: rgba(41,151,255,.86);
+    }
+    .works-hover-slot::before {
+      content: attr(data-slot-label);
+      position: relative;
+      z-index: 1;
+      color: rgba(255,255,255,.86);
+      text-shadow: 0 1px 4px rgba(0,0,0,.7);
+    }
+    .works-hover-slot[data-has-custom]::before {
+      color: rgba(255,255,255,.92);
+    }
+    body.editing .works-hover-slot[data-media] {
+      outline: 1px solid rgba(41,151,255,.7);
+      outline-offset: -1px;
+    }
+    body.editing .works-hover-slot[data-media]::after {
+      content: none !important;
+    }
+    .works-hover-slot .media-revert {
+      right: -6px;
+      bottom: -6px;
+      padding: 0;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      font-size: 0;
+    }
+    .works-hover-slot .media-revert::before {
+      content: '×';
+      font-size: 11px;
+      line-height: 1;
+    }
 
     .card-bg, .card-bg-ov {
       position: absolute;
@@ -254,7 +351,7 @@
       <a href="index.html" class="nav-logo"><img src="logo.png" alt="Arthod"></a>
       <nav class="nav-links">
         <a href="about.html">About</a>
-        <a href="works.html">Works</a>
+        <a href="works.html?v=works-hover-slots-20260706-1">Works</a>
         <a href="services.html">Services</a>
         <a href="contact.html">Contact</a>
       </nav>
@@ -265,7 +362,7 @@
   <div class="mobile-overlay" id="mobile-overlay">
     <nav class="mobile-nav">
       <a href="about.html" class="mobile-link">About</a>
-      <a href="works.html" class="mobile-link">Works</a>
+      <a href="works.html?v=works-hover-slots-20260706-1" class="mobile-link">Works</a>
       <a href="services.html" class="mobile-link">Services</a>
       <a href="contact.html" class="mobile-link">Contact</a>
     </nav>
@@ -276,6 +373,7 @@
   </div>
 
   <main class="works-page">
+    <canvas class="works-flow" id="works-flow" aria-hidden="true"></canvas>
 
     <div class="wp-header r">
       <div>
@@ -295,8 +393,8 @@
       <!-- 01 -->
       <a class="port-card r" href="work.html?id=01" data-cats="interactive">
         <div class="card-head">
-          <div class="card-head-left"><span class="card-title"><span class="card-ko">빛의 파동</span><span class="card-en">Wave of Light</span></span></div>
-          <div class="card-head-right"><span class="card-yr">2024</span><span class="card-type">Interactive · LED</span></div>
+          <div class="card-head-left"><span class="card-title"><span class="card-ko">Stream Scape</span><span class="card-en">Interactive Media Art · Generative AI</span></span></div>
+          <div class="card-head-right"><span class="card-yr">2025</span><span class="card-type">고양콘텐츠사업화 지원사업</span></div>
         </div>
         <div class="card-inner"><div class="card-bg" style="background-size:cover;background-position:center"></div><div class="card-bg-ov"></div></div>
       </a>
@@ -304,8 +402,8 @@
       <!-- 02 -->
       <a class="port-card r" href="work.html?id=02" data-cats="projection">
         <div class="card-head">
-          <div class="card-head-left"><span class="card-title"><span class="card-ko">공간 매핑</span><span class="card-en">Spatial Mapping</span></span></div>
-          <div class="card-head-right"><span class="card-yr">2024</span><span class="card-type">Projection · LiDAR</span></div>
+          <div class="card-head-left"><span class="card-title"><span class="card-ko">Hyper Drive</span><span class="card-en">Multimedia Installation</span></span></div>
+          <div class="card-head-right"><span class="card-yr">2025</span><span class="card-type">코스믹 리조트 콘텐츠 제작</span></div>
         </div>
         <div class="card-inner"><div class="card-bg" style="background-size:cover;background-position:center"></div><div class="card-bg-ov"></div></div>
       </a>
@@ -313,8 +411,8 @@
       <!-- 03 -->
       <a class="port-card r" href="work.html?id=03" data-cats="av">
         <div class="card-head">
-          <div class="card-head-left"><span class="card-title"><span class="card-ko">소리의 형태</span><span class="card-en">Shape of Sound</span></span></div>
-          <div class="card-head-right"><span class="card-yr">2023</span><span class="card-type">AV Performance</span></div>
+          <div class="card-head-left"><span class="card-title"><span class="card-ko">Infinity Book</span><span class="card-en">Public Installation</span></span></div>
+          <div class="card-head-right"><span class="card-yr">2025</span><span class="card-type">열린아트공모전 대상</span></div>
         </div>
         <div class="card-inner"><div class="card-bg" style="background-size:cover;background-position:center"></div><div class="card-bg-ov"></div></div>
       </a>
@@ -322,8 +420,8 @@
       <!-- 04 -->
       <a class="port-card r" href="work.html?id=04" data-cats="interactive">
         <div class="card-head">
-          <div class="card-head-left"><span class="card-title"><span class="card-ko">잔상</span><span class="card-en">Afterimage</span></span></div>
-          <div class="card-head-right"><span class="card-yr">2023</span><span class="card-type">Video · Urban Data</span></div>
+          <div class="card-head-left"><span class="card-title"><span class="card-ko">Luminous Melody</span><span class="card-en">Interactive Light Installation</span></span></div>
+          <div class="card-head-right"><span class="card-yr">2024</span><span class="card-type">고양콘텐츠사업화</span></div>
         </div>
         <div class="card-inner"><div class="card-bg" style="background-size:cover;background-position:center"></div><div class="card-bg-ov"></div></div>
       </a>
@@ -331,8 +429,8 @@
       <!-- 05 -->
       <a class="port-card r" href="work.html?id=05" data-cats="generative">
         <div class="card-head">
-          <div class="card-head-left"><span class="card-title"><span class="card-ko">디지털 정원</span><span class="card-en">Digital Garden</span></span></div>
-          <div class="card-head-right"><span class="card-yr">2022</span><span class="card-type">Generative Art</span></div>
+          <div class="card-head-left"><span class="card-title"><span class="card-ko">OS-1</span><span class="card-en">Laser Installation</span></span></div>
+          <div class="card-head-right"><span class="card-yr">2024</span><span class="card-type">다원예술 창작산실</span></div>
         </div>
         <div class="card-inner"><div class="card-bg" style="background-size:cover;background-position:center"></div><div class="card-bg-ov"></div></div>
       </a>
@@ -340,8 +438,8 @@
       <!-- 06 -->
       <a class="port-card r" href="work.html?id=06" data-cats="generative">
         <div class="card-head">
-          <div class="card-head-left"><span class="card-title"><span class="card-ko">흐름</span><span class="card-en">Flow</span></span></div>
-          <div class="card-head-right"><span class="card-yr">2022</span><span class="card-type">Fluid Simulation</span></div>
+          <div class="card-head-left"><span class="card-title"><span class="card-ko">Transmission</span><span class="card-en">Laser Reflection Installation</span></span></div>
+          <div class="card-head-right"><span class="card-yr">2024</span><span class="card-type">국가유산 미디어아트 수원화성</span></div>
         </div>
         <div class="card-inner"><div class="card-bg" style="background-size:cover;background-position:center"></div><div class="card-bg-ov"></div></div>
       </a>
@@ -349,8 +447,8 @@
       <!-- 07 -->
       <a class="port-card r" href="work.html?id=07" data-cats="brand">
         <div class="card-head">
-          <div class="card-head-left"><span class="card-title"><span class="card-ko">반향</span><span class="card-en">Echo</span></span></div>
-          <div class="card-head-right"><span class="card-yr">2022</span><span class="card-type">Brand · Interactive</span></div>
+          <div class="card-head-left"><span class="card-title"><span class="card-ko">Emotion Particle</span><span class="card-en">Interactive Media Installation</span></span></div>
+          <div class="card-head-right"><span class="card-yr">2023</span><span class="card-type">미디어아트ON</span></div>
         </div>
         <div class="card-inner"><div class="card-bg" style="background-size:cover;background-position:center"></div><div class="card-bg-ov"></div></div>
       </a>
@@ -358,8 +456,8 @@
       <!-- 08 -->
       <a class="port-card r" href="work.html?id=08" data-cats="projection">
         <div class="card-head">
-          <div class="card-head-left"><span class="card-title"><span class="card-ko">도시의 피부</span><span class="card-en">City Skin</span></span></div>
-          <div class="card-head-right"><span class="card-yr">2021</span><span class="card-type">Media Facade</span></div>
+          <div class="card-head-left"><span class="card-title"><span class="card-ko">Emotion Cloud</span><span class="card-en">Interactive Light Installation</span></span></div>
+          <div class="card-head-right"><span class="card-yr">2023</span><span class="card-type">모든예술31</span></div>
         </div>
         <div class="card-inner"><div class="card-bg" style="background-size:cover;background-position:center"></div><div class="card-bg-ov"></div></div>
       </a>
@@ -367,8 +465,8 @@
       <!-- 09 -->
       <a class="port-card r" href="work.html?id=09" data-cats="av">
         <div class="card-head">
-          <div class="card-head-left"><span class="card-title"><span class="card-ko">청각의 색</span><span class="card-en">Color of Sound</span></span></div>
-          <div class="card-head-right"><span class="card-yr">2021</span><span class="card-type">Audio Reactive</span></div>
+          <div class="card-head-left"><span class="card-title"><span class="card-ko">Equniox</span><span class="card-en">Kinetic Light Installation</span></span></div>
+          <div class="card-head-right"><span class="card-yr">2024</span><span class="card-type">언제나 미래였던: 우주유영</span></div>
         </div>
         <div class="card-inner"><div class="card-bg" style="background-size:cover;background-position:center"></div><div class="card-bg-ov"></div></div>
       </a>
@@ -377,7 +475,7 @@
       <a class="port-card r" href="work.html?id=10" data-cats="brand">
         <div class="card-head">
           <div class="card-head-left"><span class="card-title"><span class="card-ko">기억의 층</span><span class="card-en">Layers of Memory</span></span></div>
-          <div class="card-head-right"><span class="card-yr">2020</span><span class="card-type">Exhibition · Brand</span></div>
+          <div class="card-head-right"><span class="card-yr">2020</span><span class="card-type">삼성물산 패션부문</span></div>
         </div>
         <div class="card-inner"><div class="card-bg" style="background-size:cover;background-position:center"></div><div class="card-bg-ov"></div></div>
       </a>
@@ -386,7 +484,7 @@
       <a class="port-card r" href="work.html?id=11" data-cats="generative interactive">
         <div class="card-head">
           <div class="card-head-left"><span class="card-title"><span class="card-ko">경계</span><span class="card-en">Boundary</span></span></div>
-          <div class="card-head-right"><span class="card-yr">2020</span><span class="card-type">Generative · Sensor</span></div>
+          <div class="card-head-right"><span class="card-yr">2020</span><span class="card-type">아르코미술관</span></div>
         </div>
         <div class="card-inner"><div class="card-bg" style="background-size:cover;background-position:center"></div><div class="card-bg-ov"></div></div>
       </a>
@@ -395,7 +493,7 @@
       <a class="port-card r" href="work.html?id=12" data-cats="projection brand">
         <div class="card-head">
           <div class="card-head-left"><span class="card-title"><span class="card-ko">시작점</span><span class="card-en">Origin Point</span></span></div>
-          <div class="card-head-right"><span class="card-yr">2019</span><span class="card-type">Projection · Event</span></div>
+          <div class="card-head-right"><span class="card-yr">2019</span><span class="card-type">DDP 동대문디자인플라자</span></div>
         </div>
         <div class="card-inner"><div class="card-bg" style="background-size:cover;background-position:center"></div><div class="card-bg-ov"></div></div>
       </a>
@@ -418,8 +516,97 @@
     </div>
   </footer>
 
-  <script src="main.js?v=public-sync-2"></script>
+  <script src="main.js?v=works-hover-slots-20260706-1"></script>
   <script>
+    // ── Works-only dissolve image slots ──────────────────────
+    (function installWorksHoverSlots() {
+      document.querySelectorAll('.port-card').forEach(card => {
+        const inner = card.querySelector('.card-inner');
+        const id = (card.getAttribute('href') || '').match(/id=(\w+)/)?.[1];
+        if (!inner || !id || inner.querySelector('.works-hover-slots')) return;
+        const box = document.createElement('div');
+        box.className = 'works-hover-slots';
+        box.setAttribute('aria-label', 'Works hover dissolve images');
+        box.innerHTML = Array.from({ length: 6 }, (_, i) => {
+          const n = i + 1;
+          return `<span class="works-hover-slot" role="button" tabindex="0" data-slot-label="${n}" data-media="image" data-media-key="whover:${id}:${n}"></span>`;
+        }).join('');
+        inner.appendChild(box);
+      });
+    })();
+
+    // ── Generative line field ────────────────────────────────
+    (function () {
+      const canvas = document.getElementById('works-flow');
+      if (!canvas || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const ctx = canvas.getContext('2d');
+      let w = 0;
+      let h = 0;
+      let dpr = 1;
+      let mx = 0.5;
+      let my = 0.42;
+      let t0 = performance.now();
+      function resize() {
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        w = window.innerWidth;
+        h = window.innerHeight;
+        canvas.width = Math.floor(w * dpr);
+        canvas.height = Math.floor(h * dpr);
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      function setPointer(clientX, clientY) {
+        mx = clientX / Math.max(1, w);
+        my = clientY / Math.max(1, h);
+      }
+      function drawCurve(yBase, phase, alpha, width, tint) {
+        const amp = h * (0.045 + tint * 0.018);
+        const drift = (mx - 0.5) * 34;
+        ctx.beginPath();
+        for (let x = -80; x <= w + 80; x += 28) {
+          const nx = x / Math.max(1, w);
+          const y = yBase
+            + Math.sin(nx * 7.2 + phase) * amp
+            + Math.sin(nx * 15.5 - phase * .72) * amp * .28
+            + (my - 0.42) * h * .045;
+          const px = x + drift * Math.sin(nx * Math.PI);
+          if (x === -80) ctx.moveTo(px, y);
+          else ctx.lineTo(px, y);
+        }
+        ctx.strokeStyle = `rgba(${70 + tint * 60}, ${135 + tint * 45}, 255, ${alpha})`;
+        ctx.lineWidth = width;
+        ctx.stroke();
+      }
+      resize();
+      (function tick() {
+        const now = performance.now();
+        const t = (now - t0) * 0.00028;
+        ctx.clearRect(0, 0, w, h);
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle = 'rgba(8,8,8,.16)';
+        ctx.fillRect(0, 0, w, h);
+        ctx.globalCompositeOperation = 'lighter';
+        for (let i = 0; i < 12; i++) {
+          const p = i / 11;
+          drawCurve(h * (0.14 + p * 0.78), t * (1.1 + p * .35) + i * .72, 0.025 + p * .025, 0.7 + p * .65, p);
+        }
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeStyle = 'rgba(255,255,255,.035)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 5; i++) {
+          const y = h * (.18 + i * .17) + Math.sin(t * 1.7 + i) * 18;
+          ctx.beginPath();
+          ctx.moveTo(w * .08, y);
+          ctx.bezierCurveTo(w * .3, y - 34, w * .58, y + 42, w * .92, y - 12);
+          ctx.stroke();
+        }
+        requestAnimationFrame(tick);
+      })();
+      window.addEventListener('resize', resize, { passive: true });
+      window.addEventListener('pointermove', e => setPointer(e.clientX, e.clientY), { passive: true });
+    })();
+
     // ── 카드 순서 편집 (편집 모드 전용, 위/아래 버튼) ──────────────
     (function () {
       const CARD_ORDER_KEY = 'arthod-cardorder:works';
@@ -569,6 +756,23 @@
       if (info.kind === 'image' && info.file) return PUBLIC_BACKUP_BASE + info.file;
       return '';
     }
+    async function imageUrlForKey(db, key, publicIndex) {
+      const rec = await resolveLocalMediaRecord(db, key);
+      if (rec && rec.kind === 'image' && rec.blob) {
+        const url = URL.createObjectURL(rec.blob);
+        cardImgObjectUrls.push(url);
+        return url;
+      }
+      return publicImageUrl(key, publicIndex);
+    }
+    async function worksHoverImages(id, db, publicIndex) {
+      const urls = [];
+      for (let i = 1; i <= 6; i++) {
+        const url = await imageUrlForKey(db, `whover:${id}:${i}`, publicIndex);
+        if (url) urls.push(url);
+      }
+      return urls;
+    }
     function gallerySlotsFor(id, publicText) {
       try {
         const saved = JSON.parse(localStorage.getItem('arthod-galleryitems:' + id));
@@ -585,31 +789,18 @@
       try { db = await openMediaDb(); } catch (e) {}
       const publicData = await publicContent();
       const publicIndex = publicData.mediaIndex || {};
+      const customHover = await worksHoverImages(id, db, publicIndex);
+      if (customHover.length) return customHover;
       const slots = gallerySlotsFor(id, publicData.text);
       const urls = [];
       for (const slot of slots) {
-        const key = `wd:${id}:${slot}`;
-        const rec = await resolveLocalMediaRecord(db, key);
-        if (rec && rec.kind === 'image' && rec.blob) {
-          const url = URL.createObjectURL(rec.blob);
-          cardImgObjectUrls.push(url);
-          urls.push(url);
-          continue;
-        }
-        const pubUrl = publicImageUrl(key, publicIndex);
-        if (pubUrl) urls.push(pubUrl);
+        const url = await imageUrlForKey(db, `wd:${id}:${slot}`, publicIndex);
+        if (url) urls.push(url);
       }
       if (!urls.length) {
         const key = `wd:${id}:c0`;
-        const rec = await resolveLocalMediaRecord(db, key);
-        if (rec && rec.kind === 'image' && rec.blob) {
-          const url = URL.createObjectURL(rec.blob);
-          cardImgObjectUrls.push(url);
-          urls.push(url);
-        } else {
-          const pubUrl = publicImageUrl(key, publicIndex);
-          if (pubUrl) urls.push(pubUrl);
-        }
+        const url = await imageUrlForKey(db, key, publicIndex);
+        if (url) urls.push(url);
       }
       return urls;
     }
@@ -735,6 +926,12 @@
     applyDetailHoverImages();
     setTimeout(applyDetailHoverImages, 900);
     setTimeout(applyDetailHoverImages, 2200);
+    window.addEventListener('arthod:media-updated', e => {
+      const key = e.detail && e.detail.key;
+      if (!key || key.indexOf('whover:') === 0 || key.indexOf('wd:') === 0 || key.indexOf('wimg:') === 0) {
+        applyDetailHoverImages();
+      }
+    });
     window.addEventListener('beforeunload', () => cardImgObjectUrls.forEach(url => URL.revokeObjectURL(url)));
   </script>
 </body>

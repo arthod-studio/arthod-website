@@ -431,7 +431,10 @@ if (fv) {
       return await new Promise((res, rej) => {
         const tx = d.transaction('m', 'readwrite');
         tx.objectStore('m').put(v, k);
-        tx.oncomplete = () => res();
+        tx.oncomplete = () => {
+          window.dispatchEvent(new CustomEvent('arthod:media-updated', { detail: { key: k } }));
+          res();
+        };
         tx.onerror = () => rej(tx.error);
       });
     } catch (e) { /* ignore */ }
@@ -453,7 +456,10 @@ if (fv) {
       return await new Promise(res => {
         const tx = d.transaction('m', 'readwrite');
         tx.objectStore('m').delete(k);
-        tx.oncomplete = () => res();
+        tx.oncomplete = () => {
+          window.dispatchEvent(new CustomEvent('arthod:media-updated', { detail: { key: k } }));
+          res();
+        };
       });
     } catch (e) { /* ignore */ }
   }
@@ -474,6 +480,10 @@ if (fv) {
   function humanLabel(key) {
     if (key === 'home:hero') return '홈 — 히어로 배경';
     if (key.indexOf('wimg:') === 0) return '작품 ' + key.split(':')[1] + ' — 대표 이미지 (Works 카드·상세 공용)';
+    if (key.indexOf('whover:') === 0) {
+      const p = key.split(':');
+      return '작품 ' + p[1] + ' — Works 디졸브 ' + p[2];
+    }
     if (key.indexOf('works:') === 0) { const m = key.match(/id=(\d+)/); return 'Works — 작품 ' + (m ? m[1] : ''); }
     if (key.indexOf('svc:') === 0) return 'Services — ' + (parseInt(key.split(':')[1], 10) + 1) + '번';
     if (key.indexOf('wd:') === 0) {
@@ -522,7 +532,7 @@ if (fv) {
       else container.style.backgroundImage = `url("${url}")`;
     }
     const pc = container.closest('.port-card');
-    if (pc) pc.setAttribute('data-custom-img', '1');
+    if (pc && !(container.dataset.mediaKey || '').startsWith('whover:')) pc.setAttribute('data-custom-img', '1');
     markCustom(container);
   }
   // 유튜브/비메오 iframe: 클릭 전엔 썸네일+재생 버튼만 보여주고,
@@ -856,6 +866,7 @@ if (fv) {
 
   /* 크기 · 위치 조절 핸들 (모든 미디어 슬롯에 부착 — 클릭과 분리된 드래그 전용 핸들) */
   function attachSizeHandle(el) {
+    if ((el.dataset.mediaKey || '').startsWith('whover:')) return;
     if (el.dataset.media === 'hero' || el.querySelector(':scope > .size-handle')) return;
     const h = document.createElement('div');
     h.className = 'size-handle';
@@ -892,6 +903,7 @@ if (fv) {
     h.addEventListener('touchstart', onDown, { passive: false });
   }
   function attachPanHandle(el) {
+    if ((el.dataset.mediaKey || '').startsWith('whover:')) return;
     if (el.dataset.media === 'hero' || el.querySelector(':scope > .pan-handle')) return;
     const h = document.createElement('div');
     h.className = 'pan-handle';
@@ -939,6 +951,7 @@ if (fv) {
     h.addEventListener('touchstart', onDown, { passive: false });
   }
   function attachZoomHandle(el) {
+    if ((el.dataset.mediaKey || '').startsWith('whover:')) return;
     if (el.dataset.media === 'hero' || el.querySelector(':scope > .zoom-handle')) return;
     const h = document.createElement('div');
     h.className = 'zoom-handle';
@@ -1079,6 +1092,7 @@ if (fv) {
     let m = key.match(/id=(\w+)/); if (m) return m[1];
     m = key.match(/^wd:(\w+):/); if (m) return m[1];
     m = key.match(/^wimg:(\w+)/); if (m) return m[1];
+    m = key.match(/^whover:(\w+):/); if (m) return m[1];
     if (key.indexOf('svc:') === 0) return 'services';
     return 'misc';
   }
