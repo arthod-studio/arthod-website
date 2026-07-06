@@ -29,9 +29,11 @@
       min-height: 100vh;
       padding-top: var(--nav-h);
       overflow: hidden;
+      --mx: 52%;
+      --my: 18%;
     }
     .works-page::before,
-    .works-flow {
+    .works-page::after {
       content: '';
       position: fixed;
       inset: 0;
@@ -40,15 +42,18 @@
     }
     .works-page::before {
       background:
-        radial-gradient(ellipse 80% 55% at 50% 0%, rgba(255,255,255,.06), transparent 64%),
-        radial-gradient(ellipse 62% 42% at 84% 32%, rgba(41,151,255,.055), transparent 72%),
+        radial-gradient(circle at var(--mx) var(--my), rgba(255,255,255,.105), transparent 23rem),
+        radial-gradient(ellipse 70% 48% at 78% 18%, rgba(41,151,255,.055), transparent 72%),
+        radial-gradient(ellipse 90% 55% at 20% 0%, rgba(255,255,255,.042), transparent 68%),
         #080808;
     }
-    .works-flow {
-      width: 100%;
-      height: 100%;
-      opacity: .94;
-      mix-blend-mode: screen;
+    .works-page::after {
+      opacity: .28;
+      background-image:
+        radial-gradient(circle at 20% 30%, rgba(255,255,255,.18) 0 1px, transparent 1.5px),
+        radial-gradient(circle at 72% 64%, rgba(41,151,255,.2) 0 1px, transparent 1.5px);
+      background-size: 96px 96px, 148px 148px;
+      mask-image: linear-gradient(to bottom, #000 0%, rgba(0,0,0,.72) 34%, transparent 100%);
     }
     .wp-header,
     .works-filter,
@@ -57,7 +62,7 @@
       z-index: 1;
     }
     @media (prefers-reduced-motion: reduce) {
-      .works-flow { display: none; }
+      .works-page { --mx: 50%; --my: 18%; }
     }
 
     /* ── Header ── */
@@ -372,8 +377,6 @@
   </div>
 
   <main class="works-page">
-    <canvas class="works-flow" id="works-flow" aria-hidden="true"></canvas>
-
     <div class="wp-header r">
       <div>
         <h1 class="wp-title">Works</h1>
@@ -534,81 +537,23 @@
       });
     })();
 
-    // ── Quiet reactive point field ───────────────────────────
+    // ── Quiet reactive light field ───────────────────────────
     (function () {
-      const canvas = document.getElementById('works-flow');
-      if (!canvas || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-      const ctx = canvas.getContext('2d');
-      let w = 0;
-      let h = 0;
-      let dpr = 1;
-      let mx = -9999;
-      let my = -9999;
-      let t0 = performance.now();
-      let points = [];
-      function resize() {
-        dpr = Math.min(window.devicePixelRatio || 1, 2);
-        w = window.innerWidth;
-        h = window.innerHeight;
-        canvas.width = Math.floor(w * dpr);
-        canvas.height = Math.floor(h * dpr);
-        canvas.style.width = w + 'px';
-        canvas.style.height = h + 'px';
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        seedPoints();
+      const page = document.querySelector('.works-page');
+      if (!page || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      let raf = 0;
+      let mx = 52;
+      let my = 18;
+      function apply() {
+        raf = 0;
+        page.style.setProperty('--mx', mx + '%');
+        page.style.setProperty('--my', my + '%');
       }
-      function seedPoints() {
-        const gap = w < 700 ? 34 : 40;
-        points = [];
-        for (let y = gap * .8; y < h; y += gap) {
-          for (let x = gap * .8; x < w; x += gap) {
-            const jitterX = Math.sin(x * 12.989 + y * 78.233) * gap * .18;
-            const jitterY = Math.cos(x * 4.217 + y * 31.117) * gap * .18;
-            points.push({
-              x: x + jitterX,
-              y: y + jitterY,
-              p: (x * .013 + y * .021) % Math.PI
-            });
-          }
-        }
-      }
-      function setPointer(clientX, clientY) {
-        mx = clientX;
-        my = clientY;
-      }
-      resize();
-      (function tick() {
-        const now = performance.now();
-        const t = (now - t0) * 0.001;
-        ctx.clearRect(0, 0, w, h);
-        ctx.globalCompositeOperation = 'lighter';
-        for (const pt of points) {
-          const dx = pt.x - mx;
-          const dy = pt.y - my;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          const near = Math.max(0, 1 - dist / 180);
-          const breathe = (Math.sin(t * .72 + pt.p) + 1) * .5;
-          const lift = near * 7;
-          const x = pt.x + (dx / Math.max(dist, 1)) * lift;
-          const y = pt.y + (dy / Math.max(dist, 1)) * lift;
-          const r = .9 + near * 1.6 + breathe * .22;
-          const a = .07 + breathe * .05 + near * .26;
-          ctx.fillStyle = `rgba(${170 + near * 45}, ${190 + near * 35}, 255, ${a})`;
-          ctx.beginPath();
-          ctx.arc(x, y, r, 0, Math.PI * 2);
-          ctx.fill();
-          if (near > .54) {
-            ctx.fillStyle = `rgba(255,255,255,${(near - .54) * .16})`;
-            ctx.fillRect(x - 5, y - .5, 10, 1);
-            ctx.fillRect(x - .5, y - 5, 1, 10);
-          }
-        }
-        ctx.globalCompositeOperation = 'source-over';
-        requestAnimationFrame(tick);
-      })();
-      window.addEventListener('resize', resize, { passive: true });
-      window.addEventListener('pointermove', e => setPointer(e.clientX, e.clientY), { passive: true });
-      window.addEventListener('pointerleave', () => { mx = -9999; my = -9999; }, { passive: true });
+      window.addEventListener('pointermove', e => {
+        mx = Math.max(8, Math.min(92, (e.clientX / window.innerWidth) * 100));
+        my = Math.max(6, Math.min(70, (e.clientY / window.innerHeight) * 100));
+        if (!raf) raf = requestAnimationFrame(apply);
+      }, { passive: true });
     })();
 
     // ── 카드 순서 편집 (편집 모드 전용, 위/아래 버튼) ──────────────
