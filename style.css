@@ -76,7 +76,7 @@ body,body *{
   border:1.5px solid rgba(255,255,255,.72);
   border-radius:50%;
   transform:translate(-50%,-50%);
-  transition:width .3s var(--ease),height .3s var(--ease),border-color .25s;
+  transition:width .16s var(--ease),height .16s var(--ease),border-color .14s;
 }
 
 body.ch-hover #cursor-ring{width:64px;height:64px;border-color:rgba(255,255,255,.5)}

@@ -20,16 +20,21 @@ window.addEventListener('wheel', e => {
   }
   const dot = cursor.querySelector('#cursor-dot');
   const ring = cursor.querySelector('#cursor-ring');
-  let rx = 0, ry = 0, tx = 0, ty = 0;
+  let rx = 0, ry = 0, tx = 0, ty = 0, hasPoint = false;
   function move(e) {
     tx = e.clientX;
     ty = e.clientY;
+    if (!hasPoint) {
+      rx = tx;
+      ry = ty;
+      hasPoint = true;
+    }
     dot.style.transform = `translate(${tx}px, ${ty}px) translate(-50%,-50%)`;
     cursor.classList.add('on');
   }
   function tick() {
-    rx += (tx - rx) * 0.18;
-    ry += (ty - ry) * 0.18;
+    rx += (tx - rx) * 0.42;
+    ry += (ty - ry) * 0.42;
     ring.style.transform = `translate(${rx}px, ${ry}px) translate(-50%,-50%)`;
     requestAnimationFrame(tick);
   }
