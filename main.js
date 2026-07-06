@@ -79,7 +79,8 @@ window.addEventListener('scroll', updateNav, { passive: true });
 
   const setActive = href => {
     links.forEach(link => {
-      const same = (link.getAttribute('href') || '').split('#')[0] === href;
+      const target = (link.getAttribute('href') || '').split('#')[0].split('?')[0];
+      const same = target === href;
       link.classList.toggle('active', same);
       link.setAttribute('aria-current', same ? 'page' : 'false');
     });
