@@ -673,6 +673,297 @@
     .btn-wg { background:transparent;color:#fff;font-size:13px;font-weight:500;padding:13px 32px;border-radius:2px;border:1px solid rgba(255,255,255,.3);display:inline-flex;align-items:center;transition:border-color .2s; letter-spacing:.04em; }
     .btn-wg:hover { border-color:rgba(255,255,255,.7); }
 
+    /* ── MotionSite-inspired renewal ── */
+    :root {
+      --ab-dark: #050505;
+      --ab-panel: rgba(255,255,255,.055);
+      --ab-line: rgba(255,255,255,.13);
+      --ab-soft: rgba(255,255,255,.62);
+      --ab-dim: rgba(255,255,255,.34);
+      --ab-acid: #d8ff3e;
+      --ab-cyan: #74e8ff;
+    }
+    body { background: var(--ab-dark); }
+    .page-wrap {
+      background: var(--ab-dark);
+      color: #fff;
+    }
+    .ab-hero {
+      min-height: 112svh;
+      background:
+        linear-gradient(rgba(255,255,255,.032) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px),
+        radial-gradient(ellipse at 50% 36%, rgba(255,255,255,.07), transparent 42%),
+        #020202;
+      background-size: clamp(52px,6vw,96px) clamp(52px,6vw,96px), clamp(52px,6vw,96px) clamp(52px,6vw,96px), auto, auto;
+    }
+    .ab-hero::before {
+      opacity: 1;
+      background:
+        linear-gradient(120deg, transparent 0%, rgba(216,255,62,.09) 36%, transparent 56%),
+        linear-gradient(180deg, transparent 0%, rgba(255,255,255,.08) 50%, transparent 100%);
+      background-size: 180% 100%, 100% 100%;
+      animation: abSweep 9s cubic-bezier(.76,0,.24,1) infinite;
+      mask-image: linear-gradient(to bottom, transparent 0%, #000 18%, #000 72%, transparent 100%);
+      pointer-events: none;
+    }
+    @keyframes abSweep {
+      0%, 18% { background-position: 130% 0, 0 0; opacity: .25; }
+      52% { background-position: -30% 0, 0 0; opacity: .75; }
+      100% { background-position: -30% 0, 0 0; opacity: .2; }
+    }
+    .ab-hero::after {
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.22), transparent);
+    }
+    .ab-hero-label,
+    .ab-hero-year,
+    .ab-recent-kicker,
+    .ab-recent-count,
+    .ab-tl-sub {
+      color: var(--ab-dim);
+    }
+    .ab-hero-center {
+      display: grid;
+      gap: clamp(18px,3vh,36px);
+      justify-items: center;
+    }
+    .ab-hero-title {
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+    .ab-hero-kicker {
+      display: none !important;
+    }
+    .ab-logo-motion {
+      width: min(88vw, 1180px);
+      mix-blend-mode: screen;
+    }
+    .ab-hero-copy {
+      min-width: 0;
+    }
+    .ab-hero-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 760px;
+    }
+    .ab-hero-chip {
+      border: 1px solid var(--ab-line);
+      background: rgba(255,255,255,.055);
+      color: rgba(255,255,255,.72);
+      border-radius: 999px;
+      padding: 9px 13px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      backdrop-filter: blur(14px);
+    }
+    .ab-hero-chip strong {
+      color: var(--ab-acid);
+      font-weight: 700;
+    }
+    .ab-hero-bottom {
+      align-items: stretch;
+      border-top: 1px solid var(--ab-line);
+    }
+    .ab-hero-desc {
+      font-size: 76px;
+      max-width: 1180px;
+      font-weight: 850;
+      line-height: .92;
+      letter-spacing: 0;
+    }
+    .ab-hero-info {
+      align-self: end;
+      background: var(--ab-panel);
+      border: 1px solid var(--ab-line);
+      border-radius: 8px;
+      padding: clamp(18px,2vw,28px);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+    }
+    .ab-hero-info p {
+      text-align: left;
+      border-top-color: rgba(255,255,255,.11);
+    }
+    .ab-hero-info p:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+    .ab-hero-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: clamp(18px,3vh,28px);
+    }
+    .ab-motion-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 18px;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 999px;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .03em;
+      background: rgba(255,255,255,.06);
+    }
+    .ab-motion-btn.primary {
+      color: #050505;
+      background: var(--ab-acid);
+      border-color: var(--ab-acid);
+    }
+
+    .ab-statement {
+      background:
+        linear-gradient(180deg, #050505 0%, #0a0a0a 100%);
+      border-bottom-color: var(--ab-line);
+    }
+    .ab-statement::before {
+      content: 'STUDIO METHOD  ( ARTHOD )';
+      color: var(--ab-dim);
+    }
+    .ab-statement::after {
+      background: var(--ab-line);
+    }
+    .ab-statement-q {
+      color: #fff;
+      text-wrap: balance;
+    }
+    .ab-statement-q em {
+      color: rgba(255,255,255,.42);
+    }
+    .ab-statement-body {
+      border-top-color: var(--ab-line);
+      gap: 12px;
+    }
+    .ab-statement-body p {
+      min-height: clamp(240px,28vw,390px);
+      padding: clamp(24px,3vw,38px);
+      border: 1px solid var(--ab-line);
+      border-radius: 8px;
+      background:
+        linear-gradient(145deg, rgba(255,255,255,.09), rgba(255,255,255,.025));
+      color: rgba(255,255,255,.68);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+    }
+    .ab-statement-body p::before {
+      color: var(--ab-acid);
+    }
+
+    .ab-recent {
+      background:
+        linear-gradient(180deg, #050505, #090909);
+    }
+    .ab-recent-sticky {
+      background:
+        linear-gradient(180deg, rgba(5,5,5,.98), rgba(5,5,5,.94));
+    }
+    .ab-recent-head {
+      border-bottom-color: var(--ab-line);
+    }
+    .ab-recent-title {
+      font-size: 128px;
+      text-transform: uppercase;
+    }
+    .ab-recent-media {
+      border-color: rgba(255,255,255,.18);
+      border-radius: 8px;
+      box-shadow: 0 18px 70px rgba(0,0,0,.42);
+    }
+    .ab-recent-card {
+      flex-basis: clamp(340px,44vw,760px);
+    }
+    .ab-recent-meta {
+      color: rgba(255,255,255,.66);
+    }
+    .ab-recent-desc {
+      color: rgba(255,255,255,.5);
+    }
+
+    .ab-phil {
+      background: #050505;
+      gap: 12px;
+      padding: clamp(14px,2vw,28px);
+    }
+    .ab-phil-col,
+    .ab-phil-col:first-child,
+    .ab-phil-col:last-child {
+      background:
+        linear-gradient(145deg, rgba(255,255,255,.09), rgba(255,255,255,.025));
+      color: #fff;
+      border: 1px solid var(--ab-line);
+      border-radius: 8px;
+      min-height: clamp(520px,62vh,760px);
+    }
+    .ab-phil-col:first-child::before {
+      background: linear-gradient(120deg, rgba(216,255,62,.18), transparent 48%);
+    }
+    .ab-phil-col:last-child::before {
+      background: linear-gradient(120deg, rgba(116,232,255,.16), transparent 48%);
+    }
+    .ab-phil-tag,
+    .ab-phil-col:last-child .ab-phil-tag {
+      color: var(--ab-dim);
+    }
+    .ab-phil-word,
+    .ab-phil-col:last-child .ab-phil-word {
+      color: #fff;
+      font-size: 128px;
+    }
+    .ab-phil-list li,
+    .ab-phil-col:last-child .ab-phil-list li {
+      color: rgba(255,255,255,.64);
+      border-left-color: rgba(255,255,255,.18);
+    }
+
+    .ab-timeline {
+      color: #fff;
+      background: #050505;
+      max-width: none;
+      padding-left: var(--px);
+      padding-right: var(--px);
+    }
+    .ab-tl-header {
+      border-bottom-color: var(--ab-line);
+    }
+    .ab-tl-title,
+    .ab-tl-name {
+      color: #fff;
+    }
+    .ab-tl-item {
+      border-bottom: 1px solid var(--ab-line);
+      background: rgba(255,255,255,.025);
+      padding: clamp(18px,2vw,28px);
+      margin-bottom: 8px;
+      border-radius: 8px;
+    }
+    .ab-tl-year {
+      color: var(--ab-acid);
+    }
+    .ab-tl-desc {
+      color: rgba(255,255,255,.55);
+    }
+    .ab-cta {
+      background:
+        linear-gradient(180deg, #050505, #000);
+      border-top: 1px solid var(--ab-line);
+    }
+    .ab-cta h2 {
+      font-size: 104px;
+    }
+    .btn-w {
+      border-radius: 999px;
+      background: var(--ab-acid);
+      color: #050505;
+    }
+    .btn-wg {
+      border-radius: 999px;
+    }
+
     @media(min-width:901px) and (max-width:1100px){
       .ab-phil-col:first-child .ab-phil-word,
       .ab-phil-col:last-child .ab-phil-word,
@@ -752,6 +1043,21 @@
         grid-template-columns: 1fr;
         align-items:flex-start;
       }
+      .ab-hero-desc {
+        font-size: 52px;
+        line-height: .98;
+      }
+      .ab-recent-title,
+      .ab-phil-word,
+      .ab-phil-col:last-child .ab-phil-word {
+        font-size: 76px;
+      }
+      .ab-cta h2 {
+        font-size: 64px;
+      }
+      .ab-hero-actions {
+        justify-content: flex-start;
+      }
       .ab-hero-info { width: 100%; }
       .ab-hero-info p { text-align:left; }
       .ab-recent-head {
@@ -777,11 +1083,19 @@
         margin: 0;
       }
       .ab-hero-desc {
-        font-size: clamp(22px,9vw,38px);
+        font-size: 34px;
         max-width: 100%;
       }
+      .ab-recent-title,
+      .ab-phil-word,
+      .ab-phil-col:last-child .ab-phil-word {
+        font-size: 44px;
+      }
+      .ab-cta h2 {
+        font-size: 42px;
+      }
       .ab-recent {
-        min-height: 190svh;
+        min-height: calc(100svh + var(--recent-travel, 1100px));
       }
       .ab-recent-sticky {
         padding-top: calc(var(--nav-h) + 24px);
@@ -862,13 +1176,24 @@
             </video>
             <span class="ab-logo-fallback">Art + Method</span>
           </span>
+          <div class="ab-hero-chips" aria-label="Studio focus">
+            <span class="ab-hero-chip"><strong>01</strong> Interactive Media</span>
+            <span class="ab-hero-chip"><strong>02</strong> Spatial Systems</span>
+            <span class="ab-hero-chip"><strong>03</strong> AI Experience</span>
+          </div>
         </div>
       </div>
 
       <div class="ab-hero-bottom r d2">
-        <p class="ab-hero-desc" data-ek="heroLead">
-          Arthod blends art, technology, and spatial method to create immersive media experiences that stay with people.
-        </p>
+        <div class="ab-hero-copy">
+          <p class="ab-hero-desc" data-ek="heroLead">
+            Arthod blends art, technology, and spatial method to create immersive media experiences that stay with people.
+          </p>
+          <div class="ab-hero-actions" aria-label="About page links">
+            <a class="ab-motion-btn primary" href="works.html">Explore Works</a>
+            <a class="ab-motion-btn" href="contact.html">Start a Project</a>
+          </div>
+        </div>
         <div class="ab-hero-info">
           <p data-ek="heroInfo1">미디어아트 스튜디오 Arthod는 Art와 Method의 합성어입니다.</p>
           <p data-ek="heroInfo2">예술과 기술이 교차하는 지점에서 새로운 감각적 경험을 설계합니다.</p>
