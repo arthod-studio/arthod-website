@@ -1118,6 +1118,7 @@ if (fv) {
   // 전체 텍스트 + 미디어를 작품별로 백업
   async function ghBackup(cfg, onStatus) {
     const status = onStatus || (() => {});
+    status('백업할 수정 내용을 읽는 중…');
     // 1) 텍스트·스타일·레이아웃 오버라이드 수집
     const text = {};
     for (let i = 0; i < localStorage.length; i++) {
@@ -1131,6 +1132,7 @@ if (fv) {
     }
     // 2) 미디어 수집 (작품별로 그룹화 + 전체 인덱스)
     const items = await mediaAll();
+    status(`미디어 ${items.length}개 확인 완료. 업로드를 시작합니다…`);
     const perWork = {};
     const mediaIndex = {};
     let done = 0;
@@ -1201,18 +1203,23 @@ if (fv) {
       if (!cfg.owner || !cfg.repo) return setStatus('저장소를 owner/repo 형식으로 입력하세요.', true);
       ghSaveCfg(cfg); setStatus('설정이 저장되었습니다.');
     });
-    ghPanel.querySelector('.gh-now').addEventListener('click', async () => {
+    const nowBtn = ghPanel.querySelector('.gh-now');
+    const setBusy = (busy) => {
+      nowBtn.disabled = busy;
+      nowBtn.textContent = busy ? '백업 중…' : '지금 백업';
+    };
+    nowBtn.addEventListener('click', async () => {
       if (ghBusy) return;
       const cfg = readForm();
       if (!cfg.owner || !cfg.repo || !cfg.token) return setStatus('저장소와 토큰을 모두 입력하세요.', true);
-      ghSaveCfg(cfg); ghBusy = true; setStatus('백업 시작…');
+      ghSaveCfg(cfg); ghBusy = true; setBusy(true); setStatus('백업 시작… 창을 닫지 말고 기다려주세요.');
       try {
         const r = await ghBackup(cfg, m => setStatus(m));
-        setStatus(`완료 ✓  작품 ${r.works}개 · 미디어 ${r.media}개를 백업했습니다.`);
+        setStatus(`완료 ✓  ${new Date().toLocaleTimeString()} · 작품 ${r.works}개 · 미디어 ${r.media}개를 백업했습니다.`);
         toast('GitHub 백업 완료');
       } catch (e) {
         setStatus('실패: ' + e.message, true);
-      } finally { ghBusy = false; }
+      } finally { ghBusy = false; setBusy(false); }
     });
   }
   function openGhPanel() { if (!ghPanel) buildGhPanel(); ghPanel.classList.add('open'); }
@@ -1611,6 +1618,7 @@ if (fv) {
       .gh-savecfg:hover{border-color:var(--ink,#111)}
       .gh-now{background:var(--ink,#111);border:none;color:#fff}
       .gh-now:hover{opacity:.85}
+      .gh-now:disabled{opacity:.55;cursor:wait}
       .gh-hint{font-size:10px;line-height:1.6;color:var(--ink-4,#aaa);margin-top:10px}
       .hero-choice{position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;
         background:rgba(15,14,12,.5);backdrop-filter:blur(3px)}
