@@ -163,7 +163,8 @@
       color: inherit;
       position: relative;
     }
-    .port-card.hidden { display: none; }
+    .port-card.hidden,
+    .port-card.count-hidden { display: none; }
 
     /* Text header — always visible, above image */
     .card-head {
@@ -234,6 +235,35 @@
       box-shadow: 0 3px 10px rgba(0,0,0,.25);
     }
     .card-reorder button:hover { background: rgba(0,70,190,.95); }
+    .works-count-tools {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      padding: 4px;
+      border: 1px solid var(--border,#e8e6e2);
+      border-radius: 7px;
+      background: #fff;
+    }
+    body.editing .works-count-tools { display: inline-flex; }
+    .works-count-tools button {
+      width: 26px;
+      height: 24px;
+      border-radius: 5px;
+      border: 1px solid var(--border,#e0ded9);
+      background: #fff;
+      color: var(--ink,#111);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .works-count-tools button:hover { border-color: var(--ink,#111); }
+    .works-count-tools span {
+      min-width: 44px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink,#111);
+    }
     .card-project {
       font-size: 11px;
       letter-spacing: .04em;
@@ -602,22 +632,75 @@
       }, { passive: true });
     })();
 
-    // ── 카드 순서 편집 (편집 모드 전용, 위/아래 버튼) ──────────────
+    // ── 카드 순서·개수 편집 (편집 모드 전용) ───────────────────
     (function () {
       const CARD_ORDER_KEY = 'arthod-cardorder:works';
+      const WORK_COUNT_KEY = 'arthod-workcount:works';
       const grid = document.getElementById('port-grid');
+      const countLabel = document.querySelector('.wp-count');
+      const yearText = '2019–2024';
+      let activeFilter = 'all';
       function currentHrefOrder() {
         return [...grid.querySelectorAll('.port-card')].map(c => c.getAttribute('href'));
+      }
+      function allCards() {
+        return [...grid.querySelectorAll('.port-card')];
+      }
+      function savedCount() {
+        const cards = allCards();
+        const raw = parseInt(localStorage.getItem(WORK_COUNT_KEY), 10);
+        return Number.isFinite(raw) ? Math.max(1, Math.min(cards.length, raw)) : cards.length;
+      }
+      function setCount(next) {
+        const cards = allCards();
+        const count = Math.max(1, Math.min(cards.length, next));
+        localStorage.setItem(WORK_COUNT_KEY, String(count));
+        applyWorkCount();
+      }
+      function updateCountTools(count, total) {
+        document.querySelectorAll('.works-count-tools').forEach(box => {
+          const text = box.querySelector('.wct-current');
+          if (text) text.textContent = count + '/' + total;
+          const minus = box.querySelector('.wct-minus');
+          const plus = box.querySelector('.wct-plus');
+          if (minus) minus.disabled = count <= 1;
+          if (plus) plus.disabled = count >= total;
+        });
+      }
+      function applyWorkCount() {
+        const cards = allCards();
+        const count = savedCount();
+        cards.forEach((card, i) => {
+          const inCount = i < count;
+          const inFilter = activeFilter === 'all' || card.dataset.cats.includes(activeFilter);
+          card.classList.toggle('count-hidden', !inCount);
+          card.classList.toggle('hidden', inCount && !inFilter);
+        });
+        if (countLabel) countLabel.textContent = count + ' Projects · ' + yearText;
+        updateCountTools(count, cards.length);
+      }
+      function installCountTools() {
+        const bar = document.querySelector('.edit-bar');
+        if (!bar || bar.querySelector('.works-count-tools')) return;
+        const box = document.createElement('span');
+        box.className = 'works-count-tools';
+        box.innerHTML = '<button type="button" class="wct-minus" aria-label="작품 줄이기">−</button><span class="wct-current"></span><button type="button" class="wct-plus" aria-label="작품 늘리기">+</button>';
+        const bake = bar.querySelector('.edit-bake');
+        bar.insertBefore(box, bake || bar.querySelector('.edit-reset'));
+        box.querySelector('.wct-minus').addEventListener('click', () => setCount(savedCount() - 1));
+        box.querySelector('.wct-plus').addEventListener('click', () => setCount(savedCount() + 1));
+        applyWorkCount();
       }
       function applyCardOrder() {
         let saved;
         try { saved = JSON.parse(localStorage.getItem(CARD_ORDER_KEY)); } catch (e) {}
-        const cards = [...grid.querySelectorAll('.port-card')];
+        const cards = allCards();
         const byHref = Object.fromEntries(cards.map(c => [c.getAttribute('href'), c]));
         if (Array.isArray(saved) && saved.every(h => byHref[h])) {
           const rest = cards.map(c => c.getAttribute('href')).filter(h => !saved.includes(h));
           [...saved, ...rest].forEach(href => grid.appendChild(byHref[href]));
         }
+        applyWorkCount();
       }
       applyCardOrder();
 
@@ -640,12 +723,27 @@
         if (dir < 0) grid.insertBefore(card, cards[j]);
         else grid.insertBefore(cards[j], card);
         localStorage.setItem(CARD_ORDER_KEY, JSON.stringify(currentHrefOrder()));
+        applyWorkCount();
       }
       const mo = new MutationObserver(() => {
-        if (document.body.classList.contains('editing')) attachReorderHandles();
+        if (document.body.classList.contains('editing')) {
+          attachReorderHandles();
+          installCountTools();
+        }
       });
       mo.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-      if (document.body.classList.contains('editing')) attachReorderHandles();
+      if (document.body.classList.contains('editing')) {
+        attachReorderHandles();
+        installCountTools();
+      }
+      window.addEventListener('load', installCountTools);
+      applyWorkCount();
+
+      window.arthodApplyWorksCount = applyWorkCount;
+      window.arthodSetWorksFilter = filter => {
+        activeFilter = filter || 'all';
+        applyWorkCount();
+      };
     })();
 
     // Filter
@@ -654,9 +752,7 @@
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         const f = btn.dataset.filter;
-        document.querySelectorAll('.port-card').forEach(card => {
-          card.classList.toggle('hidden', f !== 'all' && !card.dataset.cats.includes(f));
-        });
+        if (window.arthodSetWorksFilter) window.arthodSetWorksFilter(f);
       });
     });
 
