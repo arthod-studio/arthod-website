@@ -1831,35 +1831,45 @@ if (fv) {
           }
         });
       }
-      if (data.mediaIndex) {
-        for (const [key, info] of Object.entries(data.mediaIndex)) {
-          const existing = await mediaGet(key);
-          if (existing && !hasNewPublicVersion) continue;
-          if (info.kind === 'embed') {
-            await mediaSet(key, { kind: 'embed', embedUrl: info.embedUrl });
-            changed = true;
-          } else if (info.kind === 'ref') {
-            await mediaSet(key, { kind: 'ref', refKey: info.refKey });
-            changed = true;
-          } else if (info.file) {
-            try {
-              const mr = await fetch(base + info.file, { cache: 'no-store' });
-              if (mr.ok) {
-                const blob = await mr.blob();
-                await mediaSet(key, { kind: info.kind, blob });
-                changed = true;
-              }
-            } catch (e) { /* 개별 파일 실패는 무시 */ }
-          }
-        }
-      }
       if (data.savedAt) localStorage.setItem(PUBLIC_SYNC_KEY, data.savedAt);
       localStorage.setItem(PUBLIC_SYNC_VERSION_KEY, PUBLIC_SYNC_VERSION);
+      if (data.mediaIndex) {
+        (async () => {
+          let mediaChanged = false;
+          for (const [key, info] of Object.entries(data.mediaIndex)) {
+            const existing = await mediaGet(key);
+            if (existing && !hasNewPublicVersion) continue;
+            if (info.kind === 'embed') {
+              await mediaSet(key, { kind: 'embed', embedUrl: info.embedUrl });
+              mediaChanged = true;
+            } else if (info.kind === 'ref') {
+              await mediaSet(key, { kind: 'ref', refKey: info.refKey });
+              mediaChanged = true;
+            } else if (info.file) {
+              try {
+                const mr = await fetch(base + info.file, { cache: 'no-store' });
+                if (mr.ok) {
+                  const blob = await mr.blob();
+                  await mediaSet(key, { kind: info.kind, blob });
+                  mediaChanged = true;
+                }
+              } catch (e) { /* 개별 파일 실패는 무시 */ }
+            }
+          }
+          if (mediaChanged) window.dispatchEvent(new CustomEvent('arthod:public-sync'));
+        })();
+      }
     } catch (e) { /* 오프라인/네트워크 오류 시 조용히 무시 */ }
     return changed;
   }
 
   /* ── 7. 초기화 ── */
+  function revealBootingPage() {
+    document.body.classList.remove('work-detail-booting');
+    document.body.classList.add('work-detail-ready');
+    window.dispatchEvent(new CustomEvent('arthod:editor-ready'));
+  }
+
   async function init() {
     db(); // warm-start IndexedDB
     const publicSyncChanged = await syncFromPublicSource(); // 방문자마다 최신 게시본을 먼저 반영
@@ -1873,7 +1883,10 @@ if (fv) {
     restoreLayouts();
     attachMediaHandles();
     buildUI();
-    applyAllMedia().then(refreshCount);
+    applyAllMedia().then(() => {
+      refreshCount();
+      revealBootingPage();
+    }).catch(revealBootingPage);
     // 콜드 스타트 / works.html 기본 이미지 루프와의 경합 방지: 여러 번 재적용 (idempotent)
     setTimeout(() => applyAllMedia(), 250);
     setTimeout(() => applyAllMedia(), 800);

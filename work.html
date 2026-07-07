@@ -9,6 +9,15 @@
   <link rel="stylesheet" href="style.css?v=cursor-fast-20260706-1"/>
   <style>
     .work-page { padding-top: var(--nav-h); }
+    body.work-detail-booting .work-page {
+      opacity: 0;
+      visibility: hidden;
+    }
+    body.work-detail-ready .work-page {
+      opacity: 1;
+      visibility: visible;
+      transition: opacity .18s ease;
+    }
 
     /* ── Hero ── */
     .work-hero {
@@ -442,7 +451,7 @@
     }
   </style>
 </head>
-<body>
+<body class="work-detail-booting">
 
   <!-- ══ NAV ══════════════════════════════════════════════════ -->
   <header class="site-nav scrolled" id="site-nav">
@@ -477,7 +486,7 @@
   <!-- ══ CONTENT (filled by JS) ══════════════════════════════ -->
   <main class="work-page" id="work-page"></main>
 
-  <script src="main.js?v=nav-active-20260706-1"></script>
+  <script src="main.js?v=work-no-flicker-20260707-1"></script>
   <script>
   // ── Project data ──────────────────────────────────────────
   const PROJECTS = [
