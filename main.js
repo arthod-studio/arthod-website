@@ -1834,27 +1834,42 @@ if (fv) {
       if (data.savedAt) localStorage.setItem(PUBLIC_SYNC_KEY, data.savedAt);
       localStorage.setItem(PUBLIC_SYNC_VERSION_KEY, PUBLIC_SYNC_VERSION);
       if (data.mediaIndex) {
+        const currentWorkMatch = PAGE.match(/^work(\w+)/);
+        const currentWorkMediaPrefix = currentWorkMatch ? ('wd:' + currentWorkMatch[1].padStart(2, '0') + ':') : '';
+        async function syncMediaEntry(key, info) {
+          const existing = await mediaGet(key);
+          if (existing && !hasNewPublicVersion) return false;
+          if (info.kind === 'embed') {
+            await mediaSet(key, { kind: 'embed', embedUrl: info.embedUrl });
+            return true;
+          }
+          if (info.kind === 'ref') {
+            await mediaSet(key, { kind: 'ref', refKey: info.refKey });
+            return true;
+          }
+          if (info.file) {
+            try {
+              const mr = await fetch(base + info.file, { cache: 'no-store' });
+              if (mr.ok) {
+                const blob = await mr.blob();
+                await mediaSet(key, { kind: info.kind, blob });
+                return true;
+              }
+            } catch (e) { /* 개별 파일 실패는 무시 */ }
+          }
+          return false;
+        }
+        const priorityKeys = currentWorkMediaPrefix
+          ? Object.keys(data.mediaIndex).filter(key => key.indexOf(currentWorkMediaPrefix) === 0)
+          : [];
+        for (const key of priorityKeys) {
+          if (await syncMediaEntry(key, data.mediaIndex[key])) changed = true;
+        }
         (async () => {
           let mediaChanged = false;
           for (const [key, info] of Object.entries(data.mediaIndex)) {
-            const existing = await mediaGet(key);
-            if (existing && !hasNewPublicVersion) continue;
-            if (info.kind === 'embed') {
-              await mediaSet(key, { kind: 'embed', embedUrl: info.embedUrl });
-              mediaChanged = true;
-            } else if (info.kind === 'ref') {
-              await mediaSet(key, { kind: 'ref', refKey: info.refKey });
-              mediaChanged = true;
-            } else if (info.file) {
-              try {
-                const mr = await fetch(base + info.file, { cache: 'no-store' });
-                if (mr.ok) {
-                  const blob = await mr.blob();
-                  await mediaSet(key, { kind: info.kind, blob });
-                  mediaChanged = true;
-                }
-              } catch (e) { /* 개별 파일 실패는 무시 */ }
-            }
+            if (priorityKeys.includes(key)) continue;
+            if (await syncMediaEntry(key, info)) mediaChanged = true;
           }
           if (mediaChanged) window.dispatchEvent(new CustomEvent('arthod:public-sync'));
         })();
