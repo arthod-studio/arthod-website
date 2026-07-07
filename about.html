@@ -16,6 +16,12 @@
     .site-nav.scrolled { background: rgba(0,0,0,.8) !important; backdrop-filter: blur(16px); border-color: transparent !important; }
     .nav-links a { color: rgba(255,255,255,.6) !important; background: linear-gradient(#fff,#fff) no-repeat left center / 0% 100% !important; }
     .nav-links a:hover { background-size: 100% 100% !important; color: #000 !important; }
+    .nav-links a.active,
+    .site-nav.scrolled .nav-links a.active {
+      background-size: 100% 100% !important;
+      color: #000 !important;
+      font-weight: 600 !important;
+    }
 
     /* ── Hero ── */
     .ab-hero {
@@ -379,7 +385,7 @@
     <div class="nav-wrap">
       <a href="index.html" class="nav-logo"><img src="logo.png?v=logo-arthod-20260706-1" alt="Arthod"></a>
       <nav class="nav-links">
-        <a href="about.html" style="font-weight:600">About</a>
+        <a href="about.html">About</a>
         <a href="works.html?v=works-hover-slots-20260706-1">Works</a>
         <a href="services.html">Services</a>
         <a href="contact.html">Contact</a>
@@ -676,6 +682,6 @@
       requestAnimationFrame(tick);
     })();
   </script>
-  <script src="main.js?v=nav-active-20260706-1"></script>
+  <script src="main.js?v=about-nav-active-20260707-1"></script>
 </body>
 </html>
