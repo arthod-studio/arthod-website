@@ -1914,6 +1914,20 @@ if (fv) {
         applyAllMedia();
         restoreLayouts();
       },
+      refreshEditable: () => {
+        assignKeys();
+        restoreText();
+        restoreStyles();
+        tagMedia();
+        attachMediaHandles();
+        if (editing) {
+          keyed.forEach(el => {
+            el.contentEditable = 'true';
+            el.spellcheck = false;
+          });
+        }
+        applyAllMedia();
+      },
     };
     if (publicSyncChanged) {
       window.dispatchEvent(new CustomEvent('arthod:public-sync'));

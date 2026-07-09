@@ -433,6 +433,53 @@
         document.dispatchEvent(new CustomEvent('arthod:services-rendered', { detail: { count } }));
       };
       window.ARTHOD_RENDER_SERVICES();
+
+      (function installServiceCountEditor() {
+        function currentCount() {
+          const saved = parseInt(localStorage.getItem(SERVICE_COUNT_KEY) || '', 10);
+          const fallback = Number.isFinite(Number(SERVICE_COUNT)) ? Number(SERVICE_COUNT) : SERVICE_ITEMS.length;
+          return Math.max(1, Math.min(30, Number.isFinite(saved) ? saved : fallback));
+        }
+        function updateLabel() {
+          const value = document.querySelector('.service-count-current');
+          const minus = document.querySelector('.service-count-minus');
+          const plus = document.querySelector('.service-count-plus');
+          const count = currentCount();
+          if (value) value.textContent = String(count);
+          if (minus) minus.disabled = count <= 1;
+          if (plus) plus.disabled = count >= 30;
+        }
+        function setCount(next) {
+          localStorage.setItem(SERVICE_COUNT_KEY, String(Math.max(1, Math.min(30, next))));
+          window.ARTHOD_RENDER_SERVICES();
+          window.ArthodEditor?.refreshEditable?.();
+          updateLabel();
+        }
+        function install() {
+          const bar = document.querySelector('.edit-bar');
+          if (!bar || bar.querySelector('.service-count-tools')) return;
+          const tools = document.createElement('span');
+          tools.className = 'service-count-tools';
+          tools.innerHTML = '<span class="service-count-title">Services</span><button type="button" class="service-count-minus" aria-label="서비스 줄이기">−</button><span class="service-count-current"></span><button type="button" class="service-count-plus" aria-label="서비스 늘리기">+</button>';
+          bar.insertBefore(tools, bar.querySelector('.edit-bake'));
+          tools.querySelector('.service-count-minus').addEventListener('click', () => setCount(currentCount() - 1));
+          tools.querySelector('.service-count-plus').addEventListener('click', () => setCount(currentCount() + 1));
+          updateLabel();
+        }
+        const style = document.createElement('style');
+        style.textContent = `
+          .service-count-tools{display:inline-flex;align-items:center;gap:5px;padding:3px 5px;border:1px solid var(--border,#e8e6e2);border-radius:4px}
+          .service-count-title{font-size:11px;font-weight:600;color:var(--ink-3,#777);margin:0 2px}
+          .service-count-tools button{width:24px;height:24px;padding:0;border:0;border-radius:3px;background:var(--bg-warm,#f4f3ef);color:var(--ink,#111);font-size:16px;line-height:1;cursor:pointer}
+          .service-count-tools button:disabled{opacity:.3;cursor:default}
+          .service-count-current{min-width:18px;text-align:center;font-size:12px;font-weight:700;color:var(--ink,#111)}
+        `;
+        document.head.appendChild(style);
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install);
+        else install();
+        window.addEventListener('load', install);
+        window.addEventListener('arthod:editor-ready', install);
+      })();
     </script>
 
     <!-- Process -->
@@ -640,6 +687,7 @@
 
       render();
       installToolbarButton();
+      window.addEventListener('arthod:editor-ready', installToolbarButton);
       new MutationObserver(() => {
         const editing = document.body.classList.contains('editing');
         list.querySelectorAll('[data-connect-index]').forEach(link => {
