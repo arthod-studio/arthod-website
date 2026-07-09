@@ -549,14 +549,13 @@
     </div>
     <div class="footer-bot">
       <p class="f-copy">© 2024 Arthod (아쏘드). All rights reserved.</p>
-      <div class="f-soc" id="services-connect-bottom"><a href="#">Instagram</a><a href="#">Vimeo</a><a href="#">Behance</a><a href="#">LinkedIn</a></div>
     </div>
   </footer>
 
   <script src="main.js?v=nav-active-20260706-1"></script>
   <script>
     (function () {
-      const CONNECT_KEY = 'arthod-connect:services';
+      const CONNECT_KEY = 'arthod-connect:global';
       const defaults = [
         { name: 'Instagram', url: '#' },
         { name: 'Vimeo', url: '#' },
@@ -564,13 +563,16 @@
         { name: 'LinkedIn', url: '#' }
       ];
       const list = document.getElementById('services-connect-list');
-      const bottom = document.getElementById('services-connect-bottom');
-      if (!list || !bottom) return;
+      if (!list) return;
 
       function readItems() {
         try {
-          const saved = JSON.parse(localStorage.getItem(CONNECT_KEY));
+          const saved = JSON.parse(
+            localStorage.getItem(CONNECT_KEY) ||
+            localStorage.getItem('arthod-connect:services')
+          );
           if (Array.isArray(saved)) {
+            localStorage.setItem(CONNECT_KEY, JSON.stringify(saved));
             return saved.slice(0, 30).map((item, index) => ({
               name: String(item && item.name || `Connect ${index + 1}`),
               url: String(item && item.url || '#')
@@ -592,7 +594,6 @@
       function render() {
         const editing = document.body.classList.contains('editing');
         list.innerHTML = '';
-        bottom.innerHTML = '';
         items.forEach((item, index) => {
           const li = document.createElement('li');
           li.className = 'connect-edit-item';
@@ -605,7 +606,6 @@
           link.addEventListener('input', () => {
             items[index].name = link.textContent.trim() || `Connect ${index + 1}`;
             save();
-            renderBottom();
           });
           link.addEventListener('click', event => {
             if (document.body.classList.contains('editing')) event.preventDefault();
@@ -623,7 +623,6 @@
             items[index].url = safeUrl(url.value);
             link.href = items[index].url;
             save();
-            renderBottom();
           });
           const remove = document.createElement('button');
           remove.type = 'button';
@@ -638,17 +637,7 @@
           li.appendChild(controls);
           list.appendChild(li);
         });
-        renderBottom();
         updateCount();
-      }
-      function renderBottom() {
-        bottom.innerHTML = '';
-        items.forEach(item => {
-          const link = document.createElement('a');
-          link.href = safeUrl(item.url);
-          link.textContent = item.name;
-          bottom.appendChild(link);
-        });
       }
       function updateCount() {
         const count = document.querySelector('.connect-count');

@@ -398,6 +398,28 @@ if (fv) {
     });
   }
 
+  /* Footer Connect는 모든 페이지에서 같은 목록을 사용한다. */
+  function restoreFooterConnect() {
+    const connectCol = [...document.querySelectorAll('.footer .f-col')].find(col =>
+      (col.querySelector('h4')?.textContent || '').trim().toLowerCase() === 'connect'
+    );
+    const list = connectCol?.querySelector('ul');
+    if (!list || list.id === 'services-connect-list') return;
+    let items;
+    try { items = JSON.parse(localStorage.getItem('arthod-connect:global')); } catch (e) {}
+    if (!Array.isArray(items)) return;
+    list.innerHTML = '';
+    items.slice(0, 30).forEach(item => {
+      const li = document.createElement('li');
+      const link = document.createElement('a');
+      const url = String(item?.url || '').trim();
+      link.href = !url || /^javascript:/i.test(url) ? '#' : url;
+      link.textContent = String(item?.name || 'Connect');
+      li.appendChild(link);
+      list.appendChild(li);
+    });
+  }
+
   /* ── 2. 미디어 저장소 (IndexedDB — 사진/영상 Blob) ── */
   const DB_NAME = 'arthod-media';
   let _dbp = null;
@@ -1888,6 +1910,7 @@ if (fv) {
   async function init() {
     db(); // warm-start IndexedDB
     const publicSyncChanged = await syncFromPublicSource(); // 방문자마다 최신 게시본을 먼저 반영
+    restoreFooterConnect();
     tagShared();
     assignKeys();
     restoreText();
