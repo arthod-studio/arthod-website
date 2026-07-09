@@ -375,6 +375,9 @@ if (fv) {
       const nm = nextHref.match(/id=(\w+)/);
       if (wn && nm) wn.dataset.mirror = nm[1] + ':ko';
     }
+    document.querySelectorAll('[data-connect-index]').forEach(link => {
+      tagOne(link, 'footer-connect-' + link.dataset.connectIndex + ':name');
+    });
   }
   function restoreShared() {
     sharedEls.forEach(el => {
@@ -398,26 +401,115 @@ if (fv) {
     });
   }
 
-  /* Footer Connect는 모든 페이지에서 같은 목록을 사용한다. */
+  /* Footer Connect는 모든 페이지에서 같은 목록과 편집 UI를 사용한다. */
+  const FOOTER_CONNECT_KEY = 'arthod-connect:global';
+  const FOOTER_CONNECT_DEFAULTS = [
+    { name: 'Instagram', url: '#' },
+    { name: 'Vimeo', url: '#' },
+    { name: 'Behance', url: '#' },
+    { name: 'LinkedIn', url: '#' },
+  ];
+  let footerConnectItems = [];
+  function readFooterConnect() {
+    try {
+      const saved = JSON.parse(
+        localStorage.getItem(FOOTER_CONNECT_KEY) ||
+        localStorage.getItem('arthod-connect:services')
+      );
+      if (Array.isArray(saved)) return saved.slice(0, 30).map((item, index) => ({
+        name: String(item?.name || `Connect ${index + 1}`),
+        url: String(item?.url || '#'),
+      }));
+    } catch (e) {}
+    return FOOTER_CONNECT_DEFAULTS.map(item => ({ ...item }));
+  }
+  function safeConnectUrl(value) {
+    const url = String(value || '').trim();
+    return !url || /^javascript:/i.test(url) ? '#' : url;
+  }
+  function saveFooterConnect() {
+    localStorage.setItem(FOOTER_CONNECT_KEY, JSON.stringify(footerConnectItems));
+  }
   function restoreFooterConnect() {
     const connectCol = [...document.querySelectorAll('.footer .f-col')].find(col =>
       (col.querySelector('h4')?.textContent || '').trim().toLowerCase() === 'connect'
     );
     const list = connectCol?.querySelector('ul');
-    if (!list || list.id === 'services-connect-list') return;
-    let items;
-    try { items = JSON.parse(localStorage.getItem('arthod-connect:global')); } catch (e) {}
-    if (!Array.isArray(items)) return;
+    document.querySelector('.footer-bot .f-soc')?.remove();
+    if (!list) return;
+    footerConnectItems = readFooterConnect();
+    saveFooterConnect();
     list.innerHTML = '';
-    items.slice(0, 30).forEach(item => {
+    footerConnectItems.forEach((item, index) => {
       const li = document.createElement('li');
+      li.className = 'connect-edit-item';
       const link = document.createElement('a');
-      const url = String(item?.url || '').trim();
-      link.href = !url || /^javascript:/i.test(url) ? '#' : url;
-      link.textContent = String(item?.name || 'Connect');
+      link.href = safeConnectUrl(item.url);
+      link.textContent = item.name;
+      link.dataset.connectIndex = String(index);
+      link.addEventListener('input', () => {
+        footerConnectItems[index].name = link.textContent.trim() || `Connect ${index + 1}`;
+        localStorage.setItem(SHARED_PREFIX + `footer-connect-${index}:name`, footerConnectItems[index].name);
+        saveFooterConnect();
+      });
+      link.addEventListener('click', event => {
+        if (document.body.classList.contains('editing')) event.preventDefault();
+      });
       li.appendChild(link);
+      const controls = document.createElement('span');
+      controls.className = 'connect-edit-controls';
+      const urlInput = document.createElement('input');
+      urlInput.type = 'url';
+      urlInput.value = item.url === '#' ? '' : item.url;
+      urlInput.placeholder = 'https://';
+      urlInput.setAttribute('aria-label', `${item.name} 링크`);
+      urlInput.addEventListener('change', () => {
+        footerConnectItems[index].url = safeConnectUrl(urlInput.value);
+        link.href = footerConnectItems[index].url;
+        saveFooterConnect();
+      });
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.textContent = '−';
+      remove.title = 'Connect 항목 삭제';
+      remove.addEventListener('click', () => {
+        footerConnectItems.splice(index, 1);
+        saveFooterConnect();
+        restoreFooterConnect();
+        refreshFooterConnectEditor();
+      });
+      controls.append(urlInput, remove);
+      li.appendChild(controls);
       list.appendChild(li);
     });
+    const count = document.querySelector('.connect-count');
+    if (count) count.textContent = String(footerConnectItems.length);
+  }
+  function refreshFooterConnectEditor() {
+    tagShared();
+    restoreShared();
+    restoreStyles();
+    if (editing) {
+      sharedEls.forEach(el => {
+        el.contentEditable = 'true';
+        el.spellcheck = false;
+      });
+    }
+  }
+  function installFooterConnectToolbar() {
+    if (!bar || bar.querySelector('.connect-add') || !document.querySelector('[data-connect-index]')) return;
+    const add = document.createElement('button');
+    add.type = 'button';
+    add.className = 'connect-add';
+    add.innerHTML = 'Connect + <span class="connect-count">' + footerConnectItems.length + '</span>';
+    add.addEventListener('click', () => {
+      footerConnectItems.push({ name: `Connect ${footerConnectItems.length + 1}`, url: '#' });
+      saveFooterConnect();
+      restoreFooterConnect();
+      refreshFooterConnectEditor();
+      document.querySelector('.connect-edit-item:last-child a')?.focus();
+    });
+    bar.insertBefore(add, bar.querySelector('.edit-bake'));
   }
 
   /* ── 2. 미디어 저장소 (IndexedDB — 사진/영상 Blob) ── */
@@ -1517,6 +1609,7 @@ if (fv) {
       + '<button class="edit-reset" type="button">초기화</button>'
       + '<button class="edit-save" type="button">저장 완료</button>';
     document.body.appendChild(bar);
+    installFooterConnectToolbar();
 
     const style = document.createElement('style');
     style.textContent = `
@@ -1689,6 +1782,12 @@ if (fv) {
         opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;letter-spacing:.02em;
       }
       #ed-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+      .connect-edit-controls{display:none}
+      body.editing .connect-edit-item{display:grid;grid-template-columns:minmax(86px,auto) minmax(130px,220px);align-items:center;gap:10px;margin-bottom:7px}
+      body.editing .connect-edit-controls{display:flex;align-items:center;gap:5px}
+      body.editing .connect-edit-controls input{width:100%;min-width:0;padding:5px 7px;border:1px solid rgba(255,255,255,.28);border-radius:3px;background:rgba(255,255,255,.08);color:inherit;font:11px/1.2 inherit;outline:none}
+      body.editing .connect-edit-controls button{width:24px;height:24px;flex:0 0 24px;border:1px solid rgba(255,255,255,.28);border-radius:3px;background:transparent;color:inherit;cursor:pointer}
+      .connect-add{font-size:12px;font-weight:600;color:var(--ink-2,#333);background:none;border:1px solid var(--border,#e8e6e2);padding:6px 10px;border-radius:4px;cursor:pointer}
     `;
     document.head.appendChild(style);
 
