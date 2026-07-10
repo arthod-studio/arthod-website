@@ -63,6 +63,13 @@
       color: #fff;
       display: block;
     }
+    .ab-hero-logo {
+      display: block;
+      width: min(76vw, 980px);
+      margin: 0 auto;
+      object-fit: contain;
+      mix-blend-mode: screen;
+    }
     .ab-hero-sub {
       display: flex;
       align-items: center;
@@ -417,12 +424,9 @@
       </div>
 
       <div class="ab-hero-center r d1">
-        <span class="ab-hero-title">ARTHOD</span>
-        <div class="ab-hero-sub">
-          <span class="ab-hs-word">Art</span>
-          <span class="ab-hs-plus">+</span>
-          <span class="ab-hs-word">Method</span>
-        </div>
+        <video class="ab-hero-logo ab-hero-title" autoplay muted loop playsinline preload="auto" aria-label="ARTHOD">
+          <source src="assets/about-logo.mp4?v=about-logo-20260710-1" type="video/mp4"/>
+        </video>
       </div>
 
       <div class="ab-hero-bottom r d2">
