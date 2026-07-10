@@ -346,12 +346,17 @@
       gap: 24px;
       padding: 0 0 24px;
       align-items: start;
+      min-width: 0;
     }
     .ab-tl-item + .ab-tl-item {
       padding-top: 24px;
       border-top: 1px solid var(--border);
     }
     .ab-tl-list .ab-tl-item:last-child { padding-bottom: 0; }
+    .ab-tl-item > div {
+      min-width: 0;
+      max-width: 100%;
+    }
     .ab-tl-year {
       font-family: var(--font-mono);
       font-size: clamp(18px,1.8vw,24px);
@@ -359,6 +364,7 @@
       letter-spacing: .02em;
       color: var(--ink-2);
       padding-top: 3px;
+      overflow-wrap: anywhere;
     }
     .ab-tl-name {
       font-family: var(--font-d);
@@ -367,11 +373,19 @@
       letter-spacing: -.02em;
       color: var(--ink);
       margin-bottom: 8px;
+      max-width: 100%;
+      line-height: 1.22;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
     }
     .ab-tl-desc {
-      font-size: 14px;
+      font-size: clamp(13px,1.2vw,15px);
       color: var(--ink-3);
-      line-height: 1.75;
+      line-height: 1.7;
+      max-width: min(720px,100%);
+      margin: 0;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
     }
     .ab-tl-note {
       margin-top: clamp(24px,4vh,40px);
@@ -414,7 +428,21 @@
       .ab-stats-grid { grid-template-columns:1fr 1fr; }
       .ab-tl-group { display:block; padding:40px 0; }
       .ab-tl-cat { margin-bottom:28px; }
-      .ab-tl-item { grid-template-columns:70px 1fr; gap:20px; }
+      .ab-tl-item { grid-template-columns:minmax(48px,64px) minmax(0,1fr); gap:16px; }
+      .ab-tl-year { font-size:13px; padding-top:4px; }
+      .ab-tl-name { font-size:18px; margin-bottom:6px; }
+      .ab-tl-desc { font-size:13px; line-height:1.65; }
+    }
+    @media(max-width:420px){
+      .ab-tl-header { display:block; }
+      .ab-tl-sub { display:block; margin-top:8px; }
+      .ab-tl-item {
+        grid-template-columns:1fr;
+        gap:7px;
+      }
+      .ab-tl-year {
+        min-height: 1em;
+      }
     }
   </style>
 </head>
@@ -760,6 +788,6 @@
       requestAnimationFrame(tick);
     })();
   </script>
-  <script src="main.js?v=history-recover-local-20260710-1"></script>
+  <script src="main.js?v=history-responsive-20260710-1"></script>
 </body>
 </html>

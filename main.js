@@ -2128,6 +2128,18 @@ if (fv) {
       body.editing .history-del{display:inline-flex;position:absolute;right:0;top:0;padding:7px 9px;border:1px solid rgba(200,30,20,.28);border-radius:4px;background:#fff;color:#c81e14;font:600 11px/1 var(--font-mono,ui-monospace,monospace);cursor:pointer}
       body.editing .ab-tl-item + .ab-tl-item .history-move,
       body.editing .ab-tl-item + .ab-tl-item .history-del{top:24px}
+      body.editing .ab-tl-name,
+      body.editing .ab-tl-desc{min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:keep-all}
+      @media(max-width:760px){
+        body.editing .ab-tl-item{padding-right:0;padding-bottom:58px}
+        body.editing .history-move{right:47px;top:auto;bottom:16px}
+        body.editing .history-del{right:0;top:auto;bottom:16px}
+        body.editing .ab-tl-item + .ab-tl-item .history-move,
+        body.editing .ab-tl-item + .ab-tl-item .history-del{top:auto}
+      }
+      @media(max-width:420px){
+        body.editing .history-group-controls{position:static;margin:-12px 0 18px}
+      }
     `;
     document.head.appendChild(style);
 
