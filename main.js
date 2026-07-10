@@ -529,12 +529,20 @@ if (fv) {
     return (items || []).map(group => ({
       category: plainAboutHistoryText(group.category) || 'Category',
       items: (group.items || []).map(item => ({
-        year: plainAboutHistoryText(item.year),
+        year: plainAboutHistoryText(item.year) === 'Year' ? '' : plainAboutHistoryText(item.year),
         name: plainAboutHistoryText(item.name) || 'Title',
         desc: plainAboutHistoryText(item.desc) || 'Description',
       })),
       note: plainAboutHistoryText(group.note),
-    }));
+    })).filter(group => {
+      const isPlaceholderCategory = /^Category\s+\d+$/i.test(group.category);
+      const onlyPlaceholderItem = group.items.length === 1
+        && !group.items[0].year
+        && group.items[0].name === '새 내역'
+        && group.items[0].desc === '설명을 입력하세요.'
+        && !group.note;
+      return !(isPlaceholderCategory && onlyPlaceholderItem);
+    });
   }
   function readAboutHistoryFromDom() {
     return [...document.querySelectorAll('.ab-tl-group')].map(group => ({
@@ -713,7 +721,8 @@ if (fv) {
   }
   function restoreAboutHistory() {
     if (!isAboutPage()) return;
-    const items = migrateAboutHistoryLegacyText(readAboutHistory());
+    const hasHistoryStore = localStorage.getItem(ABOUT_HISTORY_KEY) !== null;
+    const items = hasHistoryStore ? readAboutHistory() : migrateAboutHistoryLegacyText(readAboutHistory());
     saveAboutHistory(items);
     renderAboutHistory(items);
     requestAnimationFrame(() => {
@@ -2200,7 +2209,7 @@ if (fv) {
      새 게시본이면 로컬의 오래된 값까지 갱신한다 → "저장하면 모두에게 반영"을 구현.
      같은 게시본 안에서 사용자가 편집 중인 로컬 값은 덮어쓰지 않는다. */
   const PUBLIC_SOURCE = { owner: 'arthod-studio', repo: 'arthod-website-backup', branch: 'main' };
-  const PUBLIC_SYNC_VERSION = 'public-sync-3';
+  const PUBLIC_SYNC_VERSION = 'public-sync-4';
   const PUBLIC_SYNC_KEY = 'arthod-public-sync:savedAt';
   const PUBLIC_SYNC_VERSION_KEY = 'arthod-public-sync:version';
   async function syncFromPublicSource() {
