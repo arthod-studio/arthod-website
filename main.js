@@ -523,7 +523,7 @@ if (fv) {
     return [...document.querySelectorAll('.ab-tl-group')].map(group => ({
       category: group.querySelector('.ab-tl-cat')?.textContent.trim() || 'Category',
       items: [...group.querySelectorAll('.ab-tl-item')].map(item => ({
-        year: item.querySelector('.ab-tl-year')?.textContent.trim() || 'Year',
+        year: item.querySelector('.ab-tl-year')?.textContent.trim() || '',
         name: item.querySelector('.ab-tl-name')?.textContent.trim() || 'Title',
         desc: item.querySelector('.ab-tl-desc')?.textContent.trim() || 'Description',
       })),
@@ -615,7 +615,7 @@ if (fv) {
           + `<p class="ab-tl-desc" data-ek="history-${groupIndex}-${itemIndex}-desc"></p></div>`
           + `<span class="history-move"><button type="button" class="history-up" aria-label="항목 위로">↑</button><button type="button" class="history-down" aria-label="항목 아래로">↓</button></span>`
           + `<button class="history-del" type="button" aria-label="History 항목 삭제">삭제</button>`;
-        row.querySelector('.ab-tl-year').textContent = item.year || 'Year';
+        row.querySelector('.ab-tl-year').textContent = item.year || '';
         row.querySelector('.ab-tl-name').textContent = item.name || 'Title';
         row.querySelector('.ab-tl-desc').textContent = item.desc || 'Description';
         row.querySelectorAll('.ab-tl-year,.ab-tl-name,.ab-tl-desc').forEach(el => { el.dataset.historyManaged = '1'; });
@@ -642,7 +642,7 @@ if (fv) {
       add.textContent = '항목 +';
       add.addEventListener('click', () => {
         const latest = readAboutHistoryFromDom();
-        latest[groupIndex].items.push({ year: 'Year', name: '새 내역', desc: '설명을 입력하세요.' });
+        latest[groupIndex].items.push({ year: '', name: '새 내역', desc: '설명을 입력하세요.' });
         saveAboutHistory(latest);
         renderAboutHistory(latest);
         aboutHistoryEditableRefresh();
@@ -693,7 +693,7 @@ if (fv) {
       const latest = readAboutHistoryFromDom();
       latest.push({
         category: `Category ${latest.length + 1}`,
-        items: [{ year: 'Year', name: '새 내역', desc: '설명을 입력하세요.' }],
+        items: [{ year: '', name: '새 내역', desc: '설명을 입력하세요.' }],
         note: '',
       });
       saveAboutHistory(latest);
@@ -1866,6 +1866,7 @@ if (fv) {
       body.editing [data-media][data-has-custom]::after{content:'교체 ↑'}
       body.editing [data-media="hero"][data-has-custom]::after{content:'사진·영상 교체 ↑'}
       body.editing [contenteditable="true"]:empty::before{content:'텍스트 입력';color:var(--ink-4,#aaa)}
+      body.editing .ab-tl-year[contenteditable="true"]:empty::before{content:''}
       .media-revert{position:absolute;right:14px;bottom:14px;z-index:62;display:none;align-items:center;gap:6px;
         font:600 11px/1 var(--font-mono,ui-monospace,monospace);color:#fff;background:rgba(200,30,20,.92);
         padding:7px 11px;border-radius:5px;cursor:pointer;border:none;box-shadow:0 4px 14px rgba(0,0,0,.25)}
