@@ -135,6 +135,7 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
 
 /* ── Scroll reveal ───────────────────────────────────────────*/
 (function () {
+  let revealObserver = null;
   const rEls = () => [...document.querySelectorAll('.r')];
 
   function stagger(selector, step, max) {
@@ -152,19 +153,32 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
   function settle(el) {
     el.classList.add('v');
   }
+  function observeReveal(root) {
+    const scope = root || document;
+    const targets = [...scope.querySelectorAll('.r')].filter(el => !el.classList.contains('v'));
+    if (!targets.length) return;
+    if (!('IntersectionObserver' in window) || !revealObserver) {
+      targets.forEach(settle);
+      return;
+    }
+    targets.forEach(el => revealObserver.observe(el));
+  }
   if (!('IntersectionObserver' in window)) {
     rEls().forEach(settle);
+    window.ArthodReveal = { refresh: observeReveal, settle };
     return;
   }
   try {
-    const obs = new IntersectionObserver(entries => {
+    revealObserver = new IntersectionObserver(entries => {
       entries.forEach(e => {
-        if (e.isIntersecting) { settle(e.target); obs.unobserve(e.target); }
+        if (e.isIntersecting) { settle(e.target); revealObserver.unobserve(e.target); }
       });
     }, { threshold: 0.08, rootMargin: '0px 0px -8% 0px' });
-    rEls().forEach(el => obs.observe(el));
+    rEls().forEach(el => revealObserver.observe(el));
+    window.ArthodReveal = { refresh: observeReveal, settle };
   } catch (err) {
     rEls().forEach(settle);
+    window.ArthodReveal = { refresh: observeReveal, settle };
   }
 })();
 
@@ -705,7 +719,7 @@ if (fv) {
     grid.innerHTML = '';
     items.forEach((group, groupIndex) => {
       const section = document.createElement('section');
-      section.className = 'ab-tl-group r v' + (groupIndex % 3 ? ` d${groupIndex % 3}` : '');
+      section.className = 'ab-tl-group r' + (groupIndex % 3 ? ` d${groupIndex % 3}` : '');
       const cat = document.createElement('h3');
       cat.className = 'ab-tl-cat';
       cat.dataset.ek = `history-cat-${groupIndex}`;
@@ -725,7 +739,8 @@ if (fv) {
       list.className = 'ab-tl-list';
       (group.items || []).forEach((item, itemIndex) => {
         const row = document.createElement('div');
-        row.className = 'ab-tl-item';
+        row.className = 'ab-tl-item r';
+        row.style.setProperty('--r-delay', Math.min(itemIndex * 0.04, 0.24).toFixed(2) + 's');
         row.dataset.historyGroup = String(groupIndex);
         row.dataset.historyItem = String(itemIndex);
         row.innerHTML =
@@ -772,7 +787,7 @@ if (fv) {
       list.appendChild(add);
       if (group.note) {
         const note = document.createElement('p');
-        note.className = 'ab-tl-note';
+        note.className = 'ab-tl-note r';
         note.dataset.ek = `history-note-${groupIndex}`;
         note.dataset.historyManaged = '1';
         note.dataset.historyStyle = `about-history-${groupIndex}-note`;
@@ -782,6 +797,7 @@ if (fv) {
       section.append(cat, groupControls, list);
       grid.appendChild(section);
     });
+    window.ArthodReveal?.refresh(grid);
   }
   function restoreAboutHistory() {
     if (!isAboutPage()) return;
@@ -789,13 +805,6 @@ if (fv) {
     const items = hasHistoryStore ? readAboutHistory() : migrateAboutHistoryLegacyText(readAboutHistory());
     saveAboutHistory(items);
     renderAboutHistory(items);
-    requestAnimationFrame(() => {
-      document.querySelectorAll('.ab-tl-group').forEach(group => {
-        group.classList.add('v');
-        group.style.opacity = '';
-        group.style.transform = '';
-      });
-    });
   }
   function setAboutHistoryEditable(on) {
     document.querySelectorAll('[data-history-managed="1"]').forEach(el => {
