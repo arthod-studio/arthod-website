@@ -559,7 +559,7 @@ if (fv) {
     grid.innerHTML = '';
     items.forEach((group, groupIndex) => {
       const section = document.createElement('section');
-      section.className = 'ab-tl-group r' + (groupIndex % 3 ? ` d${groupIndex % 3}` : '');
+      section.className = 'ab-tl-group r v' + (groupIndex % 3 ? ` d${groupIndex % 3}` : '');
       const cat = document.createElement('h3');
       cat.className = 'ab-tl-cat';
       cat.dataset.ek = `history-cat-${groupIndex}`;
