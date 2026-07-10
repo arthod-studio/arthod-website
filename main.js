@@ -514,6 +514,8 @@ if (fv) {
   }
 
   const ABOUT_HISTORY_KEY = 'arthod-about:history-items';
+  const ABOUT_HISTORY_LAYOUT_VERSION_KEY = 'arthod-about:history-layout-version';
+  const ABOUT_HISTORY_LAYOUT_VERSION = 'history-list-v2';
   function isAboutPage() {
     return PAGE === 'about' && !!document.querySelector('.ab-tl-grid');
   }
@@ -540,6 +542,7 @@ if (fv) {
   }
   function saveAboutHistory(items) {
     localStorage.setItem(ABOUT_HISTORY_KEY, JSON.stringify(items));
+    localStorage.setItem(ABOUT_HISTORY_LAYOUT_VERSION_KEY, ABOUT_HISTORY_LAYOUT_VERSION);
   }
   function aboutHistoryEditableRefresh() {
     assignKeys();
@@ -628,6 +631,13 @@ if (fv) {
     const items = readAboutHistory();
     saveAboutHistory(items);
     renderAboutHistory(items);
+    requestAnimationFrame(() => {
+      document.querySelectorAll('.ab-tl-group').forEach(group => {
+        group.classList.add('v');
+        group.style.opacity = '';
+        group.style.transform = '';
+      });
+    });
   }
   function setAboutHistoryEditable(on) {
     document.querySelectorAll('[data-history-managed="1"]').forEach(el => {
@@ -656,6 +666,11 @@ if (fv) {
     });
     bar.insertBefore(add, bar.querySelector('.edit-bake'));
   }
+  window.addEventListener('pageshow', () => {
+    if (!isAboutPage()) return;
+    restoreAboutHistory();
+    setAboutHistoryEditable(document.body.classList.contains('editing'));
+  });
 
   /* ── 2. 미디어 저장소 (IndexedDB — 사진/영상 Blob) ── */
   const DB_NAME = 'arthod-media';
@@ -1388,7 +1403,7 @@ if (fv) {
     const text = {};
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
-      if (k === 'arthod-about-recent-count'
+      if (k === 'arthod-about-recent-count' || k === ABOUT_HISTORY_KEY || k === ABOUT_HISTORY_LAYOUT_VERSION_KEY
         || k.indexOf('arthod-edit:') === 0 || k.indexOf('arthod-proj:') === 0 || k.indexOf('arthod-style:') === 0
         || k.indexOf('arthod-layout:') === 0 || k.indexOf('arthod-gallerylayout:') === 0 || k.indexOf('arthod-galleryitems:') === 0
         || k.indexOf('arthod-sliderorder:') === 0 || k.indexOf('arthod-cardorder:') === 0) {
@@ -1518,7 +1533,7 @@ if (fv) {
       const text = {};
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
-        if (k === 'arthod-about-recent-count' || k.indexOf('arthod-edit:') === 0 || k.indexOf('arthod-proj:') === 0 || k.indexOf('arthod-style:') === 0 || k.indexOf('arthod-layout:') === 0 || k.indexOf('arthod-gallerylayout:') === 0 || k.indexOf('arthod-galleryitems:') === 0 || k.indexOf('arthod-sliderorder:') === 0 || k.indexOf('arthod-cardorder:') === 0) {
+        if (k === 'arthod-about-recent-count' || k === ABOUT_HISTORY_KEY || k === ABOUT_HISTORY_LAYOUT_VERSION_KEY || k.indexOf('arthod-edit:') === 0 || k.indexOf('arthod-proj:') === 0 || k.indexOf('arthod-style:') === 0 || k.indexOf('arthod-layout:') === 0 || k.indexOf('arthod-gallerylayout:') === 0 || k.indexOf('arthod-galleryitems:') === 0 || k.indexOf('arthod-sliderorder:') === 0 || k.indexOf('arthod-cardorder:') === 0) {
           text[k] = localStorage.getItem(k);
         }
       }
@@ -2084,7 +2099,7 @@ if (fv) {
      새 게시본이면 로컬의 오래된 값까지 갱신한다 → "저장하면 모두에게 반영"을 구현.
      같은 게시본 안에서 사용자가 편집 중인 로컬 값은 덮어쓰지 않는다. */
   const PUBLIC_SOURCE = { owner: 'arthod-studio', repo: 'arthod-website-backup', branch: 'main' };
-  const PUBLIC_SYNC_VERSION = 'public-sync-2';
+  const PUBLIC_SYNC_VERSION = 'public-sync-3';
   const PUBLIC_SYNC_KEY = 'arthod-public-sync:savedAt';
   const PUBLIC_SYNC_VERSION_KEY = 'arthod-public-sync:version';
   async function syncFromPublicSource() {
