@@ -544,6 +544,30 @@ if (fv) {
     localStorage.setItem(ABOUT_HISTORY_KEY, JSON.stringify(items));
     localStorage.setItem(ABOUT_HISTORY_LAYOUT_VERSION_KEY, ABOUT_HISTORY_LAYOUT_VERSION);
   }
+  function moveAboutHistoryGroup(groupIndex, delta) {
+    const latest = readAboutHistoryFromDom();
+    const nextIndex = groupIndex + delta;
+    if (nextIndex < 0 || nextIndex >= latest.length) return;
+    const [moved] = latest.splice(groupIndex, 1);
+    latest.splice(nextIndex, 0, moved);
+    saveAboutHistory(latest);
+    renderAboutHistory(latest);
+    aboutHistoryEditableRefresh();
+    toast('History 순서를 변경했습니다');
+  }
+  function moveAboutHistoryItem(groupIndex, itemIndex, delta) {
+    const latest = readAboutHistoryFromDom();
+    const group = latest[groupIndex];
+    if (!group || !Array.isArray(group.items)) return;
+    const nextIndex = itemIndex + delta;
+    if (nextIndex < 0 || nextIndex >= group.items.length) return;
+    const [moved] = group.items.splice(itemIndex, 1);
+    group.items.splice(nextIndex, 0, moved);
+    saveAboutHistory(latest);
+    renderAboutHistory(latest);
+    aboutHistoryEditableRefresh();
+    toast('History 항목 순서를 변경했습니다');
+  }
   function aboutHistoryEditableRefresh() {
     assignKeys();
     restoreText();
@@ -569,6 +593,15 @@ if (fv) {
       cat.dataset.historyManaged = '1';
       cat.dataset.historyStyle = `about-history-${groupIndex}-cat`;
       cat.textContent = group.category || `Category ${groupIndex + 1}`;
+      const groupControls = document.createElement('div');
+      groupControls.className = 'history-group-controls';
+      groupControls.innerHTML =
+        `<button type="button" class="history-group-up" aria-label="카테고리 위로">↑</button>`
+        + `<button type="button" class="history-group-down" aria-label="카테고리 아래로">↓</button>`;
+      groupControls.querySelector('.history-group-up').disabled = groupIndex === 0;
+      groupControls.querySelector('.history-group-down').disabled = groupIndex === items.length - 1;
+      groupControls.querySelector('.history-group-up').addEventListener('click', () => moveAboutHistoryGroup(groupIndex, -1));
+      groupControls.querySelector('.history-group-down').addEventListener('click', () => moveAboutHistoryGroup(groupIndex, 1));
       const list = document.createElement('div');
       list.className = 'ab-tl-list';
       (group.items || []).forEach((item, itemIndex) => {
@@ -580,6 +613,7 @@ if (fv) {
           `<span class="ab-tl-year" data-ek="history-${groupIndex}-${itemIndex}-year"></span>`
           + `<div><div class="ab-tl-name" data-ek="history-${groupIndex}-${itemIndex}-name"></div>`
           + `<p class="ab-tl-desc" data-ek="history-${groupIndex}-${itemIndex}-desc"></p></div>`
+          + `<span class="history-move"><button type="button" class="history-up" aria-label="항목 위로">↑</button><button type="button" class="history-down" aria-label="항목 아래로">↓</button></span>`
           + `<button class="history-del" type="button" aria-label="History 항목 삭제">삭제</button>`;
         row.querySelector('.ab-tl-year').textContent = item.year || 'Year';
         row.querySelector('.ab-tl-name').textContent = item.name || 'Title';
@@ -596,6 +630,10 @@ if (fv) {
           aboutHistoryEditableRefresh();
           toast('History 항목을 삭제했습니다');
         });
+        row.querySelector('.history-up').disabled = itemIndex === 0;
+        row.querySelector('.history-down').disabled = itemIndex === (group.items || []).length - 1;
+        row.querySelector('.history-up').addEventListener('click', () => moveAboutHistoryItem(groupIndex, itemIndex, -1));
+        row.querySelector('.history-down').addEventListener('click', () => moveAboutHistoryItem(groupIndex, itemIndex, 1));
         list.appendChild(row);
       });
       const add = document.createElement('button');
@@ -622,7 +660,7 @@ if (fv) {
         note.textContent = group.note;
         list.appendChild(note);
       }
-      section.append(cat, list);
+      section.append(cat, groupControls, list);
       grid.appendChild(section);
     });
   }
@@ -1950,10 +1988,18 @@ if (fv) {
       body.editing .connect-edit-controls button{width:24px;height:24px;flex:0 0 24px;border:1px solid rgba(255,255,255,.28);border-radius:3px;background:transparent;color:inherit;cursor:pointer}
       .connect-add{font-size:12px;font-weight:600;color:var(--ink-2,#333);background:none;border:1px solid var(--border,#e8e6e2);padding:6px 10px;border-radius:4px;cursor:pointer}
       .history-add-group{font-size:12px;font-weight:600;color:var(--ink-2,#333);background:none;border:1px solid var(--border,#e8e6e2);padding:6px 10px;border-radius:4px;cursor:pointer}
-      .history-add-item,.history-del{display:none}
+      .history-add-item,.history-del,.history-move,.history-group-controls{display:none}
       body.editing .history-add-item{display:inline-flex;margin-top:22px;padding:7px 12px;border:1px solid var(--border,#e8e6e2);border-radius:4px;background:#fff;color:var(--ink,#111);font:600 12px/1 var(--font-mono,ui-monospace,monospace);cursor:pointer}
-      body.editing .ab-tl-item{position:relative;padding-right:70px}
-      body.editing .history-del{display:inline-flex;position:absolute;right:0;top:0;padding:6px 9px;border:1px solid rgba(200,30,20,.28);border-radius:4px;background:#fff;color:#c81e14;font:600 11px/1 var(--font-mono,ui-monospace,monospace);cursor:pointer}
+      body.editing .ab-tl-group{position:relative}
+      body.editing .history-group-controls{display:flex;position:absolute;left:0;top:calc(clamp(32px,5vw,64px) + 68px);gap:4px}
+      body.editing .history-group-controls button,
+      body.editing .history-move button{width:27px;height:27px;border:1px solid var(--border,#e8e6e2);border-radius:4px;background:#fff;color:var(--ink,#111);font:700 13px/1 var(--font-mono,ui-monospace,monospace);cursor:pointer}
+      body.editing .history-group-controls button:disabled,
+      body.editing .history-move button:disabled{opacity:.25;cursor:not-allowed}
+      body.editing .ab-tl-item{position:relative;padding-right:116px}
+      body.editing .history-move{display:flex;position:absolute;right:47px;top:0;gap:4px}
+      body.editing .history-del{display:inline-flex;position:absolute;right:0;top:0;padding:7px 9px;border:1px solid rgba(200,30,20,.28);border-radius:4px;background:#fff;color:#c81e14;font:600 11px/1 var(--font-mono,ui-monospace,monospace);cursor:pointer}
+      body.editing .ab-tl-item + .ab-tl-item .history-move,
       body.editing .ab-tl-item + .ab-tl-item .history-del{top:24px}
     `;
     document.head.appendChild(style);
