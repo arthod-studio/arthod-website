@@ -283,6 +283,7 @@ if (fv) {
       document.querySelectorAll(sel).forEach((el, n) => {
         if (el.dataset.editKey) return;
         if (el.dataset.shared || el.dataset.mirror) return; // 공유 필드는 별도 관리
+        if (el.dataset.historyManaged === '1') return; // About history는 항목 추가/삭제와 함께 별도 JSON으로 저장
         if (el.parentElement && el.parentElement.closest('[data-edit-key]')) return; // 중첩 방지
         // data-ek가 있으면 그 이름으로 영구 고정 키 사용 (코드가 바뀌어도 안전)
         // 없으면 기존 방식(선택자+등장순서)으로 폴백
@@ -310,7 +311,7 @@ if (fv) {
     { label: 'Mono', value: "var(--font-mono, ui-monospace, monospace)" },
     { label: 'Playfair', value: "'Playfair Display', Georgia, serif" },
   ];
-  function styleKey(el) { return el.dataset.editKey || el.dataset.shared; }
+  function styleKey(el) { return el.dataset.editKey || el.dataset.shared || el.dataset.historyStyle; }
   function applyStyleRec(el, rec) {
     if (!rec) return;
     if (rec.font) el.style.fontFamily = rec.font; else el.style.removeProperty('font-family');
@@ -321,7 +322,7 @@ if (fv) {
     if (rec.color) el.style.color = rec.color; else el.style.removeProperty('color');
   }
   function restoreStyles() {
-    [...keyed, ...sharedEls].forEach(el => {
+    [...keyed, ...sharedEls, ...document.querySelectorAll('[data-history-style]')].forEach(el => {
       const k = styleKey(el); if (!k) return;
       const raw = localStorage.getItem(STYLE_PREFIX + k);
       if (raw) { try { applyStyleRec(el, JSON.parse(raw)); } catch (e) {} }
@@ -508,6 +509,150 @@ if (fv) {
       restoreFooterConnect();
       refreshFooterConnectEditor();
       document.querySelector('.connect-edit-item:last-child a')?.focus();
+    });
+    bar.insertBefore(add, bar.querySelector('.edit-bake'));
+  }
+
+  const ABOUT_HISTORY_KEY = 'arthod-about:history-items';
+  function isAboutPage() {
+    return PAGE === 'about' && !!document.querySelector('.ab-tl-grid');
+  }
+  function readAboutHistoryFromDom() {
+    return [...document.querySelectorAll('.ab-tl-group')].map(group => ({
+      category: group.querySelector('.ab-tl-cat')?.textContent.trim() || 'Category',
+      items: [...group.querySelectorAll('.ab-tl-item')].map(item => ({
+        year: item.querySelector('.ab-tl-year')?.textContent.trim() || 'Year',
+        name: item.querySelector('.ab-tl-name')?.textContent.trim() || 'Title',
+        desc: item.querySelector('.ab-tl-desc')?.textContent.trim() || 'Description',
+      })),
+      note: group.querySelector('.ab-tl-note')?.textContent.trim() || '',
+    }));
+  }
+  function readAboutHistory() {
+    const raw = localStorage.getItem(ABOUT_HISTORY_KEY);
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length) return parsed;
+      } catch (e) {}
+    }
+    return readAboutHistoryFromDom();
+  }
+  function saveAboutHistory(items) {
+    localStorage.setItem(ABOUT_HISTORY_KEY, JSON.stringify(items));
+  }
+  function aboutHistoryEditableRefresh() {
+    assignKeys();
+    restoreText();
+    restoreStyles();
+    if (editing) {
+      keyed.forEach(el => {
+        el.contentEditable = 'true';
+        el.spellcheck = false;
+      });
+      setAboutHistoryEditable(true);
+    }
+  }
+  function renderAboutHistory(items) {
+    const grid = document.querySelector('.ab-tl-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    items.forEach((group, groupIndex) => {
+      const section = document.createElement('section');
+      section.className = 'ab-tl-group r' + (groupIndex % 3 ? ` d${groupIndex % 3}` : '');
+      const cat = document.createElement('h3');
+      cat.className = 'ab-tl-cat';
+      cat.dataset.ek = `history-cat-${groupIndex}`;
+      cat.dataset.historyManaged = '1';
+      cat.dataset.historyStyle = `about-history-${groupIndex}-cat`;
+      cat.textContent = group.category || `Category ${groupIndex + 1}`;
+      const list = document.createElement('div');
+      list.className = 'ab-tl-list';
+      (group.items || []).forEach((item, itemIndex) => {
+        const row = document.createElement('div');
+        row.className = 'ab-tl-item';
+        row.dataset.historyGroup = String(groupIndex);
+        row.dataset.historyItem = String(itemIndex);
+        row.innerHTML =
+          `<span class="ab-tl-year" data-ek="history-${groupIndex}-${itemIndex}-year"></span>`
+          + `<div><div class="ab-tl-name" data-ek="history-${groupIndex}-${itemIndex}-name"></div>`
+          + `<p class="ab-tl-desc" data-ek="history-${groupIndex}-${itemIndex}-desc"></p></div>`
+          + `<button class="history-del" type="button" aria-label="History 항목 삭제">삭제</button>`;
+        row.querySelector('.ab-tl-year').textContent = item.year || 'Year';
+        row.querySelector('.ab-tl-name').textContent = item.name || 'Title';
+        row.querySelector('.ab-tl-desc').textContent = item.desc || 'Description';
+        row.querySelectorAll('.ab-tl-year,.ab-tl-name,.ab-tl-desc').forEach(el => { el.dataset.historyManaged = '1'; });
+        row.querySelector('.ab-tl-year').dataset.historyStyle = `about-history-${groupIndex}-${itemIndex}-year`;
+        row.querySelector('.ab-tl-name').dataset.historyStyle = `about-history-${groupIndex}-${itemIndex}-name`;
+        row.querySelector('.ab-tl-desc').dataset.historyStyle = `about-history-${groupIndex}-${itemIndex}-desc`;
+        row.querySelector('.history-del').addEventListener('click', () => {
+          const latest = readAboutHistoryFromDom();
+          latest[groupIndex].items.splice(itemIndex, 1);
+          saveAboutHistory(latest);
+          renderAboutHistory(latest);
+          aboutHistoryEditableRefresh();
+          toast('History 항목을 삭제했습니다');
+        });
+        list.appendChild(row);
+      });
+      const add = document.createElement('button');
+      add.className = 'history-add-item';
+      add.type = 'button';
+      add.textContent = '항목 +';
+      add.addEventListener('click', () => {
+        const latest = readAboutHistoryFromDom();
+        latest[groupIndex].items.push({ year: 'Year', name: '새 내역', desc: '설명을 입력하세요.' });
+        saveAboutHistory(latest);
+        renderAboutHistory(latest);
+        aboutHistoryEditableRefresh();
+        const last = document.querySelectorAll('.ab-tl-group')[groupIndex]?.querySelector('.ab-tl-item:last-of-type .ab-tl-year');
+        last?.focus();
+        toast('History 항목을 추가했습니다');
+      });
+      list.appendChild(add);
+      if (group.note) {
+        const note = document.createElement('p');
+        note.className = 'ab-tl-note';
+        note.dataset.ek = `history-note-${groupIndex}`;
+        note.dataset.historyManaged = '1';
+        note.dataset.historyStyle = `about-history-${groupIndex}-note`;
+        note.textContent = group.note;
+        list.appendChild(note);
+      }
+      section.append(cat, list);
+      grid.appendChild(section);
+    });
+  }
+  function restoreAboutHistory() {
+    if (!isAboutPage()) return;
+    const items = readAboutHistory();
+    saveAboutHistory(items);
+    renderAboutHistory(items);
+  }
+  function setAboutHistoryEditable(on) {
+    document.querySelectorAll('[data-history-managed="1"]').forEach(el => {
+      el.contentEditable = on ? 'true' : 'false';
+      if (on) el.spellcheck = false;
+    });
+  }
+  function installAboutHistoryToolbar() {
+    if (!bar || !isAboutPage() || bar.querySelector('.history-add-group')) return;
+    const add = document.createElement('button');
+    add.type = 'button';
+    add.className = 'history-add-group';
+    add.textContent = 'History +';
+    add.addEventListener('click', () => {
+      const latest = readAboutHistoryFromDom();
+      latest.push({
+        category: `Category ${latest.length + 1}`,
+        items: [{ year: 'Year', name: '새 내역', desc: '설명을 입력하세요.' }],
+        note: '',
+      });
+      saveAboutHistory(latest);
+      renderAboutHistory(latest);
+      aboutHistoryEditableRefresh();
+      document.querySelector('.ab-tl-group:last-child .ab-tl-cat')?.focus();
+      toast('History 카테고리를 추가했습니다');
     });
     bar.insertBefore(add, bar.querySelector('.edit-bake'));
   }
@@ -1610,6 +1755,7 @@ if (fv) {
       + '<button class="edit-save" type="button">저장 완료</button>';
     document.body.appendChild(bar);
     installFooterConnectToolbar();
+    installAboutHistoryToolbar();
 
     const style = document.createElement('style');
     style.textContent = `
@@ -1788,6 +1934,12 @@ if (fv) {
       body.editing .connect-edit-controls input{width:100%;min-width:0;padding:5px 7px;border:1px solid rgba(255,255,255,.28);border-radius:3px;background:rgba(255,255,255,.08);color:inherit;font:11px/1.2 inherit;outline:none}
       body.editing .connect-edit-controls button{width:24px;height:24px;flex:0 0 24px;border:1px solid rgba(255,255,255,.28);border-radius:3px;background:transparent;color:inherit;cursor:pointer}
       .connect-add{font-size:12px;font-weight:600;color:var(--ink-2,#333);background:none;border:1px solid var(--border,#e8e6e2);padding:6px 10px;border-radius:4px;cursor:pointer}
+      .history-add-group{font-size:12px;font-weight:600;color:var(--ink-2,#333);background:none;border:1px solid var(--border,#e8e6e2);padding:6px 10px;border-radius:4px;cursor:pointer}
+      .history-add-item,.history-del{display:none}
+      body.editing .history-add-item{display:inline-flex;margin-top:22px;padding:7px 12px;border:1px solid var(--border,#e8e6e2);border-radius:4px;background:#fff;color:var(--ink,#111);font:600 12px/1 var(--font-mono,ui-monospace,monospace);cursor:pointer}
+      body.editing .ab-tl-item{position:relative;padding-right:70px}
+      body.editing .history-del{display:inline-flex;position:absolute;right:0;top:0;padding:6px 9px;border:1px solid rgba(200,30,20,.28);border-radius:4px;background:#fff;color:#c81e14;font:600 11px/1 var(--font-mono,ui-monospace,monospace);cursor:pointer}
+      body.editing .ab-tl-item + .ab-tl-item .history-del{top:24px}
     `;
     document.head.appendChild(style);
 
@@ -1796,6 +1948,7 @@ if (fv) {
     bar.querySelector('.edit-reset').addEventListener('click', async () => {
       if (!confirm('모든 수정 내용(텍스트·사진·영상)을 초기화할까요?')) return;
       keyed.forEach(el => localStorage.removeItem(TXT_PREFIX + el.dataset.editKey));
+      localStorage.removeItem(ABOUT_HISTORY_KEY);
       await mediaClear();
       location.reload();
     });
@@ -1827,6 +1980,7 @@ if (fv) {
       el.contentEditable = on ? 'true' : 'false';
       if (on) el.spellcheck = false;
     });
+    setAboutHistoryEditable(on);
     if (on) {
       document.addEventListener('click', onEditClick, true);
       document.addEventListener('keydown', onEditKeydown, true);
@@ -1839,6 +1993,7 @@ if (fv) {
       document.removeEventListener('focusin', onEditFocusIn);
       document.removeEventListener('focusout', onEditFocusOut);
       hideTextToolbar();
+      if (isAboutPage()) saveAboutHistory(readAboutHistoryFromDom());
       saveText();
       saveShared();
       applyMirrors();
@@ -2010,6 +2165,7 @@ if (fv) {
     db(); // warm-start IndexedDB
     const publicSyncChanged = await syncFromPublicSource(); // 방문자마다 최신 게시본을 먼저 반영
     restoreFooterConnect();
+    restoreAboutHistory();
     tagShared();
     assignKeys();
     restoreText();
@@ -2037,6 +2193,7 @@ if (fv) {
         restoreLayouts();
       },
       refreshEditable: () => {
+        restoreAboutHistory();
         assignKeys();
         restoreText();
         restoreStyles();
@@ -2047,6 +2204,7 @@ if (fv) {
             el.contentEditable = 'true';
             el.spellcheck = false;
           });
+          setAboutHistoryEditable(true);
         }
         applyAllMedia();
       },
