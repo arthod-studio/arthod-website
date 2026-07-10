@@ -259,7 +259,7 @@ if (fv) {
     '.ab-hero-label', '.ab-hero-year', '.ab-hero-title', '.ab-hs-word', '.ab-hero-desc', '.ab-hero-info p',
     '.ab-statement-q', '.ab-statement-body p', '.ab-recent-kicker', '.ab-recent-title', '.ab-recent-count',
     '.ab-recent-meta span', '.ab-recent-desc', '.ab-phil-tag', '.ab-phil-list li',
-    '.ab-tl-title', '.ab-tl-sub', '.ab-tl-year', '.ab-tl-name', '.ab-tl-desc', '.ab-cta h2',
+    '.ab-tl-title', '.ab-tl-sub', '.ab-tl-cat', '.ab-tl-year', '.ab-tl-name', '.ab-tl-desc', '.ab-tl-note', '.ab-cta h2',
     // Works
     '.wp-title', '.wp-subtitle', '.wp-count', '.wp-right p',
     // Work detail  (제목·영문·타입·연도는 공유 저장소로 분리 관리 → 아래 tagShared)

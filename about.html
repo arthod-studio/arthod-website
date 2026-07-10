@@ -319,12 +319,32 @@
       color: var(--ink-3);
       text-transform: uppercase;
     }
+    .ab-tl-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      border-top: 1px solid var(--border);
+      border-left: 1px solid var(--border);
+    }
+    .ab-tl-group {
+      padding: clamp(28px,4vw,48px);
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      min-height: clamp(280px,34vw,420px);
+    }
+    .ab-tl-cat {
+      font-family: var(--font-d);
+      font-size: clamp(28px,4.2vw,56px);
+      font-weight: 700;
+      letter-spacing: -.04em;
+      color: var(--ink);
+      margin-bottom: clamp(28px,4vh,48px);
+    }
     .ab-tl-item {
       display: grid;
-      grid-template-columns: 120px 1fr;
-      gap: 40px;
-      padding: 28px 0;
-      border-bottom: 1px solid var(--border);
+      grid-template-columns: 88px 1fr;
+      gap: 24px;
+      padding: 20px 0;
+      border-top: 1px solid var(--border);
       align-items: start;
     }
     .ab-tl-year {
@@ -347,6 +367,13 @@
       font-size: 14px;
       color: var(--ink-3);
       line-height: 1.75;
+    }
+    .ab-tl-note {
+      margin-top: clamp(24px,4vh,44px);
+      font-size: 13px;
+      line-height: 1.8;
+      color: var(--ink-3);
+      max-width: 520px;
     }
 
     /* ── CTA ── */
@@ -380,6 +407,8 @@
     }
     @media(max-width:600px){
       .ab-stats-grid { grid-template-columns:1fr 1fr; }
+      .ab-tl-grid { grid-template-columns:1fr; }
+      .ab-tl-group { min-height: auto; }
       .ab-tl-item { grid-template-columns:70px 1fr; gap:20px; }
     }
   </style>
@@ -499,47 +528,79 @@
         <span class="ab-tl-title">History</span>
         <span class="ab-tl-sub">2018 — Present</span>
       </div>
-      <div class="ab-tl-item r">
-        <span class="ab-tl-year">2024</span>
-        <div>
-          <div class="ab-tl-name">빛의 파동 · 공간 매핑</div>
-          <p class="ab-tl-desc">인터랙티브 LED 설치와 LiDAR 기반 프로젝션 매핑 2개 작품 발표. 서울 문화예술센터 그룹전 참여.</p>
-        </div>
-      </div>
-      <div class="ab-tl-item r d1">
-        <span class="ab-tl-year">2023</span>
-        <div>
-          <div class="ab-tl-name">소리의 형태 · 잔상</div>
-          <p class="ab-tl-desc">라이브 AV 퍼포먼스 시리즈 런칭. 도시 데이터 기반 비디오 설치로 미디어아트 페스티벌 수상.</p>
-        </div>
-      </div>
-      <div class="ab-tl-item r d2">
-        <span class="ab-tl-year">2022</span>
-        <div>
-          <div class="ab-tl-name">디지털 정원 · 흐름</div>
-          <p class="ab-tl-desc">제너러티브 아트 시스템 개발. WebGL 기반 실시간 비주얼과 기상 데이터 연동 유체 시뮬레이션 발표.</p>
-        </div>
-      </div>
-      <div class="ab-tl-item r">
-        <span class="ab-tl-year">2021</span>
-        <div>
-          <div class="ab-tl-name">도시의 피부 · 청각의 색</div>
-          <p class="ab-tl-desc">첫 번째 미디어 파사드 프로젝트 완성. 공공 건물 외벽 대규모 프로젝션 매핑 및 라이브 퍼포먼스.</p>
-        </div>
-      </div>
-      <div class="ab-tl-item r d1">
-        <span class="ab-tl-year">2019–20</span>
-        <div>
-          <div class="ab-tl-name">브랜드 협업 확대</div>
-          <p class="ab-tl-desc">국내 주요 브랜드 전시 부스 및 팝업 경험 디자인 다수 진행. 기업 오프닝 세레모니 프로젝션 매핑.</p>
-        </div>
-      </div>
-      <div class="ab-tl-item r d2">
-        <span class="ab-tl-year">2018</span>
-        <div>
-          <div class="ab-tl-name">Arthod 설립</div>
-          <p class="ab-tl-desc">서울에서 미디어아트 스튜디오 Arthod(아쏘드) 설립. Art + Method — 예술과 기술의 결합을 핵심 철학으로.</p>
-        </div>
+      <div class="ab-tl-grid">
+        <section class="ab-tl-group r">
+          <h3 class="ab-tl-cat">Education</h3>
+          <div class="ab-tl-item">
+            <span class="ab-tl-year">2024</span>
+            <div>
+              <div class="ab-tl-name">미디어아트 교육 프로그램</div>
+              <p class="ab-tl-desc">프로젝션 매핑, 인터랙션 디자인, 공간 연출 워크숍 운영.</p>
+            </div>
+          </div>
+          <div class="ab-tl-item">
+            <span class="ab-tl-year">2023</span>
+            <div>
+              <div class="ab-tl-name">크리에이티브 테크 세미나</div>
+              <p class="ab-tl-desc">예술과 기술을 연결하는 제작 프로세스 강의 및 멘토링.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="ab-tl-group r d1">
+          <h3 class="ab-tl-cat">Awards</h3>
+          <div class="ab-tl-item">
+            <span class="ab-tl-year">2024</span>
+            <div>
+              <div class="ab-tl-name">Media Art Festival Award</div>
+              <p class="ab-tl-desc">도시 데이터 기반 인터랙티브 설치 작품으로 수상.</p>
+            </div>
+          </div>
+          <div class="ab-tl-item">
+            <span class="ab-tl-year">2022</span>
+            <div>
+              <div class="ab-tl-name">Interactive Experience Selection</div>
+              <p class="ab-tl-desc">관람객 반응형 공간 경험 프로젝트 선정.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="ab-tl-group r d2">
+          <h3 class="ab-tl-cat">Exhibitions</h3>
+          <div class="ab-tl-item">
+            <span class="ab-tl-year">2024</span>
+            <div>
+              <div class="ab-tl-name">빛의 파동 · 공간 매핑</div>
+              <p class="ab-tl-desc">인터랙티브 LED 설치와 LiDAR 기반 프로젝션 매핑 작품 발표.</p>
+            </div>
+          </div>
+          <div class="ab-tl-item">
+            <span class="ab-tl-year">2023</span>
+            <div>
+              <div class="ab-tl-name">소리의 형태 · 잔상</div>
+              <p class="ab-tl-desc">라이브 AV 퍼포먼스와 비디오 설치 시리즈 공개.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="ab-tl-group r">
+          <h3 class="ab-tl-cat">Studio</h3>
+          <div class="ab-tl-item">
+            <span class="ab-tl-year">2021</span>
+            <div>
+              <div class="ab-tl-name">도시의 피부 · 청각의 색</div>
+              <p class="ab-tl-desc">공공 건물 외벽 대규모 프로젝션 매핑 및 라이브 퍼포먼스.</p>
+            </div>
+          </div>
+          <div class="ab-tl-item">
+            <span class="ab-tl-year">2018</span>
+            <div>
+              <div class="ab-tl-name">Arthod 설립</div>
+              <p class="ab-tl-desc">Art + Method를 기반으로 서울에서 미디어아트 스튜디오 설립.</p>
+            </div>
+          </div>
+          <p class="ab-tl-note">각 카테고리는 항목을 계속 추가하거나 제목을 바꿔서 사용할 수 있습니다.</p>
+        </section>
       </div>
     </div>
 
@@ -686,6 +747,6 @@
       requestAnimationFrame(tick);
     })();
   </script>
-  <script src="main.js?v=footer-connect-sync-20260709-1"></script>
+  <script src="main.js?v=history-categories-20260710-1"></script>
 </body>
 </html>
