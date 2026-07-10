@@ -515,9 +515,26 @@ if (fv) {
 
   const ABOUT_HISTORY_KEY = 'arthod-about:history-items';
   const ABOUT_HISTORY_LAYOUT_VERSION_KEY = 'arthod-about:history-layout-version';
+  const ABOUT_HISTORY_LEGACY_MIGRATION_KEY = 'arthod-about:history-legacy-migrated';
   const ABOUT_HISTORY_LAYOUT_VERSION = 'history-list-v2';
   function isAboutPage() {
     return PAGE === 'about' && !!document.querySelector('.ab-tl-grid');
+  }
+  function plainAboutHistoryText(value) {
+    const div = document.createElement('div');
+    div.innerHTML = String(value || '');
+    return (div.textContent || div.innerText || '').trim();
+  }
+  function normalizeAboutHistory(items) {
+    return (items || []).map(group => ({
+      category: plainAboutHistoryText(group.category) || 'Category',
+      items: (group.items || []).map(item => ({
+        year: plainAboutHistoryText(item.year),
+        name: plainAboutHistoryText(item.name) || 'Title',
+        desc: plainAboutHistoryText(item.desc) || 'Description',
+      })),
+      note: plainAboutHistoryText(group.note),
+    }));
   }
   function readAboutHistoryFromDom() {
     return [...document.querySelectorAll('.ab-tl-group')].map(group => ({
@@ -535,14 +552,44 @@ if (fv) {
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length) return parsed;
+        if (Array.isArray(parsed) && parsed.length) return normalizeAboutHistory(parsed);
       } catch (e) {}
     }
-    return readAboutHistoryFromDom();
+    return normalizeAboutHistory(readAboutHistoryFromDom());
   }
   function saveAboutHistory(items) {
-    localStorage.setItem(ABOUT_HISTORY_KEY, JSON.stringify(items));
+    localStorage.setItem(ABOUT_HISTORY_KEY, JSON.stringify(normalizeAboutHistory(items)));
     localStorage.setItem(ABOUT_HISTORY_LAYOUT_VERSION_KEY, ABOUT_HISTORY_LAYOUT_VERSION);
+  }
+  function legacyAboutText(slug, index) {
+    return localStorage.getItem(TXT_PREFIX + `about:${slug}:${index}`);
+  }
+  function migrateAboutHistoryLegacyText(items) {
+    if (localStorage.getItem(ABOUT_HISTORY_LEGACY_MIGRATION_KEY) === ABOUT_HISTORY_LAYOUT_VERSION) return items;
+    let changed = false;
+    let flatIndex = 0;
+    const migrated = items.map((group, groupIndex) => {
+      const nextGroup = { ...group, items: (group.items || []).map(item => ({ ...item })) };
+      const cat = legacyAboutText('abtlcat', groupIndex);
+      if (cat !== null) { nextGroup.category = plainAboutHistoryText(cat) || nextGroup.category; changed = true; }
+      nextGroup.items = nextGroup.items.map(item => {
+        const nextItem = { ...item };
+        const year = legacyAboutText('abtlyear', flatIndex);
+        const name = legacyAboutText('abtlname', flatIndex);
+        const desc = legacyAboutText('abtldesc', flatIndex);
+        if (year !== null) { nextItem.year = plainAboutHistoryText(year); changed = true; }
+        if (name !== null) { nextItem.name = plainAboutHistoryText(name) || nextItem.name; changed = true; }
+        if (desc !== null) { nextItem.desc = plainAboutHistoryText(desc) || nextItem.desc; changed = true; }
+        flatIndex += 1;
+        return nextItem;
+      });
+      const note = legacyAboutText('abtlnote', groupIndex);
+      if (note !== null) { nextGroup.note = plainAboutHistoryText(note); changed = true; }
+      return nextGroup;
+    });
+    localStorage.setItem(ABOUT_HISTORY_LEGACY_MIGRATION_KEY, ABOUT_HISTORY_LAYOUT_VERSION);
+    if (changed) saveAboutHistory(migrated);
+    return changed ? migrated : items;
   }
   function moveAboutHistoryGroup(groupIndex, delta) {
     const latest = readAboutHistoryFromDom();
@@ -666,7 +713,7 @@ if (fv) {
   }
   function restoreAboutHistory() {
     if (!isAboutPage()) return;
-    const items = readAboutHistory();
+    const items = migrateAboutHistoryLegacyText(readAboutHistory());
     saveAboutHistory(items);
     renderAboutHistory(items);
     requestAnimationFrame(() => {
@@ -681,6 +728,8 @@ if (fv) {
     document.querySelectorAll('[data-history-managed="1"]').forEach(el => {
       el.contentEditable = on ? 'true' : 'false';
       if (on) el.spellcheck = false;
+      el.oninput = on ? () => saveAboutHistory(readAboutHistoryFromDom()) : null;
+      el.onblur = on ? () => saveAboutHistory(readAboutHistoryFromDom()) : null;
     });
   }
   function installAboutHistoryToolbar() {
@@ -1441,7 +1490,7 @@ if (fv) {
     const text = {};
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
-      if (k === 'arthod-about-recent-count' || k === ABOUT_HISTORY_KEY || k === ABOUT_HISTORY_LAYOUT_VERSION_KEY
+      if (k === 'arthod-about-recent-count' || k === ABOUT_HISTORY_KEY || k === ABOUT_HISTORY_LAYOUT_VERSION_KEY || k === ABOUT_HISTORY_LEGACY_MIGRATION_KEY
         || k.indexOf('arthod-edit:') === 0 || k.indexOf('arthod-proj:') === 0 || k.indexOf('arthod-style:') === 0
         || k.indexOf('arthod-layout:') === 0 || k.indexOf('arthod-gallerylayout:') === 0 || k.indexOf('arthod-galleryitems:') === 0
         || k.indexOf('arthod-sliderorder:') === 0 || k.indexOf('arthod-cardorder:') === 0) {
@@ -1571,7 +1620,7 @@ if (fv) {
       const text = {};
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
-        if (k === 'arthod-about-recent-count' || k === ABOUT_HISTORY_KEY || k === ABOUT_HISTORY_LAYOUT_VERSION_KEY || k.indexOf('arthod-edit:') === 0 || k.indexOf('arthod-proj:') === 0 || k.indexOf('arthod-style:') === 0 || k.indexOf('arthod-layout:') === 0 || k.indexOf('arthod-gallerylayout:') === 0 || k.indexOf('arthod-galleryitems:') === 0 || k.indexOf('arthod-sliderorder:') === 0 || k.indexOf('arthod-cardorder:') === 0) {
+        if (k === 'arthod-about-recent-count' || k === ABOUT_HISTORY_KEY || k === ABOUT_HISTORY_LAYOUT_VERSION_KEY || k === ABOUT_HISTORY_LEGACY_MIGRATION_KEY || k.indexOf('arthod-edit:') === 0 || k.indexOf('arthod-proj:') === 0 || k.indexOf('arthod-style:') === 0 || k.indexOf('arthod-layout:') === 0 || k.indexOf('arthod-gallerylayout:') === 0 || k.indexOf('arthod-galleryitems:') === 0 || k.indexOf('arthod-sliderorder:') === 0 || k.indexOf('arthod-cardorder:') === 0) {
           text[k] = localStorage.getItem(k);
         }
       }
@@ -1758,6 +1807,10 @@ if (fv) {
     return el.contains(range.commonAncestorContainer);
   }
   function saveTextEl(el) {
+    if (el.dataset.historyManaged === '1') {
+      saveAboutHistory(readAboutHistoryFromDom());
+      return;
+    }
     if (el.dataset.editKey) localStorage.setItem(TXT_PREFIX + el.dataset.editKey, el.innerHTML);
   }
   function showTextToolbar(el) {
@@ -2011,6 +2064,7 @@ if (fv) {
       if (!confirm('모든 수정 내용(텍스트·사진·영상)을 초기화할까요?')) return;
       keyed.forEach(el => localStorage.removeItem(TXT_PREFIX + el.dataset.editKey));
       localStorage.removeItem(ABOUT_HISTORY_KEY);
+      localStorage.removeItem(ABOUT_HISTORY_LEGACY_MIGRATION_KEY);
       await mediaClear();
       location.reload();
     });
