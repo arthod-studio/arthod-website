@@ -516,7 +516,57 @@ if (fv) {
   const ABOUT_HISTORY_KEY = 'arthod-about:history-items';
   const ABOUT_HISTORY_LAYOUT_VERSION_KEY = 'arthod-about:history-layout-version';
   const ABOUT_HISTORY_LEGACY_MIGRATION_KEY = 'arthod-about:history-legacy-migrated';
+  const ABOUT_HISTORY_RECOVERY_KEY = 'arthod-about:history-recovered';
   const ABOUT_HISTORY_LAYOUT_VERSION = 'history-list-v2';
+  const ABOUT_HISTORY_RECOVERY_VERSION = 'history-recovered-20260710-mediafantagy';
+  const ABOUT_HISTORY_RECOVERY_ITEMS = [
+    {
+      category: 'Awards',
+      items: [
+        { year: '2024', name: 'Media Art Festival Award', desc: '도시 데이터 기반 인터랙티브 설치 작품으로 수상.' },
+        { year: '2022', name: 'Interactive Experience Selection', desc: '관람객 반응형 공간 경험 프로젝트 선정.' },
+      ],
+      note: '',
+    },
+    {
+      category: 'Exhibitions',
+      items: [
+        { year: '2025', name: 'Stream Scape', desc: 'Interactive Media Art & Generative Al • 고양콘텐츠사업화 • 고양산업진흥원' },
+        { year: '', name: 'OS-1 : 우주광학전송장치', desc: 'Laser Installation • 미래감각 • 고양문화재단' },
+        { year: '', name: 'Voyage of Light', desc: 'Light Installation • 제24회 서울억새축제, 빛으로 물들다 • 서부여가공원센터' },
+        { year: '', name: 'Infinity Book', desc: 'Public Installation • 제7회 별마당도서관 열린아트공모전 대상작 전시 • (주)신세계프라버티' },
+        { year: '2024', name: 'Luminous Melody', desc: 'Interactive Light Installation • 고양콘텐츠사업화 • 고양산업진흥원' },
+        { year: '', name: 'OS-1 : 우주광학전송장치', desc: 'Laser Installation • 다원예술 창작산실 • 한국문화예술위원회' },
+        { year: '', name: 'Transmission', desc: 'Laser Reflection installation • 국가유산 수원화성 미디어아트 • 수원문화재단' },
+        { year: '2023', name: 'Emotion Particle', desc: 'Interactive Media Installation • 미디어아트ON • 남원아트센터' },
+        { year: '', name: 'Emotion Cloud', desc: 'Interactive Light Installation • 모든예술31 • 부천문화재단' },
+      ],
+      note: '',
+    },
+    {
+      category: 'Awards',
+      items: [
+        { year: '2025', name: '별마당도서관 열린아트공모전 대상', desc: 'Infinity Book • Public Installation' },
+        { year: '2024', name: 'Asia Design Prize WINNER 수상', desc: 'Emotion Cloud • Interactive Light Installation' },
+      ],
+      note: '각 카테고리는 항목을 계속 추가하거나 제목을 바꿔서 사용할 수 있습니다.',
+    },
+    {
+      category: 'Education',
+      items: [
+        { year: '2025', name: "교육발전특구 '미디어판타GY' 강의", desc: '생성형 AI & 미디어아트 • 일산서구청소년수련관' },
+        { year: '', name: '서강대학교 특강', desc: '미디어 아티스트를 위한 프로젝션 맵핑 • 아트&테크놀로지 전공' },
+        { year: '', name: '계원예술대학교 출강', desc: '미디어아트 • 미래디자인학부' },
+        { year: '2024', name: '문화PD 22기 문화디지털신기술 체험•실습 및 지역간담회 특강', desc: '생성형 AI & 미디어아트 • 한국문화정보원' },
+        { year: '2023', name: '프로젝션 맵핑의 시작', desc: '프로젝션 맵핑 • 상상마당 아카데미 • 2023~2026' },
+        { year: '', name: '프로젝션 맵핑 아트브릿지 강의', desc: '생성형 AI & 미디어아트 •.서초유스센터 • 2022~2024' },
+        { year: '2022', name: '부천아트벙커B39 강의', desc: '미디어파사드 기초 & 심화 • 부천문화재단• 2021~2022' },
+        { year: '', name: '창작날개22 강의', desc: '프로젝션 맵핑 • 김포문화재단' },
+        { year: '2021', name: 'Class 101 온라인 강의 런칭', desc: '프로젝션 맵핑 & 무대영상' },
+      ],
+      note: '',
+    },
+  ];
   function isAboutPage() {
     return PAGE === 'about' && !!document.querySelector('.ab-tl-grid');
   }
@@ -544,6 +594,20 @@ if (fv) {
       return !(isPlaceholderCategory && onlyPlaceholderItem);
     });
   }
+  function recoverAboutHistory(items) {
+    const normalized = normalizeAboutHistory(items);
+    const recoveryApplied = localStorage.getItem(ABOUT_HISTORY_RECOVERY_KEY) === ABOUT_HISTORY_RECOVERY_VERSION;
+    const historyText = JSON.stringify(normalized);
+    const missingRecoveredText = !historyText.includes('미디어판타GY') || !historyText.includes('상상마당 아카데미');
+    if (!recoveryApplied && missingRecoveredText) {
+      localStorage.setItem(ABOUT_HISTORY_RECOVERY_KEY, ABOUT_HISTORY_RECOVERY_VERSION);
+      return normalizeAboutHistory(ABOUT_HISTORY_RECOVERY_ITEMS);
+    }
+    if (!recoveryApplied && !missingRecoveredText) {
+      localStorage.setItem(ABOUT_HISTORY_RECOVERY_KEY, ABOUT_HISTORY_RECOVERY_VERSION);
+    }
+    return normalized;
+  }
   function readAboutHistoryFromDom() {
     return [...document.querySelectorAll('.ab-tl-group')].map(group => ({
       category: group.querySelector('.ab-tl-cat')?.textContent.trim() || 'Category',
@@ -560,10 +624,10 @@ if (fv) {
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length) return normalizeAboutHistory(parsed);
+        if (Array.isArray(parsed) && parsed.length) return recoverAboutHistory(parsed);
       } catch (e) {}
     }
-    return normalizeAboutHistory(readAboutHistoryFromDom());
+    return recoverAboutHistory(readAboutHistoryFromDom());
   }
   function saveAboutHistory(items) {
     localStorage.setItem(ABOUT_HISTORY_KEY, JSON.stringify(normalizeAboutHistory(items)));
@@ -1499,7 +1563,7 @@ if (fv) {
     const text = {};
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
-      if (k === 'arthod-about-recent-count' || k === ABOUT_HISTORY_KEY || k === ABOUT_HISTORY_LAYOUT_VERSION_KEY || k === ABOUT_HISTORY_LEGACY_MIGRATION_KEY
+      if (k === 'arthod-about-recent-count' || k === ABOUT_HISTORY_KEY || k === ABOUT_HISTORY_LAYOUT_VERSION_KEY || k === ABOUT_HISTORY_LEGACY_MIGRATION_KEY || k === ABOUT_HISTORY_RECOVERY_KEY
         || k.indexOf('arthod-edit:') === 0 || k.indexOf('arthod-proj:') === 0 || k.indexOf('arthod-style:') === 0
         || k.indexOf('arthod-layout:') === 0 || k.indexOf('arthod-gallerylayout:') === 0 || k.indexOf('arthod-galleryitems:') === 0
         || k.indexOf('arthod-sliderorder:') === 0 || k.indexOf('arthod-cardorder:') === 0) {
@@ -1629,7 +1693,7 @@ if (fv) {
       const text = {};
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
-        if (k === 'arthod-about-recent-count' || k === ABOUT_HISTORY_KEY || k === ABOUT_HISTORY_LAYOUT_VERSION_KEY || k === ABOUT_HISTORY_LEGACY_MIGRATION_KEY || k.indexOf('arthod-edit:') === 0 || k.indexOf('arthod-proj:') === 0 || k.indexOf('arthod-style:') === 0 || k.indexOf('arthod-layout:') === 0 || k.indexOf('arthod-gallerylayout:') === 0 || k.indexOf('arthod-galleryitems:') === 0 || k.indexOf('arthod-sliderorder:') === 0 || k.indexOf('arthod-cardorder:') === 0) {
+        if (k === 'arthod-about-recent-count' || k === ABOUT_HISTORY_KEY || k === ABOUT_HISTORY_LAYOUT_VERSION_KEY || k === ABOUT_HISTORY_LEGACY_MIGRATION_KEY || k === ABOUT_HISTORY_RECOVERY_KEY || k.indexOf('arthod-edit:') === 0 || k.indexOf('arthod-proj:') === 0 || k.indexOf('arthod-style:') === 0 || k.indexOf('arthod-layout:') === 0 || k.indexOf('arthod-gallerylayout:') === 0 || k.indexOf('arthod-galleryitems:') === 0 || k.indexOf('arthod-sliderorder:') === 0 || k.indexOf('arthod-cardorder:') === 0) {
           text[k] = localStorage.getItem(k);
         }
       }
@@ -2074,6 +2138,7 @@ if (fv) {
       keyed.forEach(el => localStorage.removeItem(TXT_PREFIX + el.dataset.editKey));
       localStorage.removeItem(ABOUT_HISTORY_KEY);
       localStorage.removeItem(ABOUT_HISTORY_LEGACY_MIGRATION_KEY);
+      localStorage.removeItem(ABOUT_HISTORY_RECOVERY_KEY);
       await mediaClear();
       location.reload();
     });
@@ -2226,6 +2291,7 @@ if (fv) {
         (!!data.savedAt && data.savedAt !== lastSyncedAt);
       if (data.text) {
         Object.entries(data.text).forEach(([k, v]) => {
+          if (k === ABOUT_HISTORY_KEY && localStorage.getItem(ABOUT_HISTORY_KEY) !== null) return;
           if (hasNewPublicVersion || localStorage.getItem(k) === null) {
             localStorage.setItem(k, v);
             changed = true;
