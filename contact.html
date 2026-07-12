@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta name="description" content="Arthod(아쏘드) — 프로젝트 문의 및 협업 제안. hello@arthod.kr"/>
+  <meta name="description" content="Arthod(아쏘드) — 프로젝트 문의 및 협업 제안. contact.arthod@gmail.com"/>
   <meta name="application-name" content="Arthod(아쏘드)"/>
   <meta property="og:site_name" content="Arthod(아쏘드)"/>
   <meta property="og:title" content="Contact — Arthod(아쏘드)"/>
@@ -89,26 +89,6 @@
     }
 
     a.cdi-value:hover { color: rgba(255,255,255,.65); }
-
-    .contact-socials {
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-    }
-
-    .contact-soc-link {
-      font-family: var(--font-mono);
-      font-size: 10px;
-      letter-spacing: .14em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,.3);
-      transition: color .2s;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .contact-soc-link:hover { color: #fff; }
 
     /* Right: form */
     .contact-right {
@@ -386,15 +366,6 @@
             </div>
           </div>
 
-          <div style="margin-top:32px;padding-top:24px;border-top:1px solid rgba(255,255,255,.08);">
-            <span class="cdi-label" style="display:block;margin-bottom:14px;">Follow</span>
-            <div class="contact-socials">
-              <a href="#" class="contact-soc-link">Instagram ↗</a>
-              <a href="#" class="contact-soc-link">Vimeo ↗</a>
-              <a href="#" class="contact-soc-link">Behance ↗</a>
-              <a href="#" class="contact-soc-link">LinkedIn ↗</a>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -402,7 +373,12 @@
       <div class="contact-right">
         <h2 class="form-title r">프로젝트 문의</h2>
 
-        <form class="contact-form r d1" id="contact-form" novalidate>
+        <form class="contact-form r d1" id="contact-form" action="https://formsubmit.co/contact.arthod@gmail.com" method="POST">
+          <input type="hidden" name="_subject" value="[Arthod] 새로운 프로젝트 문의"/>
+          <input type="hidden" name="_template" value="table"/>
+          <input type="hidden" name="_captcha" value="false"/>
+          <input type="hidden" name="_next" value="https://www.arthod-studio.com/contact.html?sent=1"/>
+          <input type="text" name="_honey" tabindex="-1" autocomplete="off" style="display:none"/>
           <div class="form-row">
             <div class="form-field">
               <label for="name">이름 / Name</label>
@@ -532,12 +508,11 @@
       });
     });
 
-    // Form submit (demo)
-    document.getElementById('contact-form')?.addEventListener('submit', e => {
-      e.preventDefault();
+    // Show success state after the email form service redirects back.
+    if (new URLSearchParams(window.location.search).get('sent') === '1') {
       document.getElementById('contact-form').style.display = 'none';
       document.getElementById('form-success').classList.add('show');
-    });
+    }
   </script>
 </body>
 </html>
