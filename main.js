@@ -1533,6 +1533,43 @@ if (fv) {
   function blobToB64(blob) {
     return new Promise(res => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(',')[1]); fr.readAsDataURL(blob); });
   }
+  const SITE_BACKUP_FILES = [
+    'index.html', 'about.html', 'works.html', 'work.html', 'services.html', 'contact.html',
+    'style.css', 'main.js', 'support.js', 'CNAME', 'robots.txt', 'sitemap.xml', 'logo.png',
+    'assets/about-logo.mp4',
+    'assets/video/arthod-art-method-logo-motion.mp4',
+    'assets/img/arthod-logo-original-black.png',
+    'assets/fonts/Adam-Bold.ttf',
+    'assets/fonts/Adam-Light.ttf',
+    'assets/fonts/Adam-Medium.ttf'
+  ];
+  async function fetchFileAsB64(path) {
+    const r = await fetch(new URL(path, location.href).href, { cache: 'no-store' });
+    if (!r.ok) throw new Error(path + ' → ' + r.status);
+    return blobToB64(await r.blob());
+  }
+  async function ghBackupSiteSnapshot(cfg, onStatus) {
+    const status = onStatus || (() => {});
+    const saved = [];
+    const skipped = [];
+    status('웹사이트 전체 파일 스냅샷 저장 중…');
+    for (const file of SITE_BACKUP_FILES) {
+      try {
+        await ghPut(cfg, `backup/site/${file}`, await fetchFileAsB64(file), `backup site: ${file}`);
+        saved.push(file);
+      } catch (e) {
+        skipped.push({ file, error: e.message });
+      }
+    }
+    const manifest = {
+      savedAt: new Date().toISOString(),
+      page: location.pathname.split('/').pop() || 'index.html',
+      files: saved,
+      skipped
+    };
+    await ghPut(cfg, 'backup/site-manifest.json', b64utf8(JSON.stringify(manifest, null, 2)), 'backup: site snapshot manifest');
+    return { files: saved.length, skipped };
+  }
   function extFor(rec) {
     const t = (rec.blob && rec.blob.type) || '';
     if (t.indexOf('png') >= 0) return 'png';
@@ -1621,7 +1658,8 @@ if (fv) {
     status('전체 콘텐츠 저장 중…');
     const all = { savedAt: new Date().toISOString(), text, mediaIndex, works: Object.keys(perWork) };
     await ghPut(cfg, 'backup/content.json', b64utf8(JSON.stringify(all, null, 2)), 'backup: full content');
-    return { works: Object.keys(perWork).length, media: items.length };
+    const site = await ghBackupSiteSnapshot(cfg, status);
+    return { works: Object.keys(perWork).length, media: items.length, siteFiles: site.files, skippedSiteFiles: site.skipped };
   }
 
   let ghPanel = null, ghBusy = false;
@@ -1672,7 +1710,8 @@ if (fv) {
       ghSaveCfg(cfg); ghBusy = true; setBusy(true); setStatus('백업 시작… 창을 닫지 말고 기다려주세요.');
       try {
         const r = await ghBackup(cfg, m => setStatus(m));
-        setStatus(`완료 ✓  ${new Date().toLocaleTimeString()} · 작품 ${r.works}개 · 미디어 ${r.media}개를 백업했습니다.`);
+        const skipped = r.skippedSiteFiles && r.skippedSiteFiles.length ? ` · 누락 ${r.skippedSiteFiles.length}개` : '';
+        setStatus(`완료 ✓  ${new Date().toLocaleTimeString()} · 작품 ${r.works}개 · 미디어 ${r.media}개 · 사이트 파일 ${r.siteFiles || 0}개 백업${skipped}`);
         toast('GitHub 백업 완료');
       } catch (e) {
         setStatus('실패: ' + e.message, true);
@@ -1751,7 +1790,7 @@ if (fv) {
     const cfg = ghCfg();
     if (!cfg.auto || !cfg.owner || !cfg.repo || !cfg.token || ghBusy) return;
     ghBusy = true;
-    try { const r = await ghBackup(cfg, () => {}); toast(`GitHub 자동 백업 완료 (${r.media}개)`); }
+    try { const r = await ghBackup(cfg, () => {}); toast(`GitHub 자동 백업 완료 (미디어 ${r.media}개 · 사이트 ${r.siteFiles || 0}개)`); }
     catch (e) { toast('자동 백업 실패 — 설정 확인'); }
     finally { ghBusy = false; }
   }
