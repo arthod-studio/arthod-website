@@ -725,6 +725,9 @@ if (fv) {
       setAboutHistoryEditable(true);
     }
   }
+  function aboutHistoryControlsAllowed() {
+    return isEditorAllowed();
+  }
   function renderAboutHistory(items) {
     const grid = document.querySelector('.ab-tl-grid');
     if (!grid) return;
@@ -740,15 +743,6 @@ if (fv) {
       cat.dataset.historyManaged = '1';
       cat.dataset.historyStyle = `about-history-${groupIndex}-cat`;
       cat.textContent = group.category || `Category ${groupIndex + 1}`;
-      const groupControls = document.createElement('div');
-      groupControls.className = 'history-group-controls';
-      groupControls.innerHTML =
-        `<button type="button" class="history-group-up" aria-label="카테고리 위로">↑</button>`
-        + `<button type="button" class="history-group-down" aria-label="카테고리 아래로">↓</button>`;
-      groupControls.querySelector('.history-group-up').disabled = groupIndex === 0;
-      groupControls.querySelector('.history-group-down').disabled = groupIndex === items.length - 1;
-      groupControls.querySelector('.history-group-up').addEventListener('click', () => moveAboutHistoryGroup(groupIndex, -1));
-      groupControls.querySelector('.history-group-down').addEventListener('click', () => moveAboutHistoryGroup(groupIndex, 1));
       const list = document.createElement('div');
       list.className = 'ab-tl-list';
       (group.items || []).forEach((item, itemIndex) => {
@@ -760,9 +754,7 @@ if (fv) {
         row.innerHTML =
           `<span class="ab-tl-year" data-ek="history-${groupIndex}-${itemIndex}-year"></span>`
           + `<div><div class="ab-tl-name" data-ek="history-${groupIndex}-${itemIndex}-name"></div>`
-          + `<p class="ab-tl-desc" data-ek="history-${groupIndex}-${itemIndex}-desc"></p></div>`
-          + `<span class="history-move"><button type="button" class="history-up" aria-label="항목 위로">↑</button><button type="button" class="history-down" aria-label="항목 아래로">↓</button></span>`
-          + `<button class="history-del" type="button" aria-label="History 항목 삭제">삭제</button>`;
+          + `<p class="ab-tl-desc" data-ek="history-${groupIndex}-${itemIndex}-desc"></p></div>`;
         row.querySelector('.ab-tl-year').textContent = item.year || '';
         row.querySelector('.ab-tl-name').textContent = item.name || 'Title';
         row.querySelector('.ab-tl-desc').textContent = item.desc || 'Description';
@@ -770,35 +762,58 @@ if (fv) {
         row.querySelector('.ab-tl-year').dataset.historyStyle = `about-history-${groupIndex}-${itemIndex}-year`;
         row.querySelector('.ab-tl-name').dataset.historyStyle = `about-history-${groupIndex}-${itemIndex}-name`;
         row.querySelector('.ab-tl-desc').dataset.historyStyle = `about-history-${groupIndex}-${itemIndex}-desc`;
-        row.querySelector('.history-del').addEventListener('click', () => {
+        if (aboutHistoryControlsAllowed()) {
+          const move = document.createElement('span');
+          move.className = 'history-move';
+          move.innerHTML = `<button type="button" class="history-up" aria-label="항목 위로">↑</button><button type="button" class="history-down" aria-label="항목 아래로">↓</button>`;
+          const del = document.createElement('button');
+          del.className = 'history-del';
+          del.type = 'button';
+          del.setAttribute('aria-label', 'History 항목 삭제');
+          del.textContent = '삭제';
+          del.addEventListener('click', () => {
+            const latest = readAboutHistoryFromDom();
+            latest[groupIndex].items.splice(itemIndex, 1);
+            saveAboutHistory(latest);
+            renderAboutHistory(latest);
+            aboutHistoryEditableRefresh();
+            toast('History 항목을 삭제했습니다');
+          });
+          move.querySelector('.history-up').disabled = itemIndex === 0;
+          move.querySelector('.history-down').disabled = itemIndex === (group.items || []).length - 1;
+          move.querySelector('.history-up').addEventListener('click', () => moveAboutHistoryItem(groupIndex, itemIndex, -1));
+          move.querySelector('.history-down').addEventListener('click', () => moveAboutHistoryItem(groupIndex, itemIndex, 1));
+          row.append(move, del);
+        }
+        list.appendChild(row);
+      });
+      let groupControls = null;
+      if (aboutHistoryControlsAllowed()) {
+        groupControls = document.createElement('div');
+        groupControls.className = 'history-group-controls';
+        groupControls.innerHTML =
+          `<button type="button" class="history-group-up" aria-label="카테고리 위로">↑</button>`
+          + `<button type="button" class="history-group-down" aria-label="카테고리 아래로">↓</button>`;
+        groupControls.querySelector('.history-group-up').disabled = groupIndex === 0;
+        groupControls.querySelector('.history-group-down').disabled = groupIndex === items.length - 1;
+        groupControls.querySelector('.history-group-up').addEventListener('click', () => moveAboutHistoryGroup(groupIndex, -1));
+        groupControls.querySelector('.history-group-down').addEventListener('click', () => moveAboutHistoryGroup(groupIndex, 1));
+        const add = document.createElement('button');
+        add.className = 'history-add-item';
+        add.type = 'button';
+        add.textContent = '항목 +';
+        add.addEventListener('click', () => {
           const latest = readAboutHistoryFromDom();
-          latest[groupIndex].items.splice(itemIndex, 1);
+          latest[groupIndex].items.push({ year: '', name: '새 내역', desc: '설명을 입력하세요.' });
           saveAboutHistory(latest);
           renderAboutHistory(latest);
           aboutHistoryEditableRefresh();
-          toast('History 항목을 삭제했습니다');
+          const last = document.querySelectorAll('.ab-tl-group')[groupIndex]?.querySelector('.ab-tl-item:last-of-type .ab-tl-year');
+          last?.focus();
+          toast('History 항목을 추가했습니다');
         });
-        row.querySelector('.history-up').disabled = itemIndex === 0;
-        row.querySelector('.history-down').disabled = itemIndex === (group.items || []).length - 1;
-        row.querySelector('.history-up').addEventListener('click', () => moveAboutHistoryItem(groupIndex, itemIndex, -1));
-        row.querySelector('.history-down').addEventListener('click', () => moveAboutHistoryItem(groupIndex, itemIndex, 1));
-        list.appendChild(row);
-      });
-      const add = document.createElement('button');
-      add.className = 'history-add-item';
-      add.type = 'button';
-      add.textContent = '항목 +';
-      add.addEventListener('click', () => {
-        const latest = readAboutHistoryFromDom();
-        latest[groupIndex].items.push({ year: '', name: '새 내역', desc: '설명을 입력하세요.' });
-        saveAboutHistory(latest);
-        renderAboutHistory(latest);
-        aboutHistoryEditableRefresh();
-        const last = document.querySelectorAll('.ab-tl-group')[groupIndex]?.querySelector('.ab-tl-item:last-of-type .ab-tl-year');
-        last?.focus();
-        toast('History 항목을 추가했습니다');
-      });
-      list.appendChild(add);
+        list.appendChild(add);
+      }
       if (group.note) {
         const note = document.createElement('p');
         note.className = 'ab-tl-note r';
@@ -808,7 +823,9 @@ if (fv) {
         note.textContent = group.note;
         list.appendChild(note);
       }
-      section.append(cat, groupControls, list);
+      section.append(cat);
+      if (groupControls) section.append(groupControls);
+      section.append(list);
       grid.appendChild(section);
     });
     window.ArthodReveal?.refresh(grid);
