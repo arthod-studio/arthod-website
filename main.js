@@ -483,30 +483,32 @@ if (fv) {
         if (document.body.classList.contains('editing')) event.preventDefault();
       });
       li.appendChild(link);
-      const controls = document.createElement('span');
-      controls.className = 'connect-edit-controls';
-      const urlInput = document.createElement('input');
-      urlInput.type = 'url';
-      urlInput.value = item.url === '#' ? '' : item.url;
-      urlInput.placeholder = 'https://';
-      urlInput.setAttribute('aria-label', `${item.name} 링크`);
-      urlInput.addEventListener('change', () => {
-        footerConnectItems[index].url = safeConnectUrl(urlInput.value);
-        link.href = footerConnectItems[index].url;
-        saveFooterConnect();
-      });
-      const remove = document.createElement('button');
-      remove.type = 'button';
-      remove.textContent = '−';
-      remove.title = 'Connect 항목 삭제';
-      remove.addEventListener('click', () => {
-        footerConnectItems.splice(index, 1);
-        saveFooterConnect();
-        restoreFooterConnect();
-        refreshFooterConnectEditor();
-      });
-      controls.append(urlInput, remove);
-      li.appendChild(controls);
+      if (isEditorAllowed()) {
+        const controls = document.createElement('span');
+        controls.className = 'connect-edit-controls';
+        const urlInput = document.createElement('input');
+        urlInput.type = 'url';
+        urlInput.value = item.url === '#' ? '' : item.url;
+        urlInput.placeholder = 'https://';
+        urlInput.setAttribute('aria-label', `${item.name} 링크`);
+        urlInput.addEventListener('change', () => {
+          footerConnectItems[index].url = safeConnectUrl(urlInput.value);
+          link.href = footerConnectItems[index].url;
+          saveFooterConnect();
+        });
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.textContent = '−';
+        remove.title = 'Connect 항목 삭제';
+        remove.addEventListener('click', () => {
+          footerConnectItems.splice(index, 1);
+          saveFooterConnect();
+          restoreFooterConnect();
+          refreshFooterConnectEditor();
+        });
+        controls.append(urlInput, remove);
+        li.appendChild(controls);
+      }
       list.appendChild(li);
     });
     const count = document.querySelector('.connect-count');
@@ -524,6 +526,7 @@ if (fv) {
     }
   }
   function installFooterConnectToolbar() {
+    if (!isEditorAllowed()) return;
     if (!bar || bar.querySelector('.connect-add') || !document.querySelector('[data-connect-index]')) return;
     const add = document.createElement('button');
     add.type = 'button';
