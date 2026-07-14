@@ -615,7 +615,7 @@
     </div>
   </footer>
 
-  <script src="main.js?v=incognito-safari-bake-20260714-1"></script>
+  <script src="main.js?v=particle-card-image-fix-20260714-3"></script>
   <script>
     // ── Works-only dissolve image slots ──────────────────────
     window.installWorksHoverSlots = function installWorksHoverSlots() {
@@ -992,6 +992,9 @@
       return ['g1', 'g2', 'g3', 'g4', 'g5', 'g6'];
     }
     async function detailHoverImages(id) {
+      if (id === '07') {
+        return FALLBACK_CARD_IMGS['work.html?id=07'];
+      }
       let db = null;
       try { db = await openMediaDb(); } catch (e) {}
       const publicData = await publicContent();
